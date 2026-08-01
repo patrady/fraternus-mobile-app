@@ -1,0 +1,44 @@
+:root {
+  /* base palette — sampled from fraternus.org homepage */
+  --color-forest-green: #0b2b25;
+  --color-forest-green-deep: #071f1a;
+  --color-forest-green-mid: #123a32;
+  --color-terracotta: #c66737;
+  --color-terracotta-dark: #a8542a;
+  --color-tan: #c9a876;
+  --color-tan-dim: #a68a63;
+  --color-parchment: #ece3d9;
+  --color-parchment-dim: #f6f0e6;
+  --color-white: #ffffff;
+  --color-ink: #16231f;
+  --color-muted: #4a5651;
+  --color-border: #e2d6c3;
+  --color-border-on-dark: rgba(255,255,255,0.16);
+
+  /* small semantic-state additions (not observed in source; kept forest-consistent) */
+  --color-success: #4f7a52;
+  --color-error: #a8402c;
+  --color-warning: #c9a876;
+
+  /* semantic surfaces */
+  --surface-dark: var(--color-forest-green);
+  --surface-dark-deep: var(--color-forest-green-deep);
+  --surface-light: var(--color-parchment);
+  --surface-card-light: var(--color-white);
+  --surface-card-dim: var(--color-parchment-dim);
+
+  /* semantic text */
+  --text-on-dark: var(--color-white);
+  --text-on-dark-muted: #cddad5;
+  --text-on-light: var(--color-ink);
+  --text-on-light-muted: var(--color-muted);
+
+  /* semantic accents */
+  --accent-primary: var(--color-terracotta);
+  --accent-primary-hover: var(--color-terracotta-dark);
+  --accent-secondary: var(--color-tan);
+  --border-subtle: var(--color-border);
+
+  /* focus ring, used sparingly on form controls */
+  --focus-ring: 0 0 0 3px rgba(198,103,55,0.35);
+}

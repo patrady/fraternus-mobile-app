@@ -65,6 +65,25 @@ flutter run -d <device-id>
 flutter test
 ```
 
+## Running Widgetbook (Design System Catalog)
+
+The design system's component catalog lives in a separate Flutter app at `fraternus_mobile_app/widgetbook`, which depends on `fraternus_mobile_app` via a path dependency. Keeping it separate means Widgetbook and `build_runner` never end up in the production app's dependency tree.
+
+```bash
+cd fraternus_mobile_app/widgetbook
+flutter pub get
+flutter pub run build_runner build -d
+flutter run -t lib/main.dart -d chrome
+```
+
+Use `build_runner watch` instead of `build` while you're actively adding or editing use cases — it regenerates `lib/main.directories.g.dart` automatically on save, so you just need to hot reload (`r`) in the `flutter run` terminal to pick it up:
+
+```bash
+flutter pub run build_runner watch -d
+```
+
+New use cases (`@widgetbook.UseCase`) belong in `widgetbook/lib/design_system/...`, mirroring the folder structure of the component they document in `fraternus_mobile_app/lib/design_system/...` — not next to the component itself.
+
 ## Contributing
 
 ### Branching

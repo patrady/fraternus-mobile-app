@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap');
+
+:root {
+  --font-display: 'Oswald', sans-serif;
+  --font-body: 'Nunito Sans', sans-serif;
+
+  --text-h1: 700 76px/1.02 var(--font-display);
+  --text-h2: 700 34px/1.1 var(--font-display);
+  --text-h3: 600 22px/1.2 var(--font-display);
+  --text-h4: 600 18px/1.25 var(--font-display);
+  --text-eyebrow: 600 13px/1.2 var(--font-display);
+  --text-button: 600 15px/1 var(--font-display);
+  --text-body-lg: 400 19px/1.6 var(--font-body);
+  --text-body: 400 16px/1.55 var(--font-body);
+  --text-small: 400 14px/1.5 var(--font-body);
+  --text-caption: 400 13px/1.4 var(--font-body);
+
+  --tracking-eyebrow: 0.1em;
+  --tracking-button: 0.03em;
+  --case-display: uppercase; /* @kind other */
+}
