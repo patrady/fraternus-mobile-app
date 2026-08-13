@@ -6,6 +6,12 @@ import 'person_challenge_progress.dart';
 /// is the most recent past (non-cancelled) Frat Night's template, and that
 /// template's `startOfWeekDate` is what drives the challenge's effective
 /// start (not a separate field here).
+///
+/// Unlike `Event`, there's no per-challenge eligibility list here — every
+/// Member is eligible for every Challenge per the schema, so "which
+/// household members can take this on" is a household-level concept (see
+/// `ChallengeHouseholdMember`), not something that varies challenge to
+/// challenge.
 class WeeklyChallenge {
   const WeeklyChallenge({
     required this.id,
@@ -28,6 +34,7 @@ class WeeklyChallenge {
   final String description;
   final int repsTotal;
 
-  /// One entry per household member, in a fixed you/jack/thomas order.
+  /// Only the household members who have actually accepted — a
+  /// `Challenge Member` row doesn't exist until then.
   final List<PersonChallengeProgress> progress;
 }

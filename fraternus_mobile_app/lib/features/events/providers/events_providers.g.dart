@@ -184,7 +184,9 @@ final class EventByIdFamily extends $Family
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user
 /// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state.
+/// [TodaySelectedPerson] living purely in provider state. Absence of a key
+/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+/// a row is only created once they actually respond.
 
 @ProviderFor(EventRsvp)
 const eventRsvpProvider = EventRsvpFamily._();
@@ -192,13 +194,17 @@ const eventRsvpProvider = EventRsvpFamily._();
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user
 /// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state.
+/// [TodaySelectedPerson] living purely in provider state. Absence of a key
+/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+/// a row is only created once they actually respond.
 final class EventRsvpProvider
-    extends $AsyncNotifierProvider<EventRsvp, Map<String, RsvpStatus?>> {
+    extends $AsyncNotifierProvider<EventRsvp, Map<String, RsvpStatus>> {
   /// In-memory RSVP edits for one event's household rows, keyed by person.
   /// Seeded from the event's own data, then locally overridden as the user
   /// taps [RsvpToggle] — edits reset on app restart, same as
-  /// [TodaySelectedPerson] living purely in provider state.
+  /// [TodaySelectedPerson] living purely in provider state. Absence of a key
+  /// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+  /// a row is only created once they actually respond.
   const EventRsvpProvider._({
     required EventRsvpFamily super.from,
     required String super.argument,
@@ -235,20 +241,22 @@ final class EventRsvpProvider
   }
 }
 
-String _$eventRsvpHash() => r'fc17e4a0735896470a31615c6c6132a6fb5f3ba2';
+String _$eventRsvpHash() => r'31d74661e5b5d0f85f91e98eda1d9febb99b7418';
 
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user
 /// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state.
+/// [TodaySelectedPerson] living purely in provider state. Absence of a key
+/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+/// a row is only created once they actually respond.
 
 final class EventRsvpFamily extends $Family
     with
         $ClassFamilyOverride<
           EventRsvp,
-          AsyncValue<Map<String, RsvpStatus?>>,
-          Map<String, RsvpStatus?>,
-          FutureOr<Map<String, RsvpStatus?>>,
+          AsyncValue<Map<String, RsvpStatus>>,
+          Map<String, RsvpStatus>,
+          FutureOr<Map<String, RsvpStatus>>,
           String
         > {
   const EventRsvpFamily._()
@@ -263,7 +271,9 @@ final class EventRsvpFamily extends $Family
   /// In-memory RSVP edits for one event's household rows, keyed by person.
   /// Seeded from the event's own data, then locally overridden as the user
   /// taps [RsvpToggle] — edits reset on app restart, same as
-  /// [TodaySelectedPerson] living purely in provider state.
+  /// [TodaySelectedPerson] living purely in provider state. Absence of a key
+  /// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+  /// a row is only created once they actually respond.
 
   EventRsvpProvider call(String eventId) =>
       EventRsvpProvider._(argument: eventId, from: this);
@@ -275,13 +285,15 @@ final class EventRsvpFamily extends $Family
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user
 /// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state.
+/// [TodaySelectedPerson] living purely in provider state. Absence of a key
+/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+/// a row is only created once they actually respond.
 
-abstract class _$EventRsvp extends $AsyncNotifier<Map<String, RsvpStatus?>> {
+abstract class _$EventRsvp extends $AsyncNotifier<Map<String, RsvpStatus>> {
   late final _$args = ref.$arg as String;
   String get eventId => _$args;
 
-  FutureOr<Map<String, RsvpStatus?>> build(String eventId);
+  FutureOr<Map<String, RsvpStatus>> build(String eventId);
   @$mustCallSuper
   @override
   void runBuild() {
@@ -289,17 +301,17 @@ abstract class _$EventRsvp extends $AsyncNotifier<Map<String, RsvpStatus?>> {
     final ref =
         this.ref
             as $Ref<
-              AsyncValue<Map<String, RsvpStatus?>>,
-              Map<String, RsvpStatus?>
+              AsyncValue<Map<String, RsvpStatus>>,
+              Map<String, RsvpStatus>
             >;
     final element =
         ref.element
             as $ClassProviderElement<
               AnyNotifier<
-                AsyncValue<Map<String, RsvpStatus?>>,
-                Map<String, RsvpStatus?>
+                AsyncValue<Map<String, RsvpStatus>>,
+                Map<String, RsvpStatus>
               >,
-              AsyncValue<Map<String, RsvpStatus?>>,
+              AsyncValue<Map<String, RsvpStatus>>,
               Object?,
               Object?
             >;

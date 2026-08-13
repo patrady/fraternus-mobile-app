@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/challenge_repository.dart';
+import '../models/challenge_household_member.dart';
 import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
@@ -12,6 +13,16 @@ part 'challenge_providers.g.dart';
 @riverpod
 ChallengeRepository challengeRepository(Ref ref) {
   return const StaticChallengeRepository();
+}
+
+/// The current user's household, for the Challenge tab's person tabs —
+/// every Member is eligible for every Challenge per the schema, so this is
+/// fetched once rather than per challenge (unlike Events, which have real
+/// per-event eligibility tables).
+@riverpod
+Future<List<ChallengeHouseholdMember>> challengeHousehold(Ref ref) async {
+  final repository = ref.watch(challengeRepositoryProvider);
+  return repository.fetchHousehold();
 }
 
 /// All challenges, most recently started first.
@@ -85,11 +96,36 @@ class ChallengeProgress extends _$ChallengeProgress {
     return {for (final progress in challenge?.progress ?? const []) progress.memberId: progress};
   }
 
+  /// Accepting is what creates the `Challenge Member` row in the first
+  /// place (mirroring `Event RSVP`'s "no row until submitted" rule), so
+  /// this builds a fresh [PersonChallengeProgress] rather than editing a
+  /// pre-existing placeholder — there isn't one.
   void accept(String personKey) {
     final current = state.value ?? const {};
-    final existing = current[personKey];
-    if (existing == null) return;
-    state = AsyncData({...current, personKey: existing.copyWith(committedDate: DateTime.now())});
+    if (current.containsKey(personKey)) return;
+
+    final household = ref.read(challengeHouseholdProvider).value;
+    String? label;
+    for (final member in household ?? const []) {
+      if (member.memberId == personKey) {
+        label = member.label;
+        break;
+      }
+    }
+    if (label == null) return;
+
+    final now = DateTime.now();
+    final progress = PersonChallengeProgress(
+      id: '$challengeId-$personKey',
+      memberId: personKey,
+      challengeId: challengeId,
+      label: label,
+      committedDate: now,
+      reps: const [],
+      createdAt: now,
+      lastModifiedAt: now,
+    );
+    state = AsyncData({...current, personKey: progress});
   }
 
   /// Marks the rep at [repIndex] complete (today's date) if it's currently

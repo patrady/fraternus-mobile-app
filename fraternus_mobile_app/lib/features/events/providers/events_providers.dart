@@ -37,21 +37,28 @@ Future<Event?> eventById(Ref ref, String eventId) async {
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user
 /// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state.
+/// [TodaySelectedPerson] living purely in provider state. Absence of a key
+/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
+/// a row is only created once they actually respond.
 @riverpod
 class EventRsvp extends _$EventRsvp {
   @override
-  Future<Map<String, RsvpStatus?>> build(String eventId) async {
+  Future<Map<String, RsvpStatus>> build(String eventId) async {
     final event = await ref.watch(eventByIdProvider(eventId).future);
     return {for (final rsvp in event?.householdRsvps ?? const []) rsvp.memberId: rsvp.status};
   }
 
   /// Tapping the already-selected option clears the RSVP back to
   /// unanswered rather than re-selecting it — matches how a real RSVP
-  /// toggle should behave (tap again to undo).
+  /// toggle should behave (tap again to undo). "Unanswered" means no row
+  /// at all, so that case removes the key instead of nulling it.
   void toggleStatus(String personKey, RsvpStatus status) {
-    final current = state.value ?? const {};
-    final next = current[personKey] == status ? null : status;
-    state = AsyncData({...current, personKey: next});
+    final current = {...(state.value ?? const {})};
+    if (current[personKey] == status) {
+      current.remove(personKey);
+    } else {
+      current[personKey] = status;
+    }
+    state = AsyncData(current);
   }
 }

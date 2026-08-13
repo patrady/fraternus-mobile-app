@@ -1,5 +1,6 @@
 import '../../../shared/models/frat_night_template.dart';
 import '../../../shared/models/frat_night_virtue.dart';
+import '../models/challenge_household_member.dart';
 import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
@@ -11,6 +12,11 @@ import '../models/weekly_challenge.dart';
 /// providers that watch it, or the screens.
 abstract class ChallengeRepository {
   Future<List<WeeklyChallenge>> fetchChallenges({required DateTime asOf});
+
+  /// The current user's household — every Member is eligible for every
+  /// Challenge per the schema, so this is a single household-wide list
+  /// rather than something fetched per challenge.
+  Future<List<ChallengeHouseholdMember>> fetchHousehold();
 }
 
 /// Hardcoded stand-in for real content. All timestamps are computed as
@@ -19,6 +25,15 @@ abstract class ChallengeRepository {
 /// runs.
 class StaticChallengeRepository implements ChallengeRepository {
   const StaticChallengeRepository();
+
+  static const _wholeHousehold = [
+    ChallengeHouseholdMember(memberId: 'you', label: 'You'),
+    ChallengeHouseholdMember(memberId: 'jack', label: 'Jack'),
+    ChallengeHouseholdMember(memberId: 'thomas', label: 'Thomas'),
+  ];
+
+  @override
+  Future<List<ChallengeHouseholdMember>> fetchHousehold() async => _wholeHousehold;
 
   static FratNightTemplate _template({
     required String id,
@@ -87,16 +102,8 @@ class StaticChallengeRepository implements ChallengeRepository {
             'discomfort — a small, repeatable act of will that carries over into '
             'everything else you do this week.',
         repsTotal: 3,
+        // "You" hasn't accepted yet — no Challenge Member row exists.
         progress: [
-          PersonChallengeProgress(
-            id: 'cold-shower-challenge-you',
-            memberId: 'you',
-            challengeId: 'cold-shower-challenge',
-            label: 'You',
-            reps: const [],
-            createdAt: coldShowerWeekStart,
-            lastModifiedAt: coldShowerWeekStart,
-          ),
           PersonChallengeProgress(
             id: 'cold-shower-challenge-jack',
             memberId: 'jack',
@@ -166,25 +173,8 @@ class StaticChallengeRepository implements ChallengeRepository {
             'no music, no conversation. Just be present before the day pulls you in '
             'a dozen directions.',
         repsTotal: 3,
+        // "You" and Jack haven't accepted yet — no rows for them.
         progress: [
-          PersonChallengeProgress(
-            id: 'morning-silence-you',
-            memberId: 'you',
-            challengeId: 'morning-silence',
-            label: 'You',
-            reps: const [],
-            createdAt: morningSilenceWeekStart,
-            lastModifiedAt: morningSilenceWeekStart,
-          ),
-          PersonChallengeProgress(
-            id: 'morning-silence-jack',
-            memberId: 'jack',
-            challengeId: 'morning-silence',
-            label: 'Jack',
-            reps: const [],
-            createdAt: morningSilenceWeekStart,
-            lastModifiedAt: morningSilenceWeekStart,
-          ),
           PersonChallengeProgress(
             id: 'morning-silence-thomas',
             memberId: 'thomas',
@@ -222,25 +212,8 @@ class StaticChallengeRepository implements ChallengeRepository {
             'Go five full days without complaining — out loud or in your head. Notice '
             'how often the urge shows up, and choose gratitude instead.',
         repsTotal: 5,
+        // "You" and Jack haven't accepted yet — no rows for them.
         progress: [
-          PersonChallengeProgress(
-            id: 'no-complaining-you',
-            memberId: 'you',
-            challengeId: 'no-complaining',
-            label: 'You',
-            reps: const [],
-            createdAt: noComplainingWeekStart,
-            lastModifiedAt: noComplainingWeekStart,
-          ),
-          PersonChallengeProgress(
-            id: 'no-complaining-jack',
-            memberId: 'jack',
-            challengeId: 'no-complaining',
-            label: 'Jack',
-            reps: const [],
-            createdAt: noComplainingWeekStart,
-            lastModifiedAt: noComplainingWeekStart,
-          ),
           PersonChallengeProgress(
             id: 'no-complaining-thomas',
             memberId: 'thomas',
@@ -280,25 +253,8 @@ class StaticChallengeRepository implements ChallengeRepository {
             'Close each day with a short examen: where did you see God today, where '
             'did you fall short, and what will you carry into tomorrow.',
         repsTotal: 7,
+        // "You" and Jack haven't accepted yet — no rows for them.
         progress: [
-          PersonChallengeProgress(
-            id: 'examen-before-bed-you',
-            memberId: 'you',
-            challengeId: 'examen-before-bed',
-            label: 'You',
-            reps: const [],
-            createdAt: examenWeekStart,
-            lastModifiedAt: examenWeekStart,
-          ),
-          PersonChallengeProgress(
-            id: 'examen-before-bed-jack',
-            memberId: 'jack',
-            challengeId: 'examen-before-bed',
-            label: 'Jack',
-            reps: const [],
-            createdAt: examenWeekStart,
-            lastModifiedAt: examenWeekStart,
-          ),
           PersonChallengeProgress(
             id: 'examen-before-bed-thomas',
             memberId: 'thomas',

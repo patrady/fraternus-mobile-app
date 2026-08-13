@@ -64,6 +64,62 @@ final class ChallengeRepositoryProvider
 String _$challengeRepositoryHash() =>
     r'273c09e879b07f8df1b1379bc6b3f3cec0a54b16';
 
+/// The current user's household, for the Challenge tab's person tabs —
+/// every Member is eligible for every Challenge per the schema, so this is
+/// fetched once rather than per challenge (unlike Events, which have real
+/// per-event eligibility tables).
+
+@ProviderFor(challengeHousehold)
+const challengeHouseholdProvider = ChallengeHouseholdProvider._();
+
+/// The current user's household, for the Challenge tab's person tabs —
+/// every Member is eligible for every Challenge per the schema, so this is
+/// fetched once rather than per challenge (unlike Events, which have real
+/// per-event eligibility tables).
+
+final class ChallengeHouseholdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ChallengeHouseholdMember>>,
+          List<ChallengeHouseholdMember>,
+          FutureOr<List<ChallengeHouseholdMember>>
+        >
+    with
+        $FutureModifier<List<ChallengeHouseholdMember>>,
+        $FutureProvider<List<ChallengeHouseholdMember>> {
+  /// The current user's household, for the Challenge tab's person tabs —
+  /// every Member is eligible for every Challenge per the schema, so this is
+  /// fetched once rather than per challenge (unlike Events, which have real
+  /// per-event eligibility tables).
+  const ChallengeHouseholdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'challengeHouseholdProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$challengeHouseholdHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<ChallengeHouseholdMember>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<ChallengeHouseholdMember>> create(Ref ref) {
+    return challengeHousehold(ref);
+  }
+}
+
+String _$challengeHouseholdHash() =>
+    r'1b998b010062d3662f0548f139080e2432e3f27b';
+
 /// All challenges, most recently started first.
 
 @ProviderFor(allChallenges)
@@ -484,7 +540,7 @@ final class ChallengeProgressProvider
   }
 }
 
-String _$challengeProgressHash() => r'8721caf9017eedb38034d7dbcbac310fb790df44';
+String _$challengeProgressHash() => r'ab1ab8198ab8246cadea9bde8678b3e8c064433e';
 
 /// In-memory accept/complete edits for one challenge's household rows,
 /// keyed by person. Seeded from the challenge's own data, then locally

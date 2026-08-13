@@ -1,6 +1,7 @@
 import 'event_attendee.dart';
 import 'event_attendees_chapter.dart';
 import 'event_attendees_specific.dart';
+import 'event_eligible_member.dart';
 import 'event_excursion_details.dart';
 import 'event_frat_night_details.dart';
 import 'event_ranch_details.dart';
@@ -28,6 +29,7 @@ class Event {
     this.fratNightDetails,
     this.excursionDetails,
     this.ranchDetails,
+    required this.eligibleHouseholdMembers,
     required this.householdRsvps,
     required this.othersAttending,
   });
@@ -60,6 +62,13 @@ class Event {
   /// Populated only when [type] is [EventType.ranch].
   final EventRanchDetails? ranchDetails;
 
+  /// Which household members can RSVP — not a schema entity itself, see
+  /// [EventEligibleMember]. Independent of [householdRsvps], which only
+  /// contains members who have actually responded.
+  final List<EventEligibleMember> eligibleHouseholdMembers;
+
+  /// Only the household members who have actually submitted a response —
+  /// an `Event RSVP` row doesn't exist until then.
   final List<HouseholdRsvp> householdRsvps;
   final List<EventAttendee> othersAttending;
 

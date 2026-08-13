@@ -111,15 +111,15 @@ class _EventDetailContent extends ConsumerWidget {
         rsvpAsync.when(
           data: (statuses) => Column(
             children: [
-              for (var i = 0; i < event.householdRsvps.length; i++) ...[
+              for (var i = 0; i < event.eligibleHouseholdMembers.length; i++) ...[
                 _RsvpRow(
-                  label: event.householdRsvps[i].label,
-                  status: statuses[event.householdRsvps[i].memberId],
+                  label: event.eligibleHouseholdMembers[i].label,
+                  status: statuses[event.eligibleHouseholdMembers[i].memberId],
                   onChanged: (status) => ref
                       .read(eventRsvpProvider(eventId).notifier)
-                      .toggleStatus(event.householdRsvps[i].memberId, status),
+                      .toggleStatus(event.eligibleHouseholdMembers[i].memberId, status),
                 ),
-                if (i != event.householdRsvps.length - 1) const SizedBox(height: 12),
+                if (i != event.eligibleHouseholdMembers.length - 1) const SizedBox(height: 12),
               ],
             ],
           ),

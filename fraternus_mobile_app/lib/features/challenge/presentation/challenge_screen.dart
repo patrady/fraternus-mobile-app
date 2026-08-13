@@ -43,13 +43,14 @@ class _ChallengeContent extends ConsumerWidget {
   final WeeklyChallenge challenge;
 
   PersonTabStatus _statusFor(PersonChallengeProgress? progress) {
-    if (progress == null || !progress.accepted) return PersonTabStatus.none;
+    if (progress == null) return PersonTabStatus.none;
     return progress.isCompleted ? PersonTabStatus.done : PersonTabStatus.inProgress;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(challengeProgressProvider(challenge.id));
+    final householdAsync = ref.watch(challengeHouseholdProvider);
     final selectedKey = ref.watch(challengeSelectedPersonProvider);
 
     return Column(
@@ -57,18 +58,22 @@ class _ChallengeContent extends ConsumerWidget {
       children: [
         ChallengeInfoCard(challenge: challenge),
         const SizedBox(height: 20),
-        progressAsync.when(
-          data: (progressByPerson) => PersonTabs(
-            people: [
-              for (final p in challenge.progress)
-                PersonTabItem(
-                  key: p.memberId,
-                  label: p.label,
-                  status: _statusFor(progressByPerson[p.memberId]),
-                ),
-            ],
-            activeKey: selectedKey,
-            onChanged: (key) => ref.read(challengeSelectedPersonProvider.notifier).select(key),
+        householdAsync.when(
+          data: (household) => progressAsync.when(
+            data: (progressByPerson) => PersonTabs(
+              people: [
+                for (final m in household)
+                  PersonTabItem(
+                    key: m.memberId,
+                    label: m.label,
+                    status: _statusFor(progressByPerson[m.memberId]),
+                  ),
+              ],
+              activeKey: selectedKey,
+              onChanged: (key) => ref.read(challengeSelectedPersonProvider.notifier).select(key),
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (error, stackTrace) => const SizedBox.shrink(),
           ),
           loading: () => const SizedBox.shrink(),
           error: (error, stackTrace) => const SizedBox.shrink(),
@@ -121,9 +126,7 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
     return progressAsync.when(
       data: (progressByPerson) {
         final progress = progressByPerson[widget.personKey];
-        if (progress == null) return const SizedBox.shrink();
-
-        if (!progress.accepted) {
+        if (progress == null) {
           return _NotAcceptedCard(challenge: widget.challenge, personKey: widget.personKey);
         }
 

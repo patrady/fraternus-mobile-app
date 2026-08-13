@@ -34,24 +34,22 @@ class PastChallengesScreen extends ConsumerWidget {
   }
 }
 
-class _PastChallengesList extends StatelessWidget {
+class _PastChallengesList extends ConsumerWidget {
   const _PastChallengesList({required this.challenges, required this.personKey});
 
   final List<WeeklyChallenge> challenges;
   final String personKey;
 
-  String? get _personLabel {
-    for (final challenge in challenges) {
-      for (final progress in challenge.progress) {
-        if (progress.memberId == personKey) return progress.label;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final household = ref.watch(challengeHouseholdProvider).value ?? const [];
+    String? personLabel;
+    for (final member in household) {
+      if (member.memberId == personKey) {
+        personLabel = member.label;
+        break;
       }
     }
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final personLabel = _personLabel;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

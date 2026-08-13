@@ -2,6 +2,7 @@ import '../../../design_system/design_system.dart' show RsvpStatus;
 import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../models/event_attendees_chapter.dart';
+import '../models/event_eligible_member.dart';
 import '../models/event_excursion_details.dart';
 import '../models/event_frat_night_details.dart';
 import '../models/event_ranch_details.dart';
@@ -28,6 +29,17 @@ class StaticEventsRepository implements EventsRepository {
   const StaticEventsRepository();
 
   static const _chapterId = 'st-philips-franklin';
+  static const _submittedByUserId = 'user-john';
+
+  static const _wholeHousehold = [
+    EventEligibleMember(memberId: 'you', label: 'Michael (You)'),
+    EventEligibleMember(memberId: 'jack', label: 'Jack'),
+    EventEligibleMember(memberId: 'thomas', label: 'Thomas'),
+  ];
+
+  static const _captainsOnlyHousehold = [
+    EventEligibleMember(memberId: 'you', label: 'Michael (You)'),
+  ];
 
   static const _othersA = [
     EventAttendee(id: 'mark-delaney', name: 'Mark Delaney'),
@@ -78,12 +90,13 @@ class StaticEventsRepository implements EventsRepository {
         lastModifiedAt: asOf.subtract(const Duration(days: 1)),
         attendeesChapter: _captainsOnlyFor('captain-meeting'),
         attendeesSpecific: const [],
+        eligibleHouseholdMembers: _captainsOnlyHousehold,
         householdRsvps: [
           HouseholdRsvp(
             id: 'rsvp-captain-meeting-you',
             eventId: 'captain-meeting',
             memberId: 'you',
-            label: 'Michael (You)',
+            submittedByUserId: _submittedByUserId,
             status: RsvpStatus.yes,
             createdAt: asOf.subtract(const Duration(days: 9)),
             lastModifiedAt: asOf.subtract(const Duration(days: 9)),
@@ -103,32 +116,9 @@ class StaticEventsRepository implements EventsRepository {
         lastModifiedAt: asOf.subtract(const Duration(days: 10)),
         attendeesChapter: _entireChapterFor('hawc-night'),
         attendeesSpecific: const [],
-        householdRsvps: [
-          HouseholdRsvp(
-            id: 'rsvp-hawc-night-you',
-            eventId: 'hawc-night',
-            memberId: 'you',
-            label: 'Michael (You)',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-hawc-night-jack',
-            eventId: 'hawc-night',
-            memberId: 'jack',
-            label: 'Jack',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-hawc-night-thomas',
-            eventId: 'hawc-night',
-            memberId: 'thomas',
-            label: 'Thomas',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-        ],
+        eligibleHouseholdMembers: _wholeHousehold,
+        // No one has responded yet — no Event RSVP rows exist.
+        householdRsvps: const [],
         othersAttending: _othersA,
       ),
       Event(
@@ -149,32 +139,8 @@ class StaticEventsRepository implements EventsRepository {
           fratNightTemplateId: 'fortitude-week',
           chapterId: _chapterId,
         ),
-        householdRsvps: [
-          HouseholdRsvp(
-            id: 'rsvp-frat-night-you',
-            eventId: 'frat-night',
-            memberId: 'you',
-            label: 'Michael (You)',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-frat-night-jack',
-            eventId: 'frat-night',
-            memberId: 'jack',
-            label: 'Jack',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-frat-night-thomas',
-            eventId: 'frat-night',
-            memberId: 'thomas',
-            label: 'Thomas',
-            createdAt: asOf.subtract(const Duration(days: 9)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 9)),
-          ),
-        ],
+        eligibleHouseholdMembers: _wholeHousehold,
+        householdRsvps: const [],
         othersAttending: _othersA,
       ),
       Event(
@@ -195,20 +161,14 @@ class StaticEventsRepository implements EventsRepository {
           hostChapterId: _chapterId,
           registrationUrl: 'https://example.com/register/buffalo-river',
         ),
+        eligibleHouseholdMembers: _wholeHousehold,
+        // "You" hasn't responded yet — only Jack and Thomas have rows.
         householdRsvps: [
-          HouseholdRsvp(
-            id: 'rsvp-buffalo-river-you',
-            eventId: 'excursion-buffalo-river',
-            memberId: 'you',
-            label: 'Michael (You)',
-            createdAt: asOf.subtract(const Duration(days: 19)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 19)),
-          ),
           HouseholdRsvp(
             id: 'rsvp-buffalo-river-jack',
             eventId: 'excursion-buffalo-river',
             memberId: 'jack',
-            label: 'Jack',
+            submittedByUserId: _submittedByUserId,
             status: RsvpStatus.yes,
             createdAt: asOf.subtract(const Duration(days: 19)),
             lastModifiedAt: asOf.subtract(const Duration(days: 19)),
@@ -217,7 +177,7 @@ class StaticEventsRepository implements EventsRepository {
             id: 'rsvp-buffalo-river-thomas',
             eventId: 'excursion-buffalo-river',
             memberId: 'thomas',
-            label: 'Thomas',
+            submittedByUserId: _submittedByUserId,
             status: RsvpStatus.yes,
             createdAt: asOf.subtract(const Duration(days: 19)),
             lastModifiedAt: asOf.subtract(const Duration(days: 19)),
@@ -242,32 +202,8 @@ class StaticEventsRepository implements EventsRepository {
           eventId: 'ranch',
           registrationUrl: 'https://example.com/register/ranch',
         ),
-        householdRsvps: [
-          HouseholdRsvp(
-            id: 'rsvp-ranch-you',
-            eventId: 'ranch',
-            memberId: 'you',
-            label: 'Michael (You)',
-            createdAt: asOf.subtract(const Duration(days: 29)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 29)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-ranch-jack',
-            eventId: 'ranch',
-            memberId: 'jack',
-            label: 'Jack',
-            createdAt: asOf.subtract(const Duration(days: 29)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 29)),
-          ),
-          HouseholdRsvp(
-            id: 'rsvp-ranch-thomas',
-            eventId: 'ranch',
-            memberId: 'thomas',
-            label: 'Thomas',
-            createdAt: asOf.subtract(const Duration(days: 29)),
-            lastModifiedAt: asOf.subtract(const Duration(days: 29)),
-          ),
-        ],
+        eligibleHouseholdMembers: _wholeHousehold,
+        householdRsvps: const [],
         othersAttending: _othersB,
       ),
     ];
