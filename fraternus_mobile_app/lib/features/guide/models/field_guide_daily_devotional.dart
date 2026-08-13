@@ -1,9 +1,9 @@
 import 'field_guide_daily_devotional_member.dart';
 
 /// One day's reading content — schema's "Field Guide Daily Devotional".
-/// "Sword Option 1/2" combine into [swordOptions]; "Spade" (the prompt
-/// text) is named [spadePrompt] here to disambiguate it from each member's
-/// own free-text answer in [FieldGuideDailyDevotionalMember.spade].
+/// "Spade" (the prompt text) is named [spadePrompt] here to disambiguate it
+/// from each member's own free-text answer in
+/// [FieldGuideDailyDevotionalMember.spade].
 class FieldGuideDailyDevotional {
   const FieldGuideDailyDevotional({
     required this.id,
@@ -12,7 +12,8 @@ class FieldGuideDailyDevotional {
     required this.identityReading,
     required this.wisdomQuote,
     required this.wisdomAuthor,
-    required this.swordOptions,
+    required this.swordOption1,
+    required this.swordOption2,
     required this.spadePrompt,
     required this.closingPrayer,
     required this.members,
@@ -28,10 +29,17 @@ class FieldGuideDailyDevotional {
   final String identityReading;
   final String wisdomQuote;
   final String wisdomAuthor;
-  final List<String> swordOptions;
+
+  /// Always exactly two options per the schema — kept as two named fields
+  /// rather than a list.
+  final String swordOption1;
+  final String swordOption2;
   final String spadePrompt;
   final String closingPrayer;
   final List<FieldGuideDailyDevotionalMember> members;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
+
+  /// UI convenience for widgets that render a generic option list.
+  List<String> get swordOptions => [swordOption1, swordOption2];
 }

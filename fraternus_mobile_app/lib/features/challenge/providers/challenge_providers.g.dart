@@ -108,7 +108,7 @@ final class AllChallengesProvider
   }
 }
 
-String _$allChallengesHash() => r'59e352899a15ed630648b6d51a817112be96cddd';
+String _$allChallengesHash() => r'b329a0083aaabe131ff307c2c522fa4adbe70011';
 
 @ProviderFor(currentChallenge)
 const currentChallengeProvider = CurrentChallengeProvider._();
@@ -265,6 +265,99 @@ final class ChallengeByIdFamily extends $Family
   String toString() => r'challengeByIdProvider';
 }
 
+/// Consecutive completed challenges for [personKey], most recent first,
+/// stopping at the first not-yet-completed one — streak is purely computed
+/// client-side (per docs/app_concept.md's Logic section), never a stored
+/// field on [PersonChallengeProgress].
+
+@ProviderFor(challengeStreak)
+const challengeStreakProvider = ChallengeStreakFamily._();
+
+/// Consecutive completed challenges for [personKey], most recent first,
+/// stopping at the first not-yet-completed one — streak is purely computed
+/// client-side (per docs/app_concept.md's Logic section), never a stored
+/// field on [PersonChallengeProgress].
+
+final class ChallengeStreakProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// Consecutive completed challenges for [personKey], most recent first,
+  /// stopping at the first not-yet-completed one — streak is purely computed
+  /// client-side (per docs/app_concept.md's Logic section), never a stored
+  /// field on [PersonChallengeProgress].
+  const ChallengeStreakProvider._({
+    required ChallengeStreakFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'challengeStreakProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$challengeStreakHash();
+
+  @override
+  String toString() {
+    return r'challengeStreakProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    final argument = this.argument as String;
+    return challengeStreak(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChallengeStreakProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$challengeStreakHash() => r'42a27a2de7d79aaad5da8a2833a4a990e70f08ee';
+
+/// Consecutive completed challenges for [personKey], most recent first,
+/// stopping at the first not-yet-completed one — streak is purely computed
+/// client-side (per docs/app_concept.md's Logic section), never a stored
+/// field on [PersonChallengeProgress].
+
+final class ChallengeStreakFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<int>, String> {
+  const ChallengeStreakFamily._()
+    : super(
+        retry: null,
+        name: r'challengeStreakProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Consecutive completed challenges for [personKey], most recent first,
+  /// stopping at the first not-yet-completed one — streak is purely computed
+  /// client-side (per docs/app_concept.md's Logic section), never a stored
+  /// field on [PersonChallengeProgress].
+
+  ChallengeStreakProvider call(String personKey) =>
+      ChallengeStreakProvider._(argument: personKey, from: this);
+
+  @override
+  String toString() => r'challengeStreakProvider';
+}
+
 /// Which household member's tab is active on the Challenge tab — same
 /// shape as TodaySelectedPerson, kept separate since Today and Challenge
 /// select independently.
@@ -391,7 +484,7 @@ final class ChallengeProgressProvider
   }
 }
 
-String _$challengeProgressHash() => r'ead7fa3fb23ce7e4b50b686a20ebfd0d761c0f7b';
+String _$challengeProgressHash() => r'8721caf9017eedb38034d7dbcbac310fb790df44';
 
 /// In-memory accept/complete edits for one challenge's household rows,
 /// keyed by person. Seeded from the challenge's own data, then locally

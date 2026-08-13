@@ -1,34 +1,66 @@
+import 'challenge_member_rep.dart';
+
+/// Adapted from docs/app_concept.md's `Challenge Member` table — one
+/// household member's progress on a single [WeeklyChallenge]. [reps] holds
+/// only the reps actually completed so far (per the schema, a
+/// [ChallengeMemberRep] row only exists once that rep is done) — the total
+/// number of reps available comes from the parent `WeeklyChallenge.repsTotal`,
+/// not duplicated here.
 class PersonChallengeProgress {
   const PersonChallengeProgress({
-    required this.personKey,
+    required this.id,
+    required this.memberId,
+    required this.challengeId,
     required this.label,
-    required this.accepted,
-    required this.repCompletions,
-    this.streakCount = 0,
+    this.committedDate,
+    this.completedDate,
+    required this.reps,
+    required this.createdAt,
+    required this.lastModifiedAt,
   });
 
-  final String personKey;
+  final String id;
+  final String memberId;
+  final String challengeId;
+
+  /// Display name — a denormalized read-model convenience, not a schema
+  /// field; joined from [Member] rather than stored/synced as-is.
   final String label;
-  final bool accepted;
 
-  /// One entry per rep — the completion date, or null if that rep isn't
-  /// done yet.
-  final List<DateTime?> repCompletions;
+  /// Set once the household member accepts the challenge.
+  final DateTime? committedDate;
 
-  /// Only meaningful/shown once [isCompleted] is true.
-  final int streakCount;
+  /// Set once every rep is complete.
+  final DateTime? completedDate;
+  final List<ChallengeMemberRep> reps;
+  final DateTime createdAt;
+  final DateTime lastModifiedAt;
 
-  int get repsDone => repCompletions.where((date) => date != null).length;
+  bool get accepted => committedDate != null;
 
-  bool get isCompleted => accepted && repsDone == repCompletions.length;
+  int get repsDone => reps.length;
 
-  PersonChallengeProgress copyWith({bool? accepted, List<DateTime?>? repCompletions}) {
+  bool get isCompleted => completedDate != null;
+
+  /// Streak is purely computed client-side from `Challenge Member`/
+  /// `Challenge Member Rep` history — deliberately not a field here, so it
+  /// can never be treated as something to store or sync.
+  PersonChallengeProgress copyWith({
+    DateTime? committedDate,
+    DateTime? completedDate,
+    bool clearCompletedDate = false,
+    List<ChallengeMemberRep>? reps,
+  }) {
     return PersonChallengeProgress(
-      personKey: personKey,
+      id: id,
+      memberId: memberId,
+      challengeId: challengeId,
       label: label,
-      accepted: accepted ?? this.accepted,
-      repCompletions: repCompletions ?? this.repCompletions,
-      streakCount: streakCount,
+      committedDate: committedDate ?? this.committedDate,
+      completedDate: clearCompletedDate ? null : (completedDate ?? this.completedDate),
+      reps: reps ?? this.reps,
+      createdAt: createdAt,
+      lastModifiedAt: lastModifiedAt,
     );
   }
 }

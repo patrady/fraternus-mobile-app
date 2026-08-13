@@ -6,13 +6,13 @@ import 'today_task.dart';
 /// switcher, along with their tasks for today.
 class HouseholdPerson {
   const HouseholdPerson({
-    required this.key,
+    required this.memberId,
     required this.label,
     required this.status,
     required this.todayTasks,
   });
 
-  final String key;
+  final String memberId;
   final String label;
 
   /// Reuses the design system's own completion-status enum rather than

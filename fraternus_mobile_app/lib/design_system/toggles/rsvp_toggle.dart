@@ -5,10 +5,10 @@ import '../tokens/fraternus_colors.dart';
 import '../tokens/fraternus_spacing.dart';
 import '../tokens/fraternus_typography.dart';
 
-enum RsvpStatus { yes, no }
+enum RsvpStatus { yes, no, tentative }
 
-/// Two-option pill toggle for event RSVPs (Going / Can't), tri-state
-/// color. Ports components-source.jsx `RsvpToggle`.
+/// Three-option pill toggle for event RSVPs (Going / Maybe / Can't).
+/// Ports components-source.jsx `RsvpToggle`.
 class RsvpToggle extends StatelessWidget {
   const RsvpToggle({super.key, this.status, required this.onChanged});
 
@@ -21,6 +21,8 @@ class RsvpToggle extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _option(RsvpStatus.yes, 'Going', FraternusColors.success),
+        const SizedBox(width: 8),
+        _option(RsvpStatus.tentative, 'Maybe', FraternusColors.warning),
         const SizedBox(width: 8),
         _option(RsvpStatus.no, "Can't", FraternusColors.error),
       ],

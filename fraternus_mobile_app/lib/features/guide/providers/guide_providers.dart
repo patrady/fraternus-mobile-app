@@ -56,7 +56,7 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   Future<Map<String, FieldGuideDailyDevotionalMember>> build(DateTime date) async {
     final week = await ref.watch(guideWeekForDateProvider(date).future);
     final devotional = week?.devotionalForDate(date);
-    return {for (final member in devotional?.members ?? const []) member.personKey: member};
+    return {for (final member in devotional?.members ?? const []) member.memberId: member};
   }
 
   void setSword(String personKey, String swordText) {
@@ -94,7 +94,7 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
 Future<int> guideBaseStreak(Ref ref, String personKey) async {
   final repository = ref.watch(guideRepositoryProvider);
   final date = ref.watch(guideSelectedDateProvider);
-  return repository.fetchStreak(personKey: personKey, asOf: date);
+  return repository.fetchStreak(memberId: personKey, asOf: date);
 }
 
 /// Fake temperament-quiz-result seed — see models/temperament.dart. Only

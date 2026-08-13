@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
+import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../models/app_user.dart';
 import '../models/member.dart';
 import '../providers/profile_providers.dart';
+import 'widgets/birthday_field.dart';
 
 class EditProfileScreen extends ConsumerWidget {
   const EditProfileScreen({super.key});
@@ -62,6 +64,7 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
   );
   late final _emailController = TextEditingController(text: widget.user.email);
   late String? _chapterId = widget.selfMember?.chapterId;
+  late DateTime? _birthday = widget.selfMember?.birthday;
 
   @override
   void dispose() {
@@ -69,6 +72,17 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
     _lastNameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickBirthday() async {
+    final now = DateTime.now();
+    final picked = await showFraternusDatePicker(
+      context: context,
+      initialDate: _birthday ?? DateTime(now.year - 35, now.month, now.day),
+      firstDate: DateTime(now.year - 100),
+      lastDate: now,
+    );
+    if (picked != null) setState(() => _birthday = picked);
   }
 
   @override
@@ -126,6 +140,12 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
           const SizedBox(height: 16),
           const Align(
             alignment: Alignment.centerLeft,
+            child: FieldLabel(label: 'Birthday'),
+          ),
+          BirthdayField(date: _birthday, onTap: _pickBirthday),
+          const SizedBox(height: 16),
+          const Align(
+            alignment: Alignment.centerLeft,
             child: FieldLabel(label: 'Chapter'),
           ),
           SelectField(
@@ -141,6 +161,7 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
         Button(
           label: 'Save',
           fullWidth: true,
+          disabled: selfMember != null && _birthday == null,
           onPressed: () {
             ref
                 .read(currentUserProvider.notifier)
@@ -151,13 +172,14 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                     email: _emailController.text,
                   ),
                 );
-            if (selfMember != null && _chapterId != null) {
+            if (selfMember != null && _chapterId != null && _birthday != null) {
               ref
                   .read(householdMembersProvider.notifier)
                   .upsert(
                     selfMember.copyWith(
                       firstName: _firstNameController.text,
                       lastName: _lastNameController.text,
+                      birthday: _birthday,
                       chapterId: _chapterId,
                     ),
                   );

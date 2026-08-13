@@ -344,7 +344,7 @@ final class GuideDevotionalProgressProvider
 }
 
 String _$guideDevotionalProgressHash() =>
-    r'45b17a5464b120b309c2b162182d2c981e8de6de';
+    r'8d88e8c120133679fb32173009acc397b9bb728a';
 
 /// In-memory sword/spade/completed edits for one date's per-person rows,
 /// keyed by date. Seeded from the fetched week's devotional-for-that-date,
@@ -477,7 +477,7 @@ final class GuideBaseStreakProvider
   }
 }
 
-String _$guideBaseStreakHash() => r'd4fc5338cc300b2dbdd6f10a3e2eb67506ddce60';
+String _$guideBaseStreakHash() => r'a21ce8046ed402f6658209c6b794cd14e6c781fa';
 
 /// Consecutive-day streak for [personKey] as of the currently selected
 /// date, NOT counting the selected date itself — the screen adds +1 live

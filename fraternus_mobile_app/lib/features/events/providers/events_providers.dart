@@ -43,7 +43,7 @@ class EventRsvp extends _$EventRsvp {
   @override
   Future<Map<String, RsvpStatus?>> build(String eventId) async {
     final event = await ref.watch(eventByIdProvider(eventId).future);
-    return {for (final rsvp in event?.householdRsvps ?? const []) rsvp.personKey: rsvp.status};
+    return {for (final rsvp in event?.householdRsvps ?? const []) rsvp.memberId: rsvp.status};
   }
 
   /// Tapping the already-selected option clears the RSVP back to

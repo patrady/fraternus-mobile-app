@@ -43,7 +43,7 @@ class _TodayContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPerson = dashboard.people.firstWhere((person) => person.key == selectedKey);
+    final selectedPerson = dashboard.people.firstWhere((person) => person.memberId == selectedKey);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +67,7 @@ class _TodayContent extends ConsumerWidget {
         const SizedBox(height: 4),
         PersonTabs(
           people: dashboard.people
-              .map((person) => PersonTabItem(key: person.key, label: person.label, status: person.status))
+              .map((person) => PersonTabItem(key: person.memberId, label: person.label, status: person.status))
               .toList(),
           activeKey: selectedKey,
           onChanged: (key) => ref.read(todaySelectedPersonProvider.notifier).select(key),
@@ -114,12 +114,12 @@ class _TodayTaskCard extends ConsumerWidget {
     // Events have no completion state of their own — only the two
     // actionable task kinds check against their own feature's real data.
     final isFieldGuideComplete =
-        ref.watch(guideDevotionalProgressProvider(_dateOnly(DateTime.now()))).value?[person.key]?.isCompleted ??
+        ref.watch(guideDevotionalProgressProvider(_dateOnly(DateTime.now()))).value?[person.memberId]?.isCompleted ??
         false;
     final currentChallenge = ref.watch(currentChallengeProvider).value;
     final isChallengeComplete = currentChallenge == null
         ? false
-        : ref.watch(challengeProgressProvider(currentChallenge.id)).value?[person.key]?.isCompleted ?? false;
+        : ref.watch(challengeProgressProvider(currentChallenge.id)).value?[person.memberId]?.isCompleted ?? false;
 
     final tasks = person.todayTasks;
     return Box(

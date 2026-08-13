@@ -200,7 +200,7 @@ final class HouseholdAssociationsProvider
 }
 
 String _$householdAssociationsHash() =>
-    r'011f21f3b56ed41576fb19c8b8546b26c74522f8';
+    r'f315e1ab6d09043f265f33f76371852c10852e40';
 
 abstract class _$HouseholdAssociations
     extends $AsyncNotifier<List<UserMemberAssociation>> {

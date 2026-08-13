@@ -62,9 +62,9 @@ class _ChallengeContent extends ConsumerWidget {
             people: [
               for (final p in challenge.progress)
                 PersonTabItem(
-                  key: p.personKey,
+                  key: p.memberId,
                   label: p.label,
-                  status: _statusFor(progressByPerson[p.personKey]),
+                  status: _statusFor(progressByPerson[p.memberId]),
                 ),
             ],
             activeKey: selectedKey,
@@ -128,33 +128,39 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
         }
 
         if (progress.isCompleted && !_showReps) {
+          final streakAsync = ref.watch(challengeStreakProvider(widget.personKey));
+          final streakLabel = streakAsync.value == null ? '' : '${streakAsync.value} week streak';
           return SizedBox(
             width: double.infinity,
             child: DarkFeatureCard(
               icon: 'award',
               value: 'Challenge Complete!',
-              body: '\u{1F525} ${progress.streakCount} week streak \u{1F525}',
+              body: '\u{1F525} $streakLabel \u{1F525}',
               ctaLabel: 'Show Reps',
               onCta: () => setState(() => _showReps = true),
             ),
           );
         }
 
-        final nextIncompleteIndex = progress.repCompletions.indexWhere((date) => date == null);
+        final completions = List<DateTime?>.filled(widget.challenge.repsTotal, null);
+        for (final rep in progress.reps) {
+          if (rep.number >= 1 && rep.number <= completions.length) completions[rep.number - 1] = rep.createdAt;
+        }
+        final nextIncompleteIndex = completions.indexWhere((date) => date == null);
 
         return Box(
           child: Column(
             children: [
-              for (var i = 0; i < progress.repCompletions.length; i++) ...[
+              for (var i = 0; i < completions.length; i++) ...[
                 ChallengeRepRow(
                   index: i,
-                  completedAt: progress.repCompletions[i],
+                  completedAt: completions[i],
                   isNextIncomplete: !progress.isCompleted && i == nextIncompleteIndex,
                   onMarkComplete: () => ref
                       .read(challengeProgressProvider(widget.challenge.id).notifier)
                       .toggleRep(widget.personKey, i),
                 ),
-                if (i != progress.repCompletions.length - 1) const HairlineDivider(),
+                if (i != completions.length - 1) const HairlineDivider(),
               ],
               if (progress.isCompleted) ...[
                 const HairlineDivider(),
@@ -188,7 +194,7 @@ class _NotAcceptedCard extends ConsumerWidget {
           const FraternusIcon(name: 'mountain', size: 32, tone: FraternusIconTone.terracotta),
           const SizedBox(height: 14),
           Text(
-            challenge.quote,
+            'Every great man had to start with a single decision to be great.',
             textAlign: TextAlign.center,
             style: FraternusTypography.body(
               color: FraternusColors.ink,

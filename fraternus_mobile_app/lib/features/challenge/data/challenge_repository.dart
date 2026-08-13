@@ -1,3 +1,6 @@
+import '../../../shared/models/frat_night_template.dart';
+import '../../../shared/models/frat_night_virtue.dart';
+import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 
@@ -17,150 +20,303 @@ abstract class ChallengeRepository {
 class StaticChallengeRepository implements ChallengeRepository {
   const StaticChallengeRepository();
 
+  static FratNightTemplate _template({
+    required String id,
+    required String title,
+    required String description,
+    required String virtueId,
+    required String virtueName,
+    required DateTime startOfWeekDate,
+  }) {
+    return FratNightTemplate(
+      id: id,
+      title: title,
+      description: description,
+      reading: description,
+      liturgicalDay: 'Ordinary Time',
+      startOfWeekDate: startOfWeekDate,
+      fratNightVirtueId: virtueId,
+      virtue: FratNightVirtue(id: virtueId, name: virtueName),
+      createdAt: startOfWeekDate,
+      lastModifiedAt: startOfWeekDate,
+    );
+  }
+
+  static ChallengeMemberRep _rep({
+    required String challengeMemberId,
+    required String completedByUserId,
+    required int number,
+    required DateTime createdAt,
+  }) {
+    return ChallengeMemberRep(
+      id: '$challengeMemberId-rep-$number',
+      challengeMemberId: challengeMemberId,
+      completedByUserId: completedByUserId,
+      number: number,
+      createdAt: createdAt,
+    );
+  }
+
   @override
   Future<List<WeeklyChallenge>> fetchChallenges({required DateTime asOf}) async {
+    final coldShowerWeekStart = asOf.subtract(const Duration(hours: 20));
+    final morningSilenceWeekStart = asOf.subtract(const Duration(days: 28));
+    final noComplainingWeekStart = asOf.subtract(const Duration(days: 42));
+    final examenWeekStart = asOf.subtract(const Duration(days: 49));
+
     return [
       WeeklyChallenge(
         id: 'cold-shower-challenge',
+        fratNightTemplateId: 'fortitude-week',
+        fratNightTemplate: _template(
+          id: 'fortitude-week',
+          title: 'The Fortitudinous Man Defends His Brothers',
+          description:
+              'Take a cold shower 3 times this week. Start warm, then finish the last '
+              '30–60 seconds fully cold. This trains you to stay calm and decisive under '
+              'discomfort — a small, repeatable act of will that carries over into '
+              'everything else you do this week.',
+          virtueId: 'fortitude',
+          virtueName: 'Fortitude',
+          startOfWeekDate: coldShowerWeekStart,
+        ),
         title: 'Cold Shower Challenge',
-        startAt: asOf.subtract(const Duration(hours: 20)),
         description:
             'Take a cold shower 3 times this week. Start warm, then finish the last '
             '30–60 seconds fully cold. This trains you to stay calm and decisive under '
             'discomfort — a small, repeatable act of will that carries over into '
             'everything else you do this week.',
-        quote:
-            'Consistency, not intensity, is what forms a man. Show up for this one, '
-            'every time, and let it become who you are.',
         repsTotal: 3,
         progress: [
-          const PersonChallengeProgress(
-            personKey: 'you',
+          PersonChallengeProgress(
+            id: 'cold-shower-challenge-you',
+            memberId: 'you',
+            challengeId: 'cold-shower-challenge',
             label: 'You',
-            accepted: false,
-            repCompletions: [null, null, null],
+            reps: const [],
+            createdAt: coldShowerWeekStart,
+            lastModifiedAt: coldShowerWeekStart,
           ),
           PersonChallengeProgress(
-            personKey: 'jack',
+            id: 'cold-shower-challenge-jack',
+            memberId: 'jack',
+            challengeId: 'cold-shower-challenge',
             label: 'Jack',
-            accepted: true,
-            repCompletions: [asOf.subtract(const Duration(days: 2)), null, null],
+            committedDate: coldShowerWeekStart,
+            reps: [
+              _rep(
+                challengeMemberId: 'cold-shower-challenge-jack',
+                completedByUserId: 'user-john',
+                number: 1,
+                createdAt: asOf.subtract(const Duration(days: 2)),
+              ),
+            ],
+            createdAt: coldShowerWeekStart,
+            lastModifiedAt: asOf.subtract(const Duration(days: 2)),
           ),
           PersonChallengeProgress(
-            personKey: 'thomas',
+            id: 'cold-shower-challenge-thomas',
+            memberId: 'thomas',
+            challengeId: 'cold-shower-challenge',
             label: 'Thomas',
-            accepted: true,
-            repCompletions: [
-              asOf.subtract(const Duration(days: 6)),
-              asOf.subtract(const Duration(days: 4)),
-              asOf.subtract(const Duration(days: 2)),
+            committedDate: coldShowerWeekStart,
+            completedDate: asOf.subtract(const Duration(days: 2)),
+            reps: [
+              _rep(
+                challengeMemberId: 'cold-shower-challenge-thomas',
+                completedByUserId: 'user-john',
+                number: 1,
+                createdAt: asOf.subtract(const Duration(days: 6)),
+              ),
+              _rep(
+                challengeMemberId: 'cold-shower-challenge-thomas',
+                completedByUserId: 'user-john',
+                number: 2,
+                createdAt: asOf.subtract(const Duration(days: 4)),
+              ),
+              _rep(
+                challengeMemberId: 'cold-shower-challenge-thomas',
+                completedByUserId: 'user-john',
+                number: 3,
+                createdAt: asOf.subtract(const Duration(days: 2)),
+              ),
             ],
-            streakCount: 3,
+            createdAt: coldShowerWeekStart,
+            lastModifiedAt: asOf.subtract(const Duration(days: 2)),
           ),
         ],
       ),
       WeeklyChallenge(
         id: 'morning-silence',
+        fratNightTemplateId: 'prudence-week',
+        fratNightTemplate: _template(
+          id: 'prudence-week',
+          title: 'The Prudent Man Listens Before He Speaks',
+          description:
+              'Spend the first 10 minutes of your morning in total silence — no phone, '
+              'no music, no conversation. Just be present before the day pulls you in '
+              'a dozen directions.',
+          virtueId: 'prudence',
+          virtueName: 'Prudence',
+          startOfWeekDate: morningSilenceWeekStart,
+        ),
         title: 'Morning Silence',
-        startAt: asOf.subtract(const Duration(days: 28)),
         description:
             'Spend the first 10 minutes of your morning in total silence — no phone, '
             'no music, no conversation. Just be present before the day pulls you in '
             'a dozen directions.',
-        quote: 'Silence is where a man hears what noise has been drowning out.',
         repsTotal: 3,
         progress: [
-          const PersonChallengeProgress(
-            personKey: 'you',
+          PersonChallengeProgress(
+            id: 'morning-silence-you',
+            memberId: 'you',
+            challengeId: 'morning-silence',
             label: 'You',
-            accepted: false,
-            repCompletions: [null, null, null],
-          ),
-          const PersonChallengeProgress(
-            personKey: 'jack',
-            label: 'Jack',
-            accepted: false,
-            repCompletions: [null, null, null],
+            reps: const [],
+            createdAt: morningSilenceWeekStart,
+            lastModifiedAt: morningSilenceWeekStart,
           ),
           PersonChallengeProgress(
-            personKey: 'thomas',
+            id: 'morning-silence-jack',
+            memberId: 'jack',
+            challengeId: 'morning-silence',
+            label: 'Jack',
+            reps: const [],
+            createdAt: morningSilenceWeekStart,
+            lastModifiedAt: morningSilenceWeekStart,
+          ),
+          PersonChallengeProgress(
+            id: 'morning-silence-thomas',
+            memberId: 'thomas',
+            challengeId: 'morning-silence',
             label: 'Thomas',
-            accepted: true,
-            repCompletions: [asOf.subtract(const Duration(days: 27)), null, null],
+            committedDate: morningSilenceWeekStart,
+            reps: [
+              _rep(
+                challengeMemberId: 'morning-silence-thomas',
+                completedByUserId: 'user-john',
+                number: 1,
+                createdAt: asOf.subtract(const Duration(days: 27)),
+              ),
+            ],
+            createdAt: morningSilenceWeekStart,
+            lastModifiedAt: asOf.subtract(const Duration(days: 27)),
           ),
         ],
       ),
       WeeklyChallenge(
         id: 'no-complaining',
+        fratNightTemplateId: 'patience-week',
+        fratNightTemplate: _template(
+          id: 'patience-week',
+          title: 'The Patient Man Chooses Gratitude',
+          description:
+              'Go five full days without complaining — out loud or in your head. Notice '
+              'how often the urge shows up, and choose gratitude instead.',
+          virtueId: 'patience',
+          virtueName: 'Patience',
+          startOfWeekDate: noComplainingWeekStart,
+        ),
         title: 'No Complaining',
-        startAt: asOf.subtract(const Duration(days: 42)),
         description:
             'Go five full days without complaining — out loud or in your head. Notice '
             'how often the urge shows up, and choose gratitude instead.',
-        quote: 'Gratitude and complaint cannot occupy the same heart at the same time.',
         repsTotal: 5,
         progress: [
-          const PersonChallengeProgress(
-            personKey: 'you',
+          PersonChallengeProgress(
+            id: 'no-complaining-you',
+            memberId: 'you',
+            challengeId: 'no-complaining',
             label: 'You',
-            accepted: false,
-            repCompletions: [null, null, null, null, null],
-          ),
-          const PersonChallengeProgress(
-            personKey: 'jack',
-            label: 'Jack',
-            accepted: false,
-            repCompletions: [null, null, null, null, null],
+            reps: const [],
+            createdAt: noComplainingWeekStart,
+            lastModifiedAt: noComplainingWeekStart,
           ),
           PersonChallengeProgress(
-            personKey: 'thomas',
+            id: 'no-complaining-jack',
+            memberId: 'jack',
+            challengeId: 'no-complaining',
+            label: 'Jack',
+            reps: const [],
+            createdAt: noComplainingWeekStart,
+            lastModifiedAt: noComplainingWeekStart,
+          ),
+          PersonChallengeProgress(
+            id: 'no-complaining-thomas',
+            memberId: 'thomas',
+            challengeId: 'no-complaining',
             label: 'Thomas',
-            accepted: true,
-            repCompletions: [
-              asOf.subtract(const Duration(days: 41)),
-              asOf.subtract(const Duration(days: 40)),
-              asOf.subtract(const Duration(days: 39)),
-              asOf.subtract(const Duration(days: 38)),
-              asOf.subtract(const Duration(days: 37)),
+            committedDate: noComplainingWeekStart,
+            completedDate: asOf.subtract(const Duration(days: 37)),
+            reps: [
+              for (var i = 0; i < 5; i++)
+                _rep(
+                  challengeMemberId: 'no-complaining-thomas',
+                  completedByUserId: 'user-john',
+                  number: i + 1,
+                  createdAt: asOf.subtract(Duration(days: 41 - i)),
+                ),
             ],
+            createdAt: noComplainingWeekStart,
+            lastModifiedAt: asOf.subtract(const Duration(days: 37)),
           ),
         ],
       ),
       WeeklyChallenge(
         id: 'examen-before-bed',
+        fratNightTemplateId: 'humility-week-frat-night',
+        fratNightTemplate: _template(
+          id: 'humility-week-frat-night',
+          title: 'The Humble Man Examines Himself Honestly',
+          description:
+              'Close each day with a short examen: where did you see God today, where '
+              'did you fall short, and what will you carry into tomorrow.',
+          virtueId: 'humility',
+          virtueName: 'Humility',
+          startOfWeekDate: examenWeekStart,
+        ),
         title: 'Examen Before Bed',
-        startAt: asOf.subtract(const Duration(days: 49)),
         description:
             'Close each day with a short examen: where did you see God today, where '
             'did you fall short, and what will you carry into tomorrow.',
-        quote: 'A day examined is a day that actually teaches you something.',
         repsTotal: 7,
         progress: [
-          const PersonChallengeProgress(
-            personKey: 'you',
+          PersonChallengeProgress(
+            id: 'examen-before-bed-you',
+            memberId: 'you',
+            challengeId: 'examen-before-bed',
             label: 'You',
-            accepted: false,
-            repCompletions: [null, null, null, null, null, null, null],
-          ),
-          const PersonChallengeProgress(
-            personKey: 'jack',
-            label: 'Jack',
-            accepted: false,
-            repCompletions: [null, null, null, null, null, null, null],
+            reps: const [],
+            createdAt: examenWeekStart,
+            lastModifiedAt: examenWeekStart,
           ),
           PersonChallengeProgress(
-            personKey: 'thomas',
+            id: 'examen-before-bed-jack',
+            memberId: 'jack',
+            challengeId: 'examen-before-bed',
+            label: 'Jack',
+            reps: const [],
+            createdAt: examenWeekStart,
+            lastModifiedAt: examenWeekStart,
+          ),
+          PersonChallengeProgress(
+            id: 'examen-before-bed-thomas',
+            memberId: 'thomas',
+            challengeId: 'examen-before-bed',
             label: 'Thomas',
-            accepted: true,
-            repCompletions: [
-              asOf.subtract(const Duration(days: 48)),
-              asOf.subtract(const Duration(days: 47)),
-              asOf.subtract(const Duration(days: 46)),
-              asOf.subtract(const Duration(days: 45)),
-              asOf.subtract(const Duration(days: 44)),
-              asOf.subtract(const Duration(days: 43)),
-              asOf.subtract(const Duration(days: 42)),
+            committedDate: examenWeekStart,
+            completedDate: asOf.subtract(const Duration(days: 42)),
+            reps: [
+              for (var i = 0; i < 7; i++)
+                _rep(
+                  challengeMemberId: 'examen-before-bed-thomas',
+                  completedByUserId: 'user-john',
+                  number: i + 1,
+                  createdAt: asOf.subtract(Duration(days: 48 - i)),
+                ),
             ],
+            createdAt: examenWeekStart,
+            lastModifiedAt: asOf.subtract(const Duration(days: 42)),
           ),
         ],
       ),

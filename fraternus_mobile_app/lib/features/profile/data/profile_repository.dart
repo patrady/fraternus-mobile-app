@@ -25,26 +25,38 @@ class StaticProfileRepository implements ProfileRepository {
 
   static const _userId = 'user-john';
 
+  // AppUser.email is sourced from the Self-relationship Member's own
+  // email — kept as one constant here so both stay in sync in this seed.
+  static const _selfEmail = 'john.smith@example.com';
+
   @override
   Future<AppUser> fetchCurrentUser() async {
-    return const AppUser(
+    final joinedAt = DateTime.now().subtract(const Duration(days: 400));
+    return AppUser(
       id: _userId,
       firstName: 'John',
       lastName: 'Smith',
-      email: 'john.smith@example.com',
+      email: _selfEmail,
+      createdAt: joinedAt,
+      lastModifiedAt: joinedAt,
     );
   }
 
   @override
   Future<List<Member>> fetchMembers() async {
     final now = DateTime.now();
+    final joinedAt = now.subtract(const Duration(days: 400));
     return [
-      const Member(
+      Member(
         id: 'you',
         firstName: 'John',
         lastName: 'Smith',
         role: MemberRole.captain,
         chapterId: 'st-philips-franklin',
+        birthday: DateTime(now.year - 42, 3, 14),
+        email: _selfEmail,
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
       Member(
         id: 'jack',
@@ -53,6 +65,8 @@ class StaticProfileRepository implements ProfileRepository {
         role: MemberRole.brother,
         chapterId: 'st-philips-franklin',
         birthday: DateTime(now.year - 12, 5, 12),
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
       Member(
         id: 'thomas',
@@ -61,27 +75,47 @@ class StaticProfileRepository implements ProfileRepository {
         role: MemberRole.brother,
         chapterId: 'st-philips-franklin',
         birthday: DateTime(now.year - 9, 9, 3),
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
     ];
   }
 
   @override
   Future<List<UserMemberAssociation>> fetchAssociations() async {
-    return const [
+    final joinedAt = DateTime.now().subtract(const Duration(days: 400));
+    return [
       UserMemberAssociation(
+        id: '$_userId-you',
         userId: _userId,
         memberId: 'you',
         relationship: AssociationRelationship.self,
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
+      // Jack (12) and Thomas (9) are both under 13 — COPPA consent applies
+      // and has already been granted in this seed.
       UserMemberAssociation(
+        id: '$_userId-jack',
         userId: _userId,
         memberId: 'jack',
         relationship: AssociationRelationship.guardian,
+        consentStatus: ConsentStatus.granted,
+        consentDate: joinedAt,
+        consentMethod: 'email confirmation',
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
       UserMemberAssociation(
+        id: '$_userId-thomas',
         userId: _userId,
         memberId: 'thomas',
         relationship: AssociationRelationship.guardian,
+        consentStatus: ConsentStatus.granted,
+        consentDate: joinedAt,
+        consentMethod: 'email confirmation',
+        createdAt: joinedAt,
+        lastModifiedAt: joinedAt,
       ),
     ];
   }

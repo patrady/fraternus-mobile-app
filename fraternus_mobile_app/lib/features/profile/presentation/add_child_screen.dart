@@ -24,19 +24,22 @@ class AddChildScreen extends ConsumerWidget {
             child: currentUserAsync.when(
               data: (currentUser) => ChildForm(
                 onSave: ({required firstName, required lastName, required birthday, required email, required chapterId}) {
+                  final now = DateTime.now();
                   final newMember = Member(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    id: now.millisecondsSinceEpoch.toString(),
                     firstName: firstName,
                     lastName: lastName,
                     role: MemberRole.brother,
                     chapterId: chapterId ?? '',
                     birthday: birthday,
                     email: email,
+                    createdAt: now,
+                    lastModifiedAt: now,
                   );
                   ref.read(householdMembersProvider.notifier).upsert(newMember);
                   ref
                       .read(householdAssociationsProvider.notifier)
-                      .addGuardianAssociation(currentUser.id, newMember.id);
+                      .addGuardianAssociation(currentUser.id, newMember);
                   context.pop();
                 },
               ),

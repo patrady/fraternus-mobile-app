@@ -17,7 +17,7 @@ class EventSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cancelled = event.status == EventStatus.cancelled;
+    final cancelled = event.isCancelled;
     final startingSoonLabel = cancelled ? null : formatStartingSoonLabel(DateTime.now(), event.startAt);
 
     return PressableBuilder(
@@ -42,8 +42,10 @@ class EventSummaryRow extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       _MetaLine(icon: 'clock', label: formatEventDateRange(event.startAt, event.endAt)),
-                      const SizedBox(height: 4),
-                      _MetaLine(icon: 'map-pin', label: event.location),
+                      if (event.location case final location?) ...[
+                        const SizedBox(height: 4),
+                        _MetaLine(icon: 'map-pin', label: location),
+                      ],
                     ],
                   ),
                 ),

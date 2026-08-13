@@ -43,7 +43,7 @@ class _PastChallengesList extends StatelessWidget {
   String? get _personLabel {
     for (final challenge in challenges) {
       for (final progress in challenge.progress) {
-        if (progress.personKey == personKey) return progress.label;
+        if (progress.memberId == personKey) return progress.label;
       }
     }
     return null;
@@ -112,7 +112,7 @@ class _PastChallengeCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Week of ${formatOrdinalDate(challenge.startAt)}',
+                          'Week of ${formatOrdinalDate(challenge.fratNightTemplate.startOfWeekDate)}',
                           style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
                         ),
                       ],

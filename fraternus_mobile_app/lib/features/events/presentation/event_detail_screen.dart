@@ -7,6 +7,7 @@ import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
 import '../models/event.dart';
 import '../models/event_attendee.dart';
+import '../models/event_attendees_chapter.dart';
 import '../providers/events_providers.dart';
 
 class EventDetailScreen extends ConsumerWidget {
@@ -45,10 +46,17 @@ class _EventDetailContent extends ConsumerWidget {
   final Event event;
   final String eventId;
 
-  String get _scopeLabel => switch (event.scope) {
-    EventScope.entireChapter => 'Entire Chapter',
-    EventScope.captainsOnly => 'Captains Only',
-  };
+  String get _scopeLabel {
+    final roles = event.attendeesChapter.map((a) => a.role).toSet();
+    if (roles.contains(EventAttendeeChapterRole.chapter)) return 'Entire Chapter';
+    if (roles.contains(EventAttendeeChapterRole.captains) && roles.contains(EventAttendeeChapterRole.brothers)) {
+      return 'Entire Chapter';
+    }
+    if (roles.contains(EventAttendeeChapterRole.captains)) return 'Captains Only';
+    if (roles.contains(EventAttendeeChapterRole.brothers)) return 'Brothers Only';
+    if (event.attendeesSpecific.isNotEmpty) return 'Invited';
+    return 'Entire Chapter';
+  }
 
   void _addToDeviceCalendar() {
     final calendarEvent = add2cal.Event(
@@ -63,7 +71,7 @@ class _EventDetailContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cancelled = event.status == EventStatus.cancelled;
+    final cancelled = event.isCancelled;
     final rsvpAsync = ref.watch(eventRsvpProvider(eventId));
 
     return Column(
@@ -89,10 +97,14 @@ class _EventDetailContent extends ConsumerWidget {
         ],
         const SizedBox(height: 16),
         _DetailMetaLine(icon: 'clock', label: formatEventDateRange(event.startAt, event.endAt)),
-        const SizedBox(height: 6),
-        _DetailMetaLine(icon: 'map-pin', label: event.location),
-        const SizedBox(height: 16),
-        BodyText(event.description),
+        if (event.location case final location?) ...[
+          const SizedBox(height: 6),
+          _DetailMetaLine(icon: 'map-pin', label: location),
+        ],
+        if (event.description case final description?) ...[
+          const SizedBox(height: 16),
+          BodyText(description),
+        ],
         const SizedBox(height: 24),
         const Subheading('RSVP'),
         const SizedBox(height: 12),
@@ -102,10 +114,10 @@ class _EventDetailContent extends ConsumerWidget {
               for (var i = 0; i < event.householdRsvps.length; i++) ...[
                 _RsvpRow(
                   label: event.householdRsvps[i].label,
-                  status: statuses[event.householdRsvps[i].personKey],
+                  status: statuses[event.householdRsvps[i].memberId],
                   onChanged: (status) => ref
                       .read(eventRsvpProvider(eventId).notifier)
-                      .toggleStatus(event.householdRsvps[i].personKey, status),
+                      .toggleStatus(event.householdRsvps[i].memberId, status),
                 ),
                 if (i != event.householdRsvps.length - 1) const SizedBox(height: 12),
               ],

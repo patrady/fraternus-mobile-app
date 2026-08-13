@@ -94,9 +94,9 @@ class _GuideContent extends ConsumerWidget {
             people: [
               for (final member in devotional.members)
                 PersonTabItem(
-                  key: member.personKey,
-                  label: _personLabels[member.personKey] ?? member.personKey,
-                  status: progressByPerson[member.personKey]?.isCompleted == true
+                  key: member.memberId,
+                  label: _personLabels[member.memberId] ?? member.memberId,
+                  status: progressByPerson[member.memberId]?.isCompleted == true
                       ? PersonTabStatus.done
                       : PersonTabStatus.none,
                 ),

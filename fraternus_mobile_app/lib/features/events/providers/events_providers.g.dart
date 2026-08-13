@@ -235,7 +235,7 @@ final class EventRsvpProvider
   }
 }
 
-String _$eventRsvpHash() => r'f585993b74db2ee8629ec7cdd2c8cb1de319234a';
+String _$eventRsvpHash() => r'fc17e4a0735896470a31615c6c6132a6fb5f3ba2';
 
 /// In-memory RSVP edits for one event's household rows, keyed by person.
 /// Seeded from the event's own data, then locally overridden as the user

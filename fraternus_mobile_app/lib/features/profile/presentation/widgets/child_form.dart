@@ -23,7 +23,7 @@ class ChildForm extends StatefulWidget {
   final void Function({
     required String firstName,
     required String lastName,
-    required DateTime? birthday,
+    required DateTime birthday,
     required String? email,
     required String? chapterId,
   })
@@ -128,10 +128,11 @@ class _ChildFormState extends State<ChildForm> {
               Button(
                 label: 'Save',
                 fullWidth: true,
+                disabled: _birthday == null,
                 onPressed: () => widget.onSave(
                   firstName: _firstNameController.text,
                   lastName: _lastNameController.text,
-                  birthday: _birthday,
+                  birthday: _birthday!,
                   email: _emailController.text.isEmpty
                       ? null
                       : _emailController.text,

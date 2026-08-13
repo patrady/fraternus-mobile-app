@@ -26,7 +26,7 @@ class StaticTodayDashboardRepository implements TodayDashboardRepository {
       weeklyFocus: const WeeklyFocus(virtue: 'Humility'),
       people: const [
         HouseholdPerson(
-          key: 'you',
+          memberId: 'you',
           label: 'You',
           status: PersonTabStatus.none,
           todayTasks: [
@@ -45,7 +45,7 @@ class StaticTodayDashboardRepository implements TodayDashboardRepository {
           ],
         ),
         HouseholdPerson(
-          key: 'jack',
+          memberId: 'jack',
           label: 'Jack',
           status: PersonTabStatus.inProgress,
           todayTasks: [
@@ -64,7 +64,7 @@ class StaticTodayDashboardRepository implements TodayDashboardRepository {
           ],
         ),
         HouseholdPerson(
-          key: 'thomas',
+          memberId: 'thomas',
           label: 'Thomas',
           status: PersonTabStatus.done,
           todayTasks: [

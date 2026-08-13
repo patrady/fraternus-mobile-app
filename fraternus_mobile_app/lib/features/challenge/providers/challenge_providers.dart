@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/challenge_repository.dart';
+import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 
@@ -18,7 +19,9 @@ ChallengeRepository challengeRepository(Ref ref) {
 Future<List<WeeklyChallenge>> allChallenges(Ref ref) async {
   final repository = ref.watch(challengeRepositoryProvider);
   final challenges = await repository.fetchChallenges(asOf: DateTime.now());
-  return challenges..sort((a, b) => b.startAt.compareTo(a.startAt));
+  return challenges..sort(
+    (a, b) => b.fratNightTemplate.startOfWeekDate.compareTo(a.fratNightTemplate.startOfWeekDate),
+  );
 }
 
 @riverpod
@@ -42,6 +45,23 @@ Future<WeeklyChallenge?> challengeById(Ref ref, String challengeId) async {
   return null;
 }
 
+/// Consecutive completed challenges for [personKey], most recent first,
+/// stopping at the first not-yet-completed one — streak is purely computed
+/// client-side (per docs/app_concept.md's Logic section), never a stored
+/// field on [PersonChallengeProgress].
+@riverpod
+Future<int> challengeStreak(Ref ref, String personKey) async {
+  final challenges = await ref.watch(allChallengesProvider.future);
+  var streak = 0;
+  for (final challenge in challenges) {
+    final progressByPerson = await ref.watch(challengeProgressProvider(challenge.id).future);
+    final progress = progressByPerson[personKey];
+    if (progress == null || !progress.isCompleted) break;
+    streak++;
+  }
+  return streak;
+}
+
 /// Which household member's tab is active on the Challenge tab — same
 /// shape as TodaySelectedPerson, kept separate since Today and Challenge
 /// select independently.
@@ -62,26 +82,50 @@ class ChallengeProgress extends _$ChallengeProgress {
   @override
   Future<Map<String, PersonChallengeProgress>> build(String challengeId) async {
     final challenge = await ref.watch(challengeByIdProvider(challengeId).future);
-    return {for (final progress in challenge?.progress ?? const []) progress.personKey: progress};
+    return {for (final progress in challenge?.progress ?? const []) progress.memberId: progress};
   }
 
   void accept(String personKey) {
     final current = state.value ?? const {};
     final existing = current[personKey];
     if (existing == null) return;
-    state = AsyncData({...current, personKey: existing.copyWith(accepted: true)});
+    state = AsyncData({...current, personKey: existing.copyWith(committedDate: DateTime.now())});
   }
 
   /// Marks the rep at [repIndex] complete (today's date) if it's currently
   /// incomplete, or clears it back to incomplete if it's already done —
   /// used both for "Mark Complete" on the current challenge's next rep and
-  /// for Past Challenges' any-order retroactive dot taps.
+  /// for Past Challenges' any-order retroactive dot taps. Both call sites
+  /// only ever touch the boundary rep (the next incomplete slot, or the
+  /// most recently completed one), matching the schema's "a Challenge
+  /// Member Rep row only exists once completed" rule.
   void toggleRep(String personKey, int repIndex) {
     final current = state.value ?? const {};
     final existing = current[personKey];
     if (existing == null) return;
-    final reps = [...existing.repCompletions];
-    reps[repIndex] = reps[repIndex] == null ? DateTime.now() : null;
-    state = AsyncData({...current, personKey: existing.copyWith(repCompletions: reps)});
+
+    final repNumber = repIndex + 1;
+    final hasRep = existing.reps.any((rep) => rep.number == repNumber);
+    final reps = hasRep
+        ? existing.reps.where((rep) => rep.number != repNumber).toList()
+        : [
+            ...existing.reps,
+            ChallengeMemberRep(
+              id: '${existing.id}-rep-$repNumber',
+              challengeMemberId: existing.id,
+              completedByUserId: 'user-john',
+              number: repNumber,
+              createdAt: DateTime.now(),
+            ),
+          ];
+
+    final repsTotal = ref.read(challengeByIdProvider(challengeId)).value?.repsTotal;
+    final isNowComplete = repsTotal != null && reps.length == repsTotal;
+    final updated = existing.copyWith(
+      reps: reps,
+      completedDate: isNowComplete ? DateTime.now() : null,
+      clearCompletedDate: !isNowComplete,
+    );
+    state = AsyncData({...current, personKey: updated});
   }
 }

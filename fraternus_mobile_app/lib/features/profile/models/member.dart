@@ -12,8 +12,10 @@ class Member {
     required this.lastName,
     required this.role,
     required this.chapterId,
-    this.birthday,
+    required this.birthday,
     this.email,
+    required this.createdAt,
+    required this.lastModifiedAt,
   });
 
   final String id;
@@ -24,16 +26,18 @@ class Member {
   /// A Member always belongs to exactly one chapter.
   final String chapterId;
 
-  /// Required in practice at Brother-creation time per the signup flow;
-  /// nullable here defensively since it isn't populated for every seed row.
-  final DateTime? birthday;
+  /// Required for every Member regardless of role — Brother, Captain, or
+  /// Commander all collect a birthday at creation time.
+  final DateTime birthday;
 
   /// Not present in app_concept.md's literal Member table, but its
   /// signup-flow prose explicitly says a Brother's creation captures an
-  /// optional email ("email is optional since Brothers may not have one")
-  /// — most likely for a future invite-claim flow. Kept here rather than
-  /// silently dropped.
+  /// optional email ("email is optional since Brothers may not have one").
+  /// This is the field actually collected at signup — [AppUser.email] is
+  /// sourced from here for a Self-relationship Member, not the reverse.
   final String? email;
+  final DateTime createdAt;
+  final DateTime lastModifiedAt;
 
   String get fullName => '$firstName $lastName';
 
@@ -55,6 +59,8 @@ class Member {
       chapterId: chapterId ?? this.chapterId,
       birthday: birthday ?? this.birthday,
       email: clearEmail ? null : (email ?? this.email),
+      createdAt: createdAt,
+      lastModifiedAt: lastModifiedAt,
     );
   }
 }

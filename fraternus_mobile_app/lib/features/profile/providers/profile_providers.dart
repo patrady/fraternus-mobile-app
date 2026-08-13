@@ -60,11 +60,28 @@ class HouseholdAssociations extends _$HouseholdAssociations {
     return ref.watch(profileRepositoryProvider).fetchAssociations();
   }
 
-  void addGuardianAssociation(String userId, String memberId) {
+  /// Consent starts Pending for a Member under 13 (COPPA) — every other
+  /// case leaves consent fields unset, per app_concept.md's "applicable
+  /// when Relationship = Guardian and the Member is under 13" rule.
+  void addGuardianAssociation(String userId, Member member) {
+    final now = DateTime.now();
+    final hadBirthdayThisYear =
+        now.month > member.birthday.month || (now.month == member.birthday.month && now.day >= member.birthday.day);
+    final age = now.year - member.birthday.year - (hadBirthdayThisYear ? 0 : 1);
+    final requiresConsent = age < 13;
+
     final current = state.value ?? const [];
     state = AsyncData([
       ...current,
-      UserMemberAssociation(userId: userId, memberId: memberId, relationship: AssociationRelationship.guardian),
+      UserMemberAssociation(
+        id: '$userId-${member.id}',
+        userId: userId,
+        memberId: member.id,
+        relationship: AssociationRelationship.guardian,
+        consentStatus: requiresConsent ? ConsentStatus.pending : null,
+        createdAt: now,
+        lastModifiedAt: now,
+      ),
     ]);
   }
 

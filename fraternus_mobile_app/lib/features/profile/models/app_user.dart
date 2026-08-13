@@ -7,12 +7,20 @@ class AppUser {
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.createdAt,
+    required this.lastModifiedAt,
   });
 
   final String id;
   final String firstName;
   final String lastName;
+
+  /// Sourced from the linked Self-relationship [Member]'s own `email` at
+  /// signup time — `Member.email` is the field actually collected, this is
+  /// populated from it rather than independently.
   final String email;
+  final DateTime createdAt;
+  final DateTime lastModifiedAt;
 
   String get fullName => '$firstName $lastName';
 
@@ -24,6 +32,8 @@ class AppUser {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
+      createdAt: createdAt,
+      lastModifiedAt: lastModifiedAt,
     );
   }
 }
