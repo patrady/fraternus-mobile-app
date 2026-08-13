@@ -188,7 +188,6 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Frat Night Template Id
     - Title
     - Description
-    - Duration (number of seconds available to complete the challenge - usually 1w in seconds)
     - Reps (ex 4)
 - Challenge Member
     - Id
@@ -260,6 +259,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Type (any one of the following)
         - frat_night: See Event Frat Night Details
         - excursion: See Event Excursion Details
+        - ranch: See Event Ranch Details
         - custom
     - Title
     - Description (nullable)

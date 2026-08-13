@@ -10,7 +10,7 @@ enum ButtonSize { small, medium, large }
 
 enum ButtonVariant { primary, ghost, underlined }
 
-enum ButtonColor { primary, secondary, danger }
+enum ButtonColor { primary, secondary, danger, success }
 
 enum ButtonIconPosition { left, right }
 
@@ -79,6 +79,7 @@ class Button extends StatelessWidget {
     ButtonColor.primary => FraternusColors.accentPrimary,
     ButtonColor.secondary => FraternusColors.forestGreen,
     ButtonColor.danger => FraternusColors.error,
+    ButtonColor.success => FraternusColors.success,
   };
 
   Color get _fillColorPressed => Color.lerp(_fillColor, const Color(0xFF000000), 0.16)!;
@@ -90,6 +91,7 @@ class Button extends StatelessWidget {
       ButtonColor.primary => FraternusColors.forestGreen,
       ButtonColor.secondary => FraternusColors.textOnLightMuted,
       ButtonColor.danger => FraternusColors.error,
+      ButtonColor.success => FraternusColors.success,
     };
   }
 

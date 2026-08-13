@@ -23,6 +23,8 @@ import 'package:widgetbook_workspace/design_system/cards/content_card.widgetbook
     as _widgetbook_workspace_design_system_cards_content_card_widgetbook;
 import 'package:widgetbook_workspace/design_system/cards/dark_feature_card.widgetbook.dart'
     as _widgetbook_workspace_design_system_cards_dark_feature_card_widgetbook;
+import 'package:widgetbook_workspace/design_system/cards/dark_summary_card.widgetbook.dart'
+    as _widgetbook_workspace_design_system_cards_dark_summary_card_widgetbook;
 import 'package:widgetbook_workspace/design_system/cards/info_card.widgetbook.dart'
     as _widgetbook_workspace_design_system_cards_info_card_widgetbook;
 import 'package:widgetbook_workspace/design_system/cards/selectable_card.widgetbook.dart'
@@ -39,6 +41,8 @@ import 'package:widgetbook_workspace/design_system/icons/icon_badge_circle.widge
     as _widgetbook_workspace_design_system_icons_icon_badge_circle_widgetbook;
 import 'package:widgetbook_workspace/design_system/layout/box.widgetbook.dart'
     as _widgetbook_workspace_design_system_layout_box_widgetbook;
+import 'package:widgetbook_workspace/design_system/layout/hairline_divider.widgetbook.dart'
+    as _widgetbook_workspace_design_system_layout_hairline_divider_widgetbook;
 import 'package:widgetbook_workspace/design_system/layout/screen_header.widgetbook.dart'
     as _widgetbook_workspace_design_system_layout_screen_header_widgetbook;
 import 'package:widgetbook_workspace/design_system/layout/screen_shell.widgetbook.dart'
@@ -251,6 +255,17 @@ final directories = <_widgetbook.WidgetbookNode>[
             ],
           ),
           _widgetbook.WidgetbookComponent(
+            name: 'DarkSummaryCard',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'This Week\'s Focus',
+                builder:
+                    _widgetbook_workspace_design_system_cards_dark_summary_card_widgetbook
+                        .defaultUseCase,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
             name: 'InfoCard',
             useCases: [
               _widgetbook.WidgetbookUseCase(
@@ -422,6 +437,17 @@ final directories = <_widgetbook.WidgetbookNode>[
                 builder:
                     _widgetbook_workspace_design_system_layout_box_widgetbook
                         .playgroundUseCase,
+              ),
+            ],
+          ),
+          _widgetbook.WidgetbookComponent(
+            name: 'HairlineDivider',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: 'Default',
+                builder:
+                    _widgetbook_workspace_design_system_layout_hairline_divider_widgetbook
+                        .defaultUseCase,
               ),
             ],
           ),

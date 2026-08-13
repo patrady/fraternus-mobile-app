@@ -1,0 +1,208 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/router/route_paths.dart';
+import '../../../design_system/design_system.dart';
+import '../models/person_challenge_progress.dart';
+import '../models/weekly_challenge.dart';
+import '../providers/challenge_providers.dart';
+import 'widgets/challenge_info_card.dart';
+import 'widgets/challenge_rep_row.dart';
+
+class ChallengeScreen extends ConsumerWidget {
+  const ChallengeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final challengeAsync = ref.watch(currentChallengeProvider);
+
+    return ScreenShell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Heading('WEEKLY CHALLENGE', level: HeadingLevel.h2),
+            const SizedBox(height: 20),
+            challengeAsync.when(
+              data: (challenge) => _ChallengeContent(challenge: challenge),
+              loading: () => const SizedBox.shrink(),
+              error: (error, stackTrace) => const BodyText('Something went wrong loading the challenge.'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChallengeContent extends ConsumerWidget {
+  const _ChallengeContent({required this.challenge});
+
+  final WeeklyChallenge challenge;
+
+  PersonTabStatus _statusFor(PersonChallengeProgress? progress) {
+    if (progress == null || !progress.accepted) return PersonTabStatus.none;
+    return progress.isCompleted ? PersonTabStatus.done : PersonTabStatus.inProgress;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progressAsync = ref.watch(challengeProgressProvider(challenge.id));
+    final selectedKey = ref.watch(challengeSelectedPersonProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ChallengeInfoCard(challenge: challenge),
+        const SizedBox(height: 20),
+        progressAsync.when(
+          data: (progressByPerson) => PersonTabs(
+            people: [
+              for (final p in challenge.progress)
+                PersonTabItem(
+                  key: p.personKey,
+                  label: p.label,
+                  status: _statusFor(progressByPerson[p.personKey]),
+                ),
+            ],
+            activeKey: selectedKey,
+            onChanged: (key) => ref.read(challengeSelectedPersonProvider.notifier).select(key),
+          ),
+          loading: () => const SizedBox.shrink(),
+          error: (error, stackTrace) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 16),
+        _ChallengeStateCard(challenge: challenge, personKey: selectedKey),
+        const SizedBox(height: 16),
+        Button(
+          label: 'Past Challenges',
+          variant: ButtonVariant.ghost,
+          fullWidth: true,
+          icon: 'chevron-right',
+          iconPosition: ButtonIconPosition.right,
+          onPressed: () => context.push(RoutePaths.pastChallenges),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+}
+
+/// The card below the person tabs — swaps between the not-accepted quote
+/// card, the rep-progress list, and the completed celebration card based
+/// on that person's live [ChallengeProgress] state. "Show/Hide Reps" is
+/// pure view state local to this widget, not a data mutation, so it's a
+/// plain [State] field rather than provider state.
+class _ChallengeStateCard extends ConsumerStatefulWidget {
+  const _ChallengeStateCard({required this.challenge, required this.personKey});
+
+  final WeeklyChallenge challenge;
+  final String personKey;
+
+  @override
+  ConsumerState<_ChallengeStateCard> createState() => _ChallengeStateCardState();
+}
+
+class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
+  bool _showReps = false;
+
+  @override
+  void didUpdateWidget(covariant _ChallengeStateCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.personKey != widget.personKey) _showReps = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progressAsync = ref.watch(challengeProgressProvider(widget.challenge.id));
+
+    return progressAsync.when(
+      data: (progressByPerson) {
+        final progress = progressByPerson[widget.personKey];
+        if (progress == null) return const SizedBox.shrink();
+
+        if (!progress.accepted) {
+          return _NotAcceptedCard(challenge: widget.challenge, personKey: widget.personKey);
+        }
+
+        if (progress.isCompleted && !_showReps) {
+          return SizedBox(
+            width: double.infinity,
+            child: DarkFeatureCard(
+              icon: 'award',
+              value: 'Challenge Complete!',
+              body: '\u{1F525} ${progress.streakCount} week streak \u{1F525}',
+              ctaLabel: 'Show Reps',
+              onCta: () => setState(() => _showReps = true),
+            ),
+          );
+        }
+
+        final nextIncompleteIndex = progress.repCompletions.indexWhere((date) => date == null);
+
+        return Box(
+          child: Column(
+            children: [
+              for (var i = 0; i < progress.repCompletions.length; i++) ...[
+                ChallengeRepRow(
+                  index: i,
+                  completedAt: progress.repCompletions[i],
+                  isNextIncomplete: !progress.isCompleted && i == nextIncompleteIndex,
+                  onMarkComplete: () => ref
+                      .read(challengeProgressProvider(widget.challenge.id).notifier)
+                      .toggleRep(widget.personKey, i),
+                ),
+                if (i != progress.repCompletions.length - 1) const HairlineDivider(),
+              ],
+              if (progress.isCompleted) ...[
+                const HairlineDivider(),
+                Button(
+                  label: 'Hide Reps',
+                  variant: ButtonVariant.underlined,
+                  onPressed: () => setState(() => _showReps = false),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _NotAcceptedCard extends ConsumerWidget {
+  const _NotAcceptedCard({required this.challenge, required this.personKey});
+
+  final WeeklyChallenge challenge;
+  final String personKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Box(
+      child: Column(
+        children: [
+          const FraternusIcon(name: 'mountain', size: 32, tone: FraternusIconTone.terracotta),
+          const SizedBox(height: 14),
+          Text(
+            challenge.quote,
+            textAlign: TextAlign.center,
+            style: FraternusTypography.body(
+              color: FraternusColors.ink,
+            ).copyWith(fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 18),
+          Button(
+            label: 'Accept Challenge',
+            fullWidth: true,
+            onPressed: () =>
+                ref.read(challengeProgressProvider(challenge.id).notifier).accept(personKey),
+          ),
+        ],
+      ),
+    );
+  }
+}

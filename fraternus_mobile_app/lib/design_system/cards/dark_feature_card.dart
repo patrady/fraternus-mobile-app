@@ -80,6 +80,7 @@ class DarkFeatureCard extends StatelessWidget {
                       border: Border.all(color: const Color(0x66FFFFFF)),
                       borderRadius: BorderRadius.circular(FraternusRadii.sm),
                     ),
+                    alignment: Alignment.center,
                     child: Text(
                       ctaLabel!.toUpperCase(),
                       style: FraternusTypography.button(fontSize: 12, color: FraternusColors.white)

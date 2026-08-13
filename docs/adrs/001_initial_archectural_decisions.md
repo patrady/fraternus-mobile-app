@@ -34,6 +34,8 @@ Fraternus is a free Flutter app (iOS + Google Play) built around Auth0 authentic
 
 ## 3. Backend & persistence: no server for now — Drift is the system of record
 
+> **Superseded by [ADR 0002](./002_supabase_backend_poc.md) §3.** A Supabase backend is now being introduced (POC phase); Postgres becomes the system of record for user-generated data and Drift's role shifts to local cache, as anticipated in the "Revisit if" note below.
+
 **Decision:** There is no custom backend for this phase of the project. No application server, no REST API, no database beyond what lives on the device. Auth0 remains the identity provider (see #6), but Drift (SQL-backed, type-safe, actively maintained) is the single, permanent store for **all** data — both reference content and user-generated data — until a backend is introduced.
 
 **Rejected alternatives for the local database:** Isar and original Hive — both effectively unmaintained by their original authors; only community forks remain.
@@ -66,6 +68,8 @@ This supersedes the earlier draft of this ADR, which had Drift acting as a synce
 
 ## 5. Notifications: fully on-device scheduling (no server push for v1)
 
+> **Partially reopened by [ADR 0002](./002_supabase_backend_poc.md) §7.** A server push channel now exists (Supabase `pg_cron` + Edge Function + FCM), which was the specific blocker cited below for event-cancellation alerts. Reconciling server-triggered reminders with this on-device scheduler is deferred to a follow-up ADR.
+
 **Decision:** All notifications are scheduled and delivered on-device via `flutter_local_notifications` + `timezone`, computed entirely from locally cached Drift data. No FCM or server-triggered push in v1.
 
 **Mechanism:** A reconciliation routine runs (a) on app resume and (b) after any local write that could affect the schedule (accepting a challenge, completing a rep, completing a devotional, changing an RSVP). Each run cancels all pending local notifications and reschedules a fresh set from a rolling ~14-day lookahead window over current local data — no per-notification ID tracking needed.
@@ -89,6 +93,8 @@ This supersedes the earlier draft of this ADR, which had Drift acting as a synce
 ---
 
 ## 6. Authentication: Auth0 official SDK (fully on-device, no backend required)
+
+> **Superseded by [ADR 0002](./002_supabase_backend_poc.md) §2.** Auth0 is replaced by Supabase Auth as part of introducing a backend; no production users existed at the time of the switch, so no migration was required.
 
 **Decision:** `auth0_flutter` for the OAuth flow, paired with `flutter_secure_storage` for token storage (keychain/keystore-backed).
 

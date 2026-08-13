@@ -27,6 +27,30 @@ class ContentCard extends StatelessWidget {
   final VoidCallback? onLike;
   final bool liked;
 
+  /// True when there's no eyebrow/title header row to anchor the like
+  /// button against — the quote-card shape (subtitle is the only text
+  /// above [child]). In that case the like button flexes inline with the
+  /// subtitle itself instead of sitting above it in its own row, which
+  /// would otherwise leave an empty-looking gap the height of the icon.
+  bool get _headerless => eyebrow == null && title == null && subtitle != null;
+
+  Widget _likeButton(BuildContext context) {
+    return PressableBuilder(
+      onTap: onLike,
+      semanticLabel: 'Like',
+      builder: (context, isPressed) {
+        return Opacity(
+          opacity: isPressed ? 0.75 : 1,
+          child: FraternusIcon(
+            name: 'heart',
+            size: 19,
+            tone: liked ? FraternusIconTone.error : FraternusIconTone.ink,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,54 +64,59 @@ class ContentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (eyebrow != null)
-                      Text(
-                        eyebrow!.toUpperCase(),
-                        style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
-                      ),
-                    if (title != null)
-                      Text(
-                        title!,
-                        style: FraternusTypography.h4(color: FraternusColors.forestGreen).copyWith(fontSize: 18),
-                      ),
-                  ],
+          if (_headerless)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    subtitle!,
+                    style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
+                        .copyWith(fontSize: 15, fontStyle: FontStyle.italic),
+                  ),
                 ),
-              ),
-              if (onLike != null)
-                PressableBuilder(
-                  onTap: onLike,
-                  semanticLabel: 'Like',
-                  builder: (context, isPressed) {
-                    return Opacity(
-                      opacity: isPressed ? 0.75 : 1,
-                      child: FraternusIcon(
-                        name: 'heart',
-                        size: 19,
-                        tone: liked ? FraternusIconTone.error : FraternusIconTone.ink,
-                      ),
-                    );
-                  },
+                if (onLike != null) ...[const SizedBox(width: 12), _likeButton(context)],
+              ],
+            )
+          else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (eyebrow != null)
+                        Text(
+                          eyebrow!.toUpperCase(),
+                          style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+                        ),
+                      if (title != null)
+                        Text(
+                          title!,
+                          style: FraternusTypography.h4(
+                            color: FraternusColors.forestGreen,
+                          ).copyWith(fontSize: 18),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-          SizedBox(height: subtitle != null ? 6 : 10),
-          if (subtitle != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                subtitle!,
-                style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
-                    .copyWith(fontSize: 13, fontStyle: FontStyle.italic),
-              ),
+                if (onLike != null) _likeButton(context),
+              ],
             ),
+            SizedBox(height: subtitle != null ? 6 : 10),
+            if (subtitle != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  subtitle!,
+                  style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
+                      .copyWith(fontSize: 13, fontStyle: FontStyle.italic),
+                ),
+              ),
+          ],
+          if (_headerless) const SizedBox(height: 12),
           ?child,
         ],
       ),
