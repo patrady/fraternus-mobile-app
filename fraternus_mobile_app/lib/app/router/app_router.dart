@@ -40,15 +40,21 @@ GoRouter appRouter(Ref ref) {
                 builder: (context, state) => const TodayScreen(),
                 routes: [
                   GoRoute(
-                    path: 'profile',
+                    path: RoutePaths.profileSegment,
                     builder: (context, state) => const ProfileScreen(),
                     routes: [
-                      GoRoute(path: 'edit', builder: (context, state) => const EditProfileScreen()),
                       GoRoute(
-                        path: 'kids',
+                        path: RoutePaths.editSegment,
+                        builder: (context, state) => const EditProfileScreen(),
+                      ),
+                      GoRoute(
+                        path: RoutePaths.kidsSegment,
                         builder: (context, state) => const MyKidsScreen(),
                         routes: [
-                          GoRoute(path: 'add', builder: (context, state) => const AddChildScreen()),
+                          GoRoute(
+                            path: RoutePaths.addSegment,
+                            builder: (context, state) => const AddChildScreen(),
+                          ),
                           GoRoute(
                             path: ':memberId',
                             builder: (context, state) =>
@@ -56,7 +62,10 @@ GoRouter appRouter(Ref ref) {
                           ),
                         ],
                       ),
-                      GoRoute(path: 'reminders', builder: (context, state) => const RemindersScreen()),
+                      GoRoute(
+                        path: RoutePaths.remindersSegment,
+                        builder: (context, state) => const RemindersScreen(),
+                      ),
                     ],
                   ),
                 ],
@@ -70,18 +79,18 @@ GoRouter appRouter(Ref ref) {
                 builder: (context, state) => const GuideScreen(),
                 routes: [
                   GoRoute(
-                    path: 'virtue',
+                    path: RoutePaths.virtueSegment,
                     builder: (context, state) => const VirtueDetailScreen(),
                     routes: [
                       GoRoute(
-                        path: 'temperament/:key',
+                        path: '${RoutePaths.temperamentSegment}/:key',
                         builder: (context, state) =>
                             TemperamentDetailScreen(temperamentKey: state.pathParameters['key']!),
                       ),
                     ],
                   ),
                   GoRoute(
-                    path: 'temperament-quiz/:personKey',
+                    path: '${RoutePaths.temperamentQuizSegment}/:personKey',
                     builder: (context, state) =>
                         TemperamentQuizScreen(personKey: state.pathParameters['personKey']!),
                   ),
@@ -95,7 +104,10 @@ GoRouter appRouter(Ref ref) {
                 path: RoutePaths.challenge,
                 builder: (context, state) => const ChallengeScreen(),
                 routes: [
-                  GoRoute(path: 'past', builder: (context, state) => const PastChallengesScreen()),
+                  GoRoute(
+                    path: RoutePaths.pastSegment,
+                    builder: (context, state) => const PastChallengesScreen(),
+                  ),
                 ],
               ),
             ],
