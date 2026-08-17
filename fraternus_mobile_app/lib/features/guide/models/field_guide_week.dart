@@ -76,4 +76,37 @@ class FieldGuideWeek {
     'phlegmatic' => phlegmaticVices,
     _ => throw ArgumentError('Unknown temperament key: $temperamentKey'),
   };
+
+  /// Expects the nested-embed shape SupabaseGuideRepository queries with:
+  /// `field_guide_week_quotes` and `field_guide_daily_devotionals` (each
+  /// devotional itself carrying `field_guide_daily_devotional_members`).
+  factory FieldGuideWeek.fromJson(Map<String, dynamic> json) {
+    final quotesJson = json['field_guide_week_quotes'] as List<dynamic>? ?? const [];
+    final devotionalsJson = json['field_guide_daily_devotionals'] as List<dynamic>? ?? const [];
+    return FieldGuideWeek(
+      id: json['id'] as String,
+      weekNumber: json['week_number'] as int,
+      virtue: json['virtue'] as String,
+      vice: json['vice'] as String,
+      extreme: json['extreme'] as String,
+      reflection: json['reflection'] as String,
+      cholericApplication: json['choleric_application'] as String,
+      cholericVices: json['choleric_vices'] as String,
+      sanguineApplication: json['sanguine_application'] as String,
+      sanguineVices: json['sanguine_vices'] as String,
+      melancholicApplication: json['melancholic_application'] as String,
+      melancholicVices: json['melancholic_vices'] as String,
+      phlegmaticApplication: json['phlegmatic_application'] as String,
+      phlegmaticVices: json['phlegmatic_vices'] as String,
+      quotes: [
+        for (final quoteJson in quotesJson) FieldGuideWeekQuote.fromJson(quoteJson as Map<String, dynamic>),
+      ],
+      devotionals: [
+        for (final devotionalJson in devotionalsJson)
+          FieldGuideDailyDevotional.fromJson(devotionalJson as Map<String, dynamic>),
+      ],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

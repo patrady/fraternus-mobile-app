@@ -1,5 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/supabase_provider.dart';
+import '../../profile/models/member.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../data/guide_repository.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
@@ -9,7 +12,21 @@ part 'guide_providers.g.dart';
 
 @riverpod
 GuideRepository guideRepository(Ref ref) {
-  return const StaticGuideRepository();
+  return SupabaseGuideRepository(ref.watch(supabaseClientProvider));
+}
+
+/// Every household Member's own chapter should in practice be the same one
+/// (app_concept.md doesn't describe a multi-chapter-household UI), so the
+/// first household member's chapter stands in for "the household's
+/// chapter" when resolving shared Field Guide content. Returns null for an
+/// empty household (no data to show either way).
+String? _householdChapterId(List<Member> members) => members.isEmpty ? null : members.first.chapterId;
+
+Member? _memberById(List<Member> members, String memberId) {
+  for (final member in members) {
+    if (member.id == memberId) return member;
+  }
+  return null;
 }
 
 /// [date] must already be truncated to year/month/day — see
@@ -18,7 +35,10 @@ GuideRepository guideRepository(Ref ref) {
 @riverpod
 Future<FieldGuideWeek?> guideWeekForDate(Ref ref, DateTime date) async {
   final repository = ref.watch(guideRepositoryProvider);
-  return repository.fetchWeekForDate(date: date);
+  final members = await ref.watch(householdMembersProvider.future);
+  final chapterId = _householdChapterId(members);
+  if (chapterId == null) return null;
+  return repository.fetchWeekForDate(date: date, chapterId: chapterId, memberIds: [for (final m in members) m.id]);
 }
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
@@ -46,10 +66,12 @@ class GuideSelectedPerson extends _$GuideSelectedPerson {
   void select(String key) => state = key;
 }
 
-/// In-memory sword/spade/completed edits for one date's per-person rows,
-/// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-/// then locally overridden — edits reset on app restart, same as
-/// ChallengeProgress/EventRsvp.
+/// Per-person completion rows for one date, read straight through from
+/// [GuideRepository] — no local edit buffer. Every mutation method here
+/// calls the repository (a real write against Supabase, or a mutation of
+/// StaticGuideRepository's in-memory map in tests) and then invalidates
+/// this provider so the UI reflects whatever the repository now reports,
+/// rather than optimistically guessing at the new state itself.
 @riverpod
 class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   @override
@@ -59,31 +81,62 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
     return {for (final member in devotional?.members ?? const []) member.memberId: member};
   }
 
-  void setSword(String personKey, String swordText) {
-    final current = state.value ?? const {};
-    final existing = current[personKey];
-    if (existing == null) return;
-    state = AsyncData({...current, personKey: existing.copyWith(sword: swordText)});
+  Future<void> setSword(String personKey, String swordText) async {
+    final devotionalId = await _dailyDevotionalId();
+    if (devotionalId == null) return;
+    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
+      dailyDevotionalId: devotionalId,
+      memberId: personKey,
+      sword: swordText,
+    );
+    // Invalidating guideWeekForDateProvider — not just this notifier — is
+    // what actually surfaces the write: build() derives its data from that
+    // provider's cached result, which a bare invalidateSelf() wouldn't
+    // touch (nothing about `date` or the household changed, so it'd stay
+    // cached and this notifier would just re-read the same stale value).
+    ref.invalidate(guideWeekForDateProvider(date));
   }
 
-  void setSpade(String personKey, String spadeText) {
-    final current = state.value ?? const {};
-    final existing = current[personKey];
-    if (existing == null) return;
-    state = AsyncData({...current, personKey: existing.copyWith(spade: spadeText)});
+  Future<void> setSpade(String personKey, String spadeText) async {
+    final devotionalId = await _dailyDevotionalId();
+    if (devotionalId == null) return;
+    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
+      dailyDevotionalId: devotionalId,
+      memberId: personKey,
+      spade: spadeText,
+    );
+    // Invalidating guideWeekForDateProvider — not just this notifier — is
+    // what actually surfaces the write: build() derives its data from that
+    // provider's cached result, which a bare invalidateSelf() wouldn't
+    // touch (nothing about `date` or the household changed, so it'd stay
+    // cached and this notifier would just re-read the same stale value).
+    ref.invalidate(guideWeekForDateProvider(date));
   }
 
   /// Marks complete (now) if incomplete, or clears back to incomplete if
   /// already complete — same undo-friendly shape as
   /// ChallengeProgress.toggleRep.
-  void toggleComplete(String personKey) {
+  Future<void> toggleComplete(String personKey) async {
+    final devotionalId = await _dailyDevotionalId();
+    if (devotionalId == null) return;
     final current = state.value ?? const {};
-    final existing = current[personKey];
-    if (existing == null) return;
-    final updated = existing.isCompleted
-        ? existing.copyWith(clearCompleted: true)
-        : existing.copyWith(completedDate: DateTime.now());
-    state = AsyncData({...current, personKey: updated});
+    final wasCompleted = current[personKey]?.isCompleted ?? false;
+    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
+      dailyDevotionalId: devotionalId,
+      memberId: personKey,
+      completed: !wasCompleted,
+    );
+    // Invalidating guideWeekForDateProvider — not just this notifier — is
+    // what actually surfaces the write: build() derives its data from that
+    // provider's cached result, which a bare invalidateSelf() wouldn't
+    // touch (nothing about `date` or the household changed, so it'd stay
+    // cached and this notifier would just re-read the same stale value).
+    ref.invalidate(guideWeekForDateProvider(date));
+  }
+
+  Future<String?> _dailyDevotionalId() async {
+    final week = await ref.read(guideWeekForDateProvider(date).future);
+    return week?.devotionalForDate(date)?.id;
   }
 }
 
@@ -94,7 +147,10 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
 Future<int> guideBaseStreak(Ref ref, String personKey) async {
   final repository = ref.watch(guideRepositoryProvider);
   final date = ref.watch(guideSelectedDateProvider);
-  return repository.fetchStreak(memberId: personKey, asOf: date);
+  final members = await ref.watch(householdMembersProvider.future);
+  final member = _memberById(members, personKey);
+  if (member == null) return 0;
+  return repository.fetchStreak(memberId: personKey, chapterId: member.chapterId, asOf: date);
 }
 
 /// Fake temperament-quiz-result seed — see models/temperament.dart. Only

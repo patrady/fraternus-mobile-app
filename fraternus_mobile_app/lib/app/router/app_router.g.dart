@@ -9,25 +9,22 @@ part of 'app_router.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// The whole app's [GoRouter], as a provider (not a bare top-level
-/// constant) so a future auth gate can add `ref.watch(authStateProvider)` +
-/// `redirect:` + `refreshListenable` here without restructuring anything
-/// below — the [StatefulShellRoute] doesn't need to move or nest.
+/// constant) so it can depend on [authStateChangesProvider] for the auth
+/// gate below.
 
 @ProviderFor(appRouter)
 const appRouterProvider = AppRouterProvider._();
 
 /// The whole app's [GoRouter], as a provider (not a bare top-level
-/// constant) so a future auth gate can add `ref.watch(authStateProvider)` +
-/// `redirect:` + `refreshListenable` here without restructuring anything
-/// below — the [StatefulShellRoute] doesn't need to move or nest.
+/// constant) so it can depend on [authStateChangesProvider] for the auth
+/// gate below.
 
 final class AppRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
   /// The whole app's [GoRouter], as a provider (not a bare top-level
-  /// constant) so a future auth gate can add `ref.watch(authStateProvider)` +
-  /// `redirect:` + `refreshListenable` here without restructuring anything
-  /// below — the [StatefulShellRoute] doesn't need to move or nest.
+  /// constant) so it can depend on [authStateChangesProvider] for the auth
+  /// gate below.
   const AppRouterProvider._()
     : super(
         from: null,
@@ -61,4 +58,4 @@ final class AppRouterProvider
   }
 }
 
-String _$appRouterHash() => r'ed9b0757c72b0ca5971284ad409db41857e3478b';
+String _$appRouterHash() => r'88b4d2432b8eded4efc69d8ee01ddcb95c2af483';

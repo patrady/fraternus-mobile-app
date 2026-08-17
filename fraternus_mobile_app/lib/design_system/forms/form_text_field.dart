@@ -14,12 +14,16 @@ class FormTextField extends StatelessWidget {
     this.onChanged,
     this.placeholder,
     this.keyboardType,
+    this.obscureText = false,
   });
 
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final String? placeholder;
   final TextInputType? keyboardType;
+
+  /// Set for password entry — no other field in this app needs it today.
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +39,7 @@ class FormTextField extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         keyboardType: keyboardType,
+        obscureText: obscureText,
         style: FraternusTypography.body().copyWith(fontSize: 15),
         decoration: InputDecoration(
           hintText: placeholder,

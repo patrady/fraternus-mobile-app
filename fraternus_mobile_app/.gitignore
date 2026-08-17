@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Supabase env files (--dart-define-from-file) — contain per-environment
+# URL/anon key. Not secret (RLS is the real boundary) but environment-
+# specific, so kept local; commit only the .example.json templates.
+/env/*.json
+!/env/*.example.json

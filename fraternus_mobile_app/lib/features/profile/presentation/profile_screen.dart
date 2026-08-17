@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../../guide/models/temperament.dart';
 import '../../guide/providers/guide_providers.dart';
 import '../models/app_user.dart';
@@ -106,10 +107,10 @@ class _ProfileContent extends ConsumerWidget {
               message: 'Are you sure you want to log out?',
               confirmLabel: 'Log Out',
             );
-            // Actual session/auth teardown is a future task — for now,
-            // confirming just returns to Today so the button doesn't feel
-            // like a no-op.
-            if (confirmed && context.mounted) context.pop();
+            // The router's redirect (re-evaluated via authStateChanges,
+            // see app/router/app_router.dart) sends the app to sign-in as
+            // soon as the session clears — no explicit navigation needed.
+            if (confirmed) await ref.read(authRepositoryProvider).signOut();
           },
         ),
         const SizedBox(height: 24),

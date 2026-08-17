@@ -1,6 +1,15 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/auth/presentation/forgot_password_screen.dart';
+import '../../features/auth/presentation/sign_in_screen.dart';
+import '../../features/auth/presentation/sign_up_captain_screen.dart';
+import '../../features/auth/presentation/sign_up_guardian_screen.dart';
+import '../../features/auth/presentation/sign_up_role_screen.dart';
+import '../../features/auth/providers/auth_providers.dart';
 import '../../features/challenge/presentation/challenge_screen.dart';
 import '../../features/challenge/presentation/past_challenges_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
@@ -21,17 +30,73 @@ import 'route_paths.dart';
 
 part 'app_router.g.dart';
 
+/// Turns a [Stream] into a [Listenable] so [GoRouter]'s `refreshListenable`
+/// re-runs `redirect` on every auth event, without recreating the router
+/// (and losing navigation state) the way rebuilding this whole provider on
+/// every auth change would. go_router itself doesn't ship this helper as of
+/// the version pinned here — this is the standard small wrapper.
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+const _authRoutePaths = {
+  RoutePaths.signIn,
+  RoutePaths.signUp,
+  RoutePaths.signUpCaptain,
+  RoutePaths.signUpGuardian,
+  RoutePaths.forgotPassword,
+};
+
 /// The whole app's [GoRouter], as a provider (not a bare top-level
-/// constant) so a future auth gate can add `ref.watch(authStateProvider)` +
-/// `redirect:` + `refreshListenable` here without restructuring anything
-/// below — the [StatefulShellRoute] doesn't need to move or nest.
+/// constant) so it can depend on [authStateChangesProvider] for the auth
+/// gate below.
 @riverpod
 GoRouter appRouter(Ref ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
+  final refreshStream = _GoRouterRefreshStream(authRepository.authStateChanges);
+  ref.onDispose(refreshStream.dispose);
+
   return GoRouter(
     initialLocation: RoutePaths.today,
+    refreshListenable: refreshStream,
+    redirect: (context, state) {
+      final signedIn = authRepository.currentSession != null;
+      final onAuthRoute = _authRoutePaths.any((path) => state.matchedLocation.startsWith(path));
+      if (!signedIn && !onAuthRoute) return RoutePaths.signIn;
+      if (signedIn && onAuthRoute) return RoutePaths.today;
+      return null;
+    },
     routes: [
+      GoRoute(path: RoutePaths.signIn, builder: (context, state) => const SignInScreen()),
+      GoRoute(path: RoutePaths.forgotPassword, builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(
+        path: RoutePaths.signUp,
+        builder: (context, state) => const SignUpRoleScreen(),
+        routes: [
+          GoRoute(
+            path: 'captain',
+            builder: (context, state) => const SignUpCaptainScreen(),
+          ),
+          GoRoute(
+            path: 'guardian',
+            builder: (context, state) => const SignUpGuardianScreen(),
+          ),
+        ],
+      ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -57,8 +122,9 @@ GoRouter appRouter(Ref ref) {
                           ),
                           GoRoute(
                             path: ':memberId',
-                            builder: (context, state) =>
-                                EditChildScreen(memberId: state.pathParameters['memberId']!),
+                            builder: (context, state) => EditChildScreen(
+                              memberId: state.pathParameters['memberId']!,
+                            ),
                           ),
                         ],
                       ),
@@ -120,8 +186,9 @@ GoRouter appRouter(Ref ref) {
                 routes: [
                   GoRoute(
                     path: ':eventId',
-                    builder: (context, state) =>
-                        EventDetailScreen(eventId: state.pathParameters['eventId']!),
+                    builder: (context, state) => EventDetailScreen(
+                      eventId: state.pathParameters['eventId']!,
+                    ),
                   ),
                 ],
               ),

@@ -1,12 +1,18 @@
-/// Top-level route paths — one per bottom-nav tab branch. Kept as plain
-/// string constants (not an enum) since go_router's `GoRoute.path` and
-/// `context.go(...)` both want raw strings.
+/// Top-level route paths — the bottom-nav tab branches plus the auth flow
+/// that gates them. Kept as plain string constants (not an enum) since
+/// go_router's `GoRoute.path` and `context.go(...)` both want raw strings.
 ///
 /// Nested segment constants (`kidsSegment`, `editSegment`, etc.) are the
 /// single source of truth for those path pieces — `app_router.dart`'s
 /// `GoRoute.path` values reference them directly instead of re-typing the
 /// literal, so a rename here can't silently desync the two files.
 abstract final class RoutePaths {
+  static const signIn = '/sign-in';
+  static const signUp = '/sign-up';
+  static const signUpCaptain = '$signUp/captain';
+  static const signUpGuardian = '$signUp/guardian';
+  static const forgotPassword = '/forgot-password';
+
   static const today = '/today';
   static const guide = '/guide';
   static const challenge = '/challenge';

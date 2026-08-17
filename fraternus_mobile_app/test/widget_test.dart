@@ -1,8 +1,17 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart' show TextField;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fraternus_mobile_app/app/fraternus_app.dart';
+import 'package:fraternus_mobile_app/design_system/design_system.dart';
+import 'package:fraternus_mobile_app/features/auth/data/auth_repository.dart';
+import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart';
+import 'package:fraternus_mobile_app/features/guide/data/guide_repository.dart';
 import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_option_list.dart';
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
 
@@ -13,9 +22,82 @@ class _FarPastGuideDate extends GuideSelectedDate {
   DateTime build() => DateTime(2000, 1, 1);
 }
 
+/// The auth gate in app/router/app_router.dart redirects to sign-in
+/// whenever `AuthRepository.currentSession` is null, and re-evaluates that
+/// redirect whenever `authStateChanges` fires (via `refreshListenable`).
+/// This fake starts signed in (so most widget tests exercise the
+/// authenticated app without touching real Supabase Auth) but stays fully
+/// stateful — `signOut`/`signIn`/`signUp` really flip `currentSession` and
+/// emit on the stream — so the "Log Out" test below genuinely proves the
+/// router's redirect wiring works, not just the button's own UI.
+class _FakeAuthRepository implements AuthRepository {
+  _FakeAuthRepository({bool signedIn = true}) {
+    if (signedIn) _session = _newSession();
+  }
+
+  Session? _session;
+  final _controller = StreamController<AuthState>.broadcast();
+
+  static final _user = User(
+    id: 'test-user',
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    createdAt: DateTime(2024).toIso8601String(),
+  );
+
+  static Session _newSession() =>
+      Session(accessToken: 'test-access-token', tokenType: 'bearer', user: _user);
+
+  @override
+  Stream<AuthState> get authStateChanges => _controller.stream;
+
+  @override
+  Session? get currentSession => _session;
+
+  @override
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) async {
+    _session = _newSession();
+    _controller.add(AuthState(AuthChangeEvent.signedIn, _session));
+  }
+
+  @override
+  Future<void> signIn({required String email, required String password}) async {
+    _session = _newSession();
+    _controller.add(AuthState(AuthChangeEvent.signedIn, _session));
+  }
+
+  @override
+  Future<void> signOut() async {
+    _session = null;
+    _controller.add(const AuthState(AuthChangeEvent.signedOut, null));
+  }
+
+  @override
+  Future<void> resetPasswordForEmail(String email) async {}
+}
+
+// `Override` isn't part of flutter_riverpod's own public export surface
+// (it's curated down via a `show` clause) but riverpod_annotation re-
+// exports it, which is already a direct dependency of this app.
+// guideRepositoryProvider now defaults to SupabaseGuideRepository (real
+// backend) — overridden here with the in-memory fake so these widget tests
+// keep running without a live Supabase connection. A fresh
+// StaticGuideRepository per call means each test gets its own isolated
+// mutable state, same isolation _FakeAuthRepository already gives auth.
+List<Override> _testOverrides({bool signedIn = true}) => [
+  authRepositoryProvider.overrideWithValue(_FakeAuthRepository(signedIn: signedIn)),
+  guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
+];
+
 void main() {
   testWidgets('Today screen renders the weekly focus and tab bar', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     // "TODAY" renders twice: the active bottom-tab label and the "Today"
@@ -28,7 +110,7 @@ void main() {
   });
 
   testWidgets('Events tab lists events and pushes a detail screen on tap', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     // Only the bottom-tab label reads "EVENTS" until the tab is active.
@@ -56,7 +138,7 @@ void main() {
   testWidgets('Challenge tab renders all 3 states and links to Past Challenges', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('CHALLENGE'));
@@ -97,7 +179,7 @@ void main() {
   testWidgets('Tapping Today in the bottom nav returns to the Today root after a task push', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Weekly Challenge'));
@@ -110,7 +192,7 @@ void main() {
   });
 
   testWidgets('Guide tab renders the daily reading and completes/undoes it', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('GUIDE'));
@@ -139,7 +221,7 @@ void main() {
   });
 
   testWidgets('More about the virtue pushes the virtue detail screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('GUIDE'));
@@ -158,7 +240,7 @@ void main() {
   });
 
   testWidgets('Tapping a temperament card pushes its own detail screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('GUIDE'));
@@ -187,7 +269,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [guideSelectedDateProvider.overrideWith(_FarPastGuideDate.new)],
+          overrides: [..._testOverrides(), guideSelectedDateProvider.overrideWith(_FarPastGuideDate.new)],
           child: const FraternusApp(),
         ),
       );
@@ -207,7 +289,7 @@ void main() {
   testWidgets('Tapping Today in the bottom nav returns to the Today root after a Field Guide push', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text("Today's Field Guide Reading"));
@@ -222,7 +304,7 @@ void main() {
   testWidgets("Tapping This Week's Focus on Today pushes the same virtue detail screen Guide links to", (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('HUMILITY'));
@@ -238,7 +320,7 @@ void main() {
   });
 
   testWidgets('Tapping See All on Today pushes the Events tab', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('SEE ALL'));
@@ -256,7 +338,7 @@ void main() {
   });
 
   testWidgets('Tapping the profile icon opens Profile', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -269,7 +351,7 @@ void main() {
   });
 
   testWidgets('Tapping John Smith opens My Profile with prefilled fields', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -289,7 +371,7 @@ void main() {
   });
 
   testWidgets('My Kids lists both children and Edit -> Remove Child removes one', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -325,7 +407,7 @@ void main() {
   });
 
   testWidgets('Add Child opens the Add Child form', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -344,7 +426,7 @@ void main() {
   });
 
   testWidgets('Reminders shows the grouped toggles', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -357,10 +439,10 @@ void main() {
     expect(find.text('7:00 AM'), findsOneWidget);
   });
 
-  testWidgets('Log Out shows a confirmation dialog and confirming returns to Today', (
+  testWidgets('Log Out shows a confirmation dialog and confirming signs out to the sign-in screen', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -379,12 +461,17 @@ void main() {
     await tester.tap(find.text('LOG OUT').last);
     await tester.pumpAndSettle();
 
+    // Confirming calls AuthRepository.signOut(), which clears the fake's
+    // session and emits on authStateChanges — the router's redirect (via
+    // refreshListenable) picks that up and lands on sign-in, proving the
+    // real wiring, not just that the dialog closed.
     expect(find.text('Are you sure you want to log out?'), findsNothing);
-    expect(find.text('HUMILITY'), findsOneWidget);
+    expect(find.text('HUMILITY'), findsNothing);
+    expect(find.text('Welcome Back'), findsOneWidget);
   });
 
   testWidgets('Tapping the Profile screen back button returns to Today', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -400,7 +487,7 @@ void main() {
   testWidgets('Find Your Temperament walks the quiz end to end and saves a result', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('GUIDE'));
@@ -462,7 +549,7 @@ void main() {
   testWidgets('Take Again on Profile opens the quiz for the current result', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: FraternusApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Profile'));
@@ -473,5 +560,89 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('THE FOUR TEMPERAMENTS'), findsOneWidget);
+  });
+
+  testWidgets('Signed-out app redirects straight to sign-in, not the tab shell', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('TODAY'), findsNothing);
+  });
+
+  testWidgets('Sign-in redirects to the tab shell once the fake session succeeds', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'guardian@example.com');
+    await tester.enterText(find.byType(TextField).last, 'correct-horse-battery-staple');
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome Back'), findsNothing);
+    expect(find.text('TODAY'), findsWidgets);
+  });
+
+  testWidgets('Sign-up flow: role choice branches to Captain and Guardian forms', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("DON'T HAVE AN ACCOUNT? SIGN UP"));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Which best describes you?'), findsOneWidget);
+
+    await tester.tap(find.text('CAPTAIN'));
+    await tester.pumpAndSettle();
+    expect(find.text('CHAPTER'), findsOneWidget);
+
+    await tester.tap(find.byIcon(FraternusIcons.resolve('chevron-left')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('GUARDIAN'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('I also attend Fraternus meetings myself'), findsOneWidget);
+    // Chapter picker only appears once "also attends" is toggled on.
+    expect(find.text('CHAPTER'), findsNothing);
+    await tester.tap(find.byType(FraternusSwitch));
+    await tester.pumpAndSettle();
+    expect(find.text('CHAPTER'), findsOneWidget);
+  });
+
+  testWidgets('Completing Guardian sign-up redirects to the tab shell', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("DON'T HAVE AN ACCOUNT? SIGN UP"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('GUARDIAN'));
+    await tester.pumpAndSettle();
+
+    final textFields = find.byType(TextField);
+    await tester.enterText(textFields.at(0), 'Jane');
+    await tester.enterText(textFields.at(1), 'Doe');
+    await tester.enterText(textFields.at(2), 'jane@example.com');
+    await tester.enterText(textFields.at(3), 'correct-horse-battery-staple');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CREATE ACCOUNT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Which best describes you?'), findsNothing);
+    expect(find.text('TODAY'), findsWidgets);
   });
 }

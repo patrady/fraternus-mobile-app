@@ -125,6 +125,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - First Name
     - Last Name
     - Email
+    - Is Reminders Enabled
     - Created Date
     - Last Modified Date
 - Member
@@ -300,3 +301,20 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Response (either "Accepted", "Declined", or "Tentative")
     - Created Date
     - Last Modified Date
+- User Reminders
+    - Id
+    - User Id
+    - Type
+        - `Field Guide Morning`
+        - `Field Guide Evening`
+        - `New Challenge`
+        - `Challenge Mid Week`
+        - `Challenge Last Day`
+        - `Event 24hr`
+        - `Event 1hr`
+    - Is Enabled (default true)
+    - Created Date
+    - Last Modified Date
+    - NOTE: Unique constraint on (User Id, Type)
+    - NOTE: Reminders are sent for a given type only if `User`.`Is Reminders Enabled` = `true` and [`User Reminders`.`Is Enabled` is true or doesn't exist]
+

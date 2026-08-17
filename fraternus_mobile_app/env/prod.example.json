@@ -1,0 +1,4 @@
+{
+  "SUPABASE_URL": "paste the hosted project's URL here (Project Settings > API)",
+  "SUPABASE_ANON_KEY": "paste the hosted project's anon/public key here (Project Settings > API) — never the service_role key"
+}

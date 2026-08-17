@@ -22,4 +22,16 @@ class ChapterFieldGuideDetails {
   final DateTime fieldGuideStartDate;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
+
+  factory ChapterFieldGuideDetails.fromJson(Map<String, dynamic> json) {
+    return ChapterFieldGuideDetails(
+      id: json['id'] as String,
+      chapterId: json['chapter_id'] as String,
+      schoolYearStartDate: DateTime.parse(json['school_year_start_date'] as String),
+      schoolYearEndDate: DateTime.parse(json['school_year_end_date'] as String),
+      fieldGuideStartDate: DateTime.parse(json['field_guide_start_date'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

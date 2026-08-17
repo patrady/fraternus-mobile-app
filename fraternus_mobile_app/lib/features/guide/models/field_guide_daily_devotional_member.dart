@@ -52,4 +52,18 @@ class FieldGuideDailyDevotionalMember {
       lastModifiedAt: lastModifiedAt,
     );
   }
+
+  factory FieldGuideDailyDevotionalMember.fromJson(Map<String, dynamic> json) {
+    return FieldGuideDailyDevotionalMember(
+      id: json['id'] as String,
+      dailyDevotionalId: json['daily_devotional_id'] as String,
+      memberId: json['member_id'] as String,
+      submittedByUserId: json['submitted_by_user_id'] as String?,
+      sword: json['sword'] as String?,
+      spade: json['spade'] as String?,
+      completedDate: json['completed_date'] == null ? null : DateTime.parse(json['completed_date'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

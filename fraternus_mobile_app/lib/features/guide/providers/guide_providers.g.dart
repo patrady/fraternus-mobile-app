@@ -49,7 +49,7 @@ final class GuideRepositoryProvider
   }
 }
 
-String _$guideRepositoryHash() => r'3177e2e856297e3f1bba09cab7724ed4f5388080';
+String _$guideRepositoryHash() => r'2c7705346b2d51ddb2058fcd9b9f339b2d4de863';
 
 /// [date] must already be truncated to year/month/day — see
 /// [GuideSelectedDate] — since DateTime equality (Riverpod's family-arg
@@ -117,7 +117,7 @@ final class GuideWeekForDateProvider
   }
 }
 
-String _$guideWeekForDateHash() => r'9b209108f7e8a39965ded773fe3979c471095e8d';
+String _$guideWeekForDateHash() => r'683d96956763eab768e6931a4fc0022b5a1d581d';
 
 /// [date] must already be truncated to year/month/day — see
 /// [GuideSelectedDate] — since DateTime equality (Riverpod's family-arg
@@ -284,28 +284,34 @@ abstract class _$GuideSelectedPerson extends $Notifier<String> {
   }
 }
 
-/// In-memory sword/spade/completed edits for one date's per-person rows,
-/// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-/// then locally overridden — edits reset on app restart, same as
-/// ChallengeProgress/EventRsvp.
+/// Per-person completion rows for one date, read straight through from
+/// [GuideRepository] — no local edit buffer. Every mutation method here
+/// calls the repository (a real write against Supabase, or a mutation of
+/// StaticGuideRepository's in-memory map in tests) and then invalidates
+/// this provider so the UI reflects whatever the repository now reports,
+/// rather than optimistically guessing at the new state itself.
 
 @ProviderFor(GuideDevotionalProgress)
 const guideDevotionalProgressProvider = GuideDevotionalProgressFamily._();
 
-/// In-memory sword/spade/completed edits for one date's per-person rows,
-/// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-/// then locally overridden — edits reset on app restart, same as
-/// ChallengeProgress/EventRsvp.
+/// Per-person completion rows for one date, read straight through from
+/// [GuideRepository] — no local edit buffer. Every mutation method here
+/// calls the repository (a real write against Supabase, or a mutation of
+/// StaticGuideRepository's in-memory map in tests) and then invalidates
+/// this provider so the UI reflects whatever the repository now reports,
+/// rather than optimistically guessing at the new state itself.
 final class GuideDevotionalProgressProvider
     extends
         $AsyncNotifierProvider<
           GuideDevotionalProgress,
           Map<String, FieldGuideDailyDevotionalMember>
         > {
-  /// In-memory sword/spade/completed edits for one date's per-person rows,
-  /// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-  /// then locally overridden — edits reset on app restart, same as
-  /// ChallengeProgress/EventRsvp.
+  /// Per-person completion rows for one date, read straight through from
+  /// [GuideRepository] — no local edit buffer. Every mutation method here
+  /// calls the repository (a real write against Supabase, or a mutation of
+  /// StaticGuideRepository's in-memory map in tests) and then invalidates
+  /// this provider so the UI reflects whatever the repository now reports,
+  /// rather than optimistically guessing at the new state itself.
   const GuideDevotionalProgressProvider._({
     required GuideDevotionalProgressFamily super.from,
     required DateTime super.argument,
@@ -344,12 +350,14 @@ final class GuideDevotionalProgressProvider
 }
 
 String _$guideDevotionalProgressHash() =>
-    r'8d88e8c120133679fb32173009acc397b9bb728a';
+    r'7beb0a3e33dede06800e59d67af0cf1aedf62cda';
 
-/// In-memory sword/spade/completed edits for one date's per-person rows,
-/// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-/// then locally overridden — edits reset on app restart, same as
-/// ChallengeProgress/EventRsvp.
+/// Per-person completion rows for one date, read straight through from
+/// [GuideRepository] — no local edit buffer. Every mutation method here
+/// calls the repository (a real write against Supabase, or a mutation of
+/// StaticGuideRepository's in-memory map in tests) and then invalidates
+/// this provider so the UI reflects whatever the repository now reports,
+/// rather than optimistically guessing at the new state itself.
 
 final class GuideDevotionalProgressFamily extends $Family
     with
@@ -369,10 +377,12 @@ final class GuideDevotionalProgressFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// In-memory sword/spade/completed edits for one date's per-person rows,
-  /// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-  /// then locally overridden — edits reset on app restart, same as
-  /// ChallengeProgress/EventRsvp.
+  /// Per-person completion rows for one date, read straight through from
+  /// [GuideRepository] — no local edit buffer. Every mutation method here
+  /// calls the repository (a real write against Supabase, or a mutation of
+  /// StaticGuideRepository's in-memory map in tests) and then invalidates
+  /// this provider so the UI reflects whatever the repository now reports,
+  /// rather than optimistically guessing at the new state itself.
 
   GuideDevotionalProgressProvider call(DateTime date) =>
       GuideDevotionalProgressProvider._(argument: date, from: this);
@@ -381,10 +391,12 @@ final class GuideDevotionalProgressFamily extends $Family
   String toString() => r'guideDevotionalProgressProvider';
 }
 
-/// In-memory sword/spade/completed edits for one date's per-person rows,
-/// keyed by date. Seeded from the fetched week's devotional-for-that-date,
-/// then locally overridden — edits reset on app restart, same as
-/// ChallengeProgress/EventRsvp.
+/// Per-person completion rows for one date, read straight through from
+/// [GuideRepository] — no local edit buffer. Every mutation method here
+/// calls the repository (a real write against Supabase, or a mutation of
+/// StaticGuideRepository's in-memory map in tests) and then invalidates
+/// this provider so the UI reflects whatever the repository now reports,
+/// rather than optimistically guessing at the new state itself.
 
 abstract class _$GuideDevotionalProgress
     extends $AsyncNotifier<Map<String, FieldGuideDailyDevotionalMember>> {
@@ -477,7 +489,7 @@ final class GuideBaseStreakProvider
   }
 }
 
-String _$guideBaseStreakHash() => r'a21ce8046ed402f6658209c6b794cd14e6c781fa';
+String _$guideBaseStreakHash() => r'0a020bd412df6a7b37fa431aaab30c0ab8133183';
 
 /// Consecutive-day streak for [personKey] as of the currently selected
 /// date, NOT counting the selected date itself — the screen adds +1 live

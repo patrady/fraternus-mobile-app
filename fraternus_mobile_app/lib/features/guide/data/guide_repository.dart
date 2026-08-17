@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/chapter_field_guide_details.dart';
 import '../models/field_guide_daily_devotional.dart';
 import '../models/field_guide_daily_devotional_member.dart';
@@ -9,37 +11,60 @@ import '../models/field_guide_week_quote.dart';
 /// downstream (providers, screens) needs to change.
 abstract class GuideRepository {
   /// The devotional-selection algorithm from docs/app_concept.md: finds the
-  /// `Chapter Field Guide Details` row covering [date], computes
-  /// `weekNumber`/`dayNumber` as an offset from that row's
+  /// `Chapter Field Guide Details` row covering [date] for [chapterId],
+  /// computes `weekNumber`/`dayNumber` as an offset from that row's
   /// `fieldGuideStartDate`, and returns the `FieldGuideWeek` containing that
-  /// week — null if [date] falls outside the school year, or past the last
-  /// authored week (the UI shows a "nothing to read"/"completed" fallback
-  /// either way).
-  Future<FieldGuideWeek?> fetchWeekForDate({required DateTime date});
+  /// week (with each devotional's `members` filtered to [memberIds]) — null
+  /// if [date] falls outside the school year, or past the last authored
+  /// week (the UI shows a "nothing to read"/"completed" fallback either
+  /// way).
+  Future<FieldGuideWeek?> fetchWeekForDate({
+    required DateTime date,
+    required String chapterId,
+    required List<String> memberIds,
+  });
 
   /// Consecutive completed days for [memberId] ending the day *before*
   /// [asOf] — deliberately excludes [asOf] itself, so the UI can add +1
   /// live the moment that day's row is marked complete/undone, without a
   /// repository round trip on every toggle.
-  Future<int> fetchStreak({required String memberId, required DateTime asOf});
+  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf});
+
+  /// Creates or updates [memberId]'s row for [dailyDevotionalId]. Each of
+  /// [sword]/[spade]/[completed] is applied only when non-null — passing
+  /// null for a field leaves it unchanged, matching how the Guide screen
+  /// calls this once per field as the user edits (sword pick, spade text,
+  /// complete toggle) rather than resubmitting the whole row every time.
+  Future<FieldGuideDailyDevotionalMember> upsertDevotionalMember({
+    required String dailyDevotionalId,
+    required String memberId,
+    String? sword,
+    String? spade,
+    bool? completed,
+  });
 }
 
-/// Hardcoded stand-in for real content. All timestamps are computed as
-/// offsets from "now" rather than literal dates, same convention as
-/// StaticChallengeRepository/StaticTodayDashboardRepository.
+/// In-memory stand-in for real content — a genuine mutable fake, not just a
+/// fixed return, since [upsertDevotionalMember] has to actually be visible
+/// on the next [fetchWeekForDate] for GuideDevotionalProgress's
+/// write-then-invalidate pattern (see guide_providers.dart) to have
+/// anything to show. Used as the default in tests (see test/widget_test.dart)
+/// since there's no live Supabase connection in that environment.
 ///
 /// Only one week of content is authored ("humility-week", Week Number 12).
 /// [_chapterFieldGuideDetails] anchors `fieldGuideStartDate` 12 weeks before
-/// the current week's Monday so the real algorithm in [fetchWeekForDate]
-/// resolves to that authored week regardless of which day the app runs on —
-/// same "meaningful whenever it runs" convention the rest of this repository
-/// already uses, just driven through the real lookup instead of a hardcoded
-/// return.
+/// the current week's Monday (computed once, at construction) so the real
+/// algorithm in [fetchWeekForDate] resolves to that authored week
+/// regardless of which day the app happens to launch on. Ignores the real
+/// [chapterId]/[memberIds] passed in — this fake only ever knows about
+/// 'st-philips-franklin' and the fixed you/jack/thomas trio, same
+/// simplification the pre-Supabase version made.
 class StaticGuideRepository implements GuideRepository {
-  const StaticGuideRepository();
+  StaticGuideRepository() : _completions = _seedCompletions(DateTime.now());
 
   static const _chapterId = 'st-philips-franklin';
   static const _authoredWeekNumber = 12;
+  static const _memberIds = ['you', 'jack', 'thomas'];
 
   static const _identityReading =
       "By God's grace, I am a man who is humble, avoiding both pride and self loading";
@@ -52,11 +77,66 @@ class StaticGuideRepository implements GuideRepository {
       'God, always the same, let me know myself, let me know You. Let me know You, O Lord, '
       'who know me; let me know You, as I am known. Amen.';
 
+  /// Keyed by '$dailyDevotionalId:$memberId'. Seeded once at construction
+  /// with a believable demo state, then mutated by [upsertDevotionalMember]
+  /// — this is what makes "mark complete" visible on the next fetch.
+  final Map<String, FieldGuideDailyDevotionalMember> _completions;
+
   static DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
   static DateTime _weekStart(DateTime date) {
     final dateOnly = _dateOnly(date);
     return dateOnly.subtract(Duration(days: dateOnly.weekday - 1));
+  }
+
+  static Map<String, FieldGuideDailyDevotionalMember> _seedCompletions(DateTime asOf) {
+    final weekStart = _weekStart(asOf);
+    final today = _dateOnly(asOf);
+    final completions = <String, FieldGuideDailyDevotionalMember>{};
+
+    for (var i = 0; i < 7; i++) {
+      final dayNumber = i + 1;
+      final dailyDevotionalId = 'humility-day-$dayNumber';
+      final isToday = dayNumber == asOf.weekday;
+      final dayDate = weekStart.add(Duration(days: i));
+
+      completions['$dailyDevotionalId:you'] = FieldGuideDailyDevotionalMember(
+        id: '$dailyDevotionalId-you',
+        dailyDevotionalId: dailyDevotionalId,
+        memberId: 'you',
+        submittedByUserId: 'user-john',
+        // "You" hasn't finished today's reading yet — everything before
+        // today is left complete so the streak badge has a believable run
+        // leading up to today's incomplete state.
+        completedDate: isToday ? null : (dayDate.isBefore(today) ? dayDate : null),
+        createdAt: dayDate,
+        lastModifiedAt: dayDate,
+      );
+      completions['$dailyDevotionalId:jack'] = FieldGuideDailyDevotionalMember(
+        id: '$dailyDevotionalId-jack',
+        dailyDevotionalId: dailyDevotionalId,
+        memberId: 'jack',
+        submittedByUserId: 'jack',
+        sword: _swordOption1,
+        spade: 'I caught myself wanting credit for something small — let it go instead.',
+        completedDate: dayDate.isAfter(today) ? null : dayDate,
+        createdAt: dayDate,
+        lastModifiedAt: dayDate,
+      );
+      completions['$dailyDevotionalId:thomas'] = FieldGuideDailyDevotionalMember(
+        id: '$dailyDevotionalId-thomas',
+        dailyDevotionalId: dailyDevotionalId,
+        memberId: 'thomas',
+        // Thomas is under 13 — completed on his behalf by his Guardian.
+        submittedByUserId: 'user-john',
+        sword: _swordOption2,
+        spade: 'Stayed quiet in a meeting instead of jumping in to be right.',
+        completedDate: dayDate.isAfter(today) ? null : dayDate,
+        createdAt: dayDate,
+        lastModifiedAt: dayDate,
+      );
+    }
+    return completions;
   }
 
   ChapterFieldGuideDetails _chapterFieldGuideDetails(DateTime asOf) {
@@ -79,11 +159,10 @@ class StaticGuideRepository implements GuideRepository {
 
     final devotionals = List.generate(7, (i) {
       final dayNumber = i + 1;
-      final isToday = dayNumber == asOf.weekday;
-      final dayDate = weekStart.add(Duration(days: i));
+      final dailyDevotionalId = 'humility-day-$dayNumber';
 
       return FieldGuideDailyDevotional(
-        id: 'humility-day-$dayNumber',
+        id: dailyDevotionalId,
         fieldGuideWeekId: 'humility-week',
         dayNumber: dayNumber,
         identityReading: _identityReading,
@@ -95,43 +174,7 @@ class StaticGuideRepository implements GuideRepository {
         closingPrayer: _closingPrayer,
         createdAt: weekStart,
         lastModifiedAt: weekStart,
-        members: [
-          FieldGuideDailyDevotionalMember(
-            id: 'humility-day-$dayNumber-you',
-            dailyDevotionalId: 'humility-day-$dayNumber',
-            memberId: 'you',
-            submittedByUserId: 'user-john',
-            // "You" hasn't finished today's reading yet — everything
-            // before today is left complete so the streak badge has a
-            // believable run leading up to today's incomplete state.
-            completedDate: isToday ? null : (dayDate.isBefore(DateTime(asOf.year, asOf.month, asOf.day)) ? dayDate : null),
-            createdAt: dayDate,
-            lastModifiedAt: dayDate,
-          ),
-          FieldGuideDailyDevotionalMember(
-            id: 'humility-day-$dayNumber-jack',
-            dailyDevotionalId: 'humility-day-$dayNumber',
-            memberId: 'jack',
-            submittedByUserId: 'jack',
-            sword: _swordOption1,
-            spade: 'I caught myself wanting credit for something small — let it go instead.',
-            completedDate: dayDate.isAfter(DateTime(asOf.year, asOf.month, asOf.day)) ? null : dayDate,
-            createdAt: dayDate,
-            lastModifiedAt: dayDate,
-          ),
-          FieldGuideDailyDevotionalMember(
-            id: 'humility-day-$dayNumber-thomas',
-            dailyDevotionalId: 'humility-day-$dayNumber',
-            memberId: 'thomas',
-            // Thomas is under 13 — completed on his behalf by his Guardian.
-            submittedByUserId: 'user-john',
-            sword: _swordOption2,
-            spade: 'Stayed quiet in a meeting instead of jumping in to be right.',
-            completedDate: dayDate.isAfter(DateTime(asOf.year, asOf.month, asOf.day)) ? null : dayDate,
-            createdAt: dayDate,
-            lastModifiedAt: dayDate,
-          ),
-        ],
+        members: [for (final memberId in _memberIds) ?_completions['$dailyDevotionalId:$memberId']],
       );
     });
 
@@ -206,7 +249,11 @@ class StaticGuideRepository implements GuideRepository {
   }
 
   @override
-  Future<FieldGuideWeek?> fetchWeekForDate({required DateTime date}) async {
+  Future<FieldGuideWeek?> fetchWeekForDate({
+    required DateTime date,
+    required String chapterId,
+    required List<String> memberIds,
+  }) async {
     final asOf = DateTime.now();
     final details = _chapterFieldGuideDetails(asOf);
 
@@ -226,12 +273,127 @@ class StaticGuideRepository implements GuideRepository {
   }
 
   @override
-  Future<int> fetchStreak({required String memberId, required DateTime asOf}) async {
+  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf}) async {
     return switch (memberId) {
       'you' => 3,
       'jack' => 8,
       'thomas' => 12,
       _ => 0,
     };
+  }
+
+  @override
+  Future<FieldGuideDailyDevotionalMember> upsertDevotionalMember({
+    required String dailyDevotionalId,
+    required String memberId,
+    String? sword,
+    String? spade,
+    bool? completed,
+  }) async {
+    final key = '$dailyDevotionalId:$memberId';
+    final now = DateTime.now();
+    final existing =
+        _completions[key] ??
+        FieldGuideDailyDevotionalMember(
+          id: key,
+          dailyDevotionalId: dailyDevotionalId,
+          memberId: memberId,
+          createdAt: now,
+          lastModifiedAt: now,
+        );
+    final updated = existing.copyWith(
+      sword: sword,
+      spade: spade,
+      completedDate: completed == true ? now : null,
+      clearCompleted: completed == false,
+    );
+    _completions[key] = updated;
+    return updated;
+  }
+}
+
+/// Supabase-backed implementation. RLS (see supabase/migrations) enforces
+/// that the caller can only read/write rows for Members they have a Self or
+/// Guardian association with — this repository doesn't re-check that
+/// client-side, it just makes the calls and lets the database reject
+/// anything out of scope.
+class SupabaseGuideRepository implements GuideRepository {
+  SupabaseGuideRepository(this._client);
+
+  final SupabaseClient _client;
+
+  static String _isoDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  @override
+  Future<FieldGuideWeek?> fetchWeekForDate({
+    required DateTime date,
+    required String chapterId,
+    required List<String> memberIds,
+  }) async {
+    // RPC #1: resolves which devotional/week apply via the school-year/
+    // week/day algorithm — the one place that logic is allowed to live
+    // (see supabase/migrations/..._rpc_functions.sql).
+    final resolvedRows = await _client.rpc(
+      'get_field_guide_devotional_for_date',
+      params: {'p_chapter_id': chapterId, 'p_date': _isoDate(date)},
+    );
+    if (resolvedRows is! List || resolvedRows.isEmpty) return null;
+    final resolved = resolvedRows.first as Map<String, dynamic>;
+    final fieldGuideWeekId = resolved['field_guide_week_id'] as String?;
+    if (fieldGuideWeekId == null) return null;
+
+    // Plain PostgREST nested embed for the rest of the shape — no logic
+    // here, just a join.
+    final weekJson = await _client
+        .from('field_guide_weeks')
+        .select(
+          '*, field_guide_week_quotes(*), '
+          'field_guide_daily_devotionals(*, field_guide_daily_devotional_members(*))',
+        )
+        .eq('id', fieldGuideWeekId)
+        .single();
+
+    // [memberIds] isn't applied as a client-side filter here — RLS on
+    // field_guide_daily_devotional_members (see the field_guide migration)
+    // already scopes the embedded rows to exactly the caller's own
+    // household before they ever leave the database, so there's nothing
+    // left to filter. [memberIds] exists on the interface because
+    // StaticGuideRepository (no RLS to lean on) needs it explicitly.
+    return FieldGuideWeek.fromJson(weekJson);
+  }
+
+  @override
+  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf}) async {
+    final result = await _client.rpc(
+      'get_field_guide_streak',
+      params: {'p_member_id': memberId, 'p_chapter_id': chapterId, 'p_as_of': _isoDate(asOf)},
+    );
+    return (result as num).toInt();
+  }
+
+  @override
+  Future<FieldGuideDailyDevotionalMember> upsertDevotionalMember({
+    required String dailyDevotionalId,
+    required String memberId,
+    String? sword,
+    String? spade,
+    bool? completed,
+  }) async {
+    // submitted_by_user_id is deliberately absent — a database trigger sets
+    // it from auth.uid() server-side (see the field_guide migration), so no
+    // repository caller can pass an arbitrary attribution.
+    final row = await _client
+        .from('field_guide_daily_devotional_members')
+        .upsert({
+          'daily_devotional_id': dailyDevotionalId,
+          'member_id': memberId,
+          if (sword != null) 'sword': sword,
+          if (spade != null) 'spade': spade,
+          if (completed != null) 'completed_date': completed ? _isoDate(DateTime.now()) : null,
+        }, onConflict: 'daily_devotional_id,member_id')
+        .select()
+        .single();
+    return FieldGuideDailyDevotionalMember.fromJson(row);
   }
 }

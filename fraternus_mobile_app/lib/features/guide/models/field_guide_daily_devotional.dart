@@ -42,4 +42,30 @@ class FieldGuideDailyDevotional {
 
   /// UI convenience for widgets that render a generic option list.
   List<String> get swordOptions => [swordOption1, swordOption2];
+
+  /// [json]'s `field_guide_daily_devotional_members` key is populated when
+  /// fetched via a PostgREST nested-embed query (see
+  /// SupabaseGuideRepository) — absent (defaults to empty) for a plain
+  /// non-embedded row.
+  factory FieldGuideDailyDevotional.fromJson(Map<String, dynamic> json) {
+    final membersJson = json['field_guide_daily_devotional_members'] as List<dynamic>? ?? const [];
+    return FieldGuideDailyDevotional(
+      id: json['id'] as String,
+      fieldGuideWeekId: json['field_guide_week_id'] as String,
+      dayNumber: json['day_number'] as int,
+      identityReading: json['identity_reading'] as String,
+      wisdomQuote: json['wisdom_quote'] as String,
+      wisdomAuthor: json['wisdom_author'] as String,
+      swordOption1: json['sword_option_1'] as String,
+      swordOption2: json['sword_option_2'] as String,
+      spadePrompt: json['spade_prompt'] as String,
+      closingPrayer: json['closing_prayer'] as String,
+      members: [
+        for (final memberJson in membersJson)
+          FieldGuideDailyDevotionalMember.fromJson(memberJson as Map<String, dynamic>),
+      ],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }
