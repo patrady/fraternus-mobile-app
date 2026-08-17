@@ -63,4 +63,18 @@ class Member {
       lastModifiedAt: lastModifiedAt,
     );
   }
+
+  factory Member.fromJson(Map<String, dynamic> json) {
+    return Member(
+      id: json['id'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
+      role: MemberRole.values.byName(json['role'] as String),
+      chapterId: json['chapter_id'] as String,
+      birthday: DateTime.parse(json['birthday'] as String),
+      email: json['email'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

@@ -1,49 +1,99 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/app_user.dart';
 import '../models/member.dart';
 import '../models/reminder_setting.dart';
 import '../models/user_member_association.dart';
 
-/// Source of the Profile tab's data. Returning a [Future] here — even
-/// though [StaticProfileRepository] resolves instantly — is the deliberate
-/// seam: swapping to a real API call later only means changing the
-/// implementation, not this interface, the providers that watch it, or the
-/// screens.
+/// Source of the Profile tab's data. Same seam as every other XRepository —
+/// swapping the implementation doesn't change this interface, the
+/// providers that watch it, or the screens.
 abstract class ProfileRepository {
   Future<AppUser> fetchCurrentUser();
   Future<List<Member>> fetchMembers();
   Future<List<UserMemberAssociation>> fetchAssociations();
   Future<List<ReminderGroup>> fetchReminders();
+
+  Future<void> updateProfile(AppUser user);
+  Future<void> updateMember(Member member);
+
+  /// Atomically creates a Brother Member + Guardian association (+ Pending
+  /// consent if under 13) for the current Guardian. Returns the new
+  /// Member's id.
+  Future<String> createChildMember({
+    required String firstName,
+    required String lastName,
+    required String chapterId,
+    required DateTime birthday,
+    String? email,
+  });
+
+  /// Atomically creates a Captain Member + Self association for the
+  /// current user. Used by both the Captain signup flow and a Guardian who
+  /// also attends meetings — nothing about it is Captain-signup-specific
+  /// beyond naming. Returns the new Member's id.
+  Future<String> completeCaptainSignup({
+    required String chapterId,
+    required String firstName,
+    required String lastName,
+    required DateTime birthday,
+  });
+
+  /// Revokes a Guardian's consent for [memberId] — app_concept.md: "treated
+  /// as a request to stop all further data collection for that Member."
+  /// Granting consent is a separate, not-yet-designed verification flow
+  /// (see docs/adrs/002_supabase_backend_poc.md §5) — this repository only
+  /// covers revocation.
+  Future<void> revokeConsent(String memberId);
+
+  /// docs/adrs/003_coppa_child_data_deletion.md — deletes [memberId] and,
+  /// via cascade, everything referencing them.
+  Future<void> deleteMember(String memberId);
+
+  Future<void> setReminderEnabled(ReminderType type, bool enabled);
+
+  /// The master switch — [AppUser.isRemindersEnabled].
+  Future<void> setRemindersEnabled(bool enabled);
 }
 
-/// Hardcoded stand-in for real content, matching the reference screenshots
-/// and the User/Member/UserMemberAssociation shape from
-/// docs/app_concept.md. Ids reuse the 'you'/'jack'/'thomas' strings other
-/// features already use for narrative continuity only — no actual
-/// cross-feature data coupling.
+/// In-memory mutable fake, matching the reference screenshots and the
+/// User/Member/UserMemberAssociation shape from docs/app_concept.md. Every
+/// write method here actually mutates this instance's state — needed so
+/// CurrentUser/HouseholdMembers/ProfileReminders' write-then-invalidate
+/// pattern (see profile_providers.dart) has something real to show on the
+/// next fetch. Used as the default in tests (see test/widget_test.dart)
+/// since there's no live Supabase connection in that environment.
 class StaticProfileRepository implements ProfileRepository {
-  const StaticProfileRepository();
+  StaticProfileRepository()
+    : _user = _seedUser(),
+      _members = _seedMembers(),
+      _associations = _seedAssociations(),
+      _reminderOverrides = {};
 
   static const _userId = 'user-john';
-
-  // AppUser.email is sourced from the Self-relationship Member's own
-  // email — kept as one constant here so both stay in sync in this seed.
   static const _selfEmail = 'john.smith@example.com';
 
-  @override
-  Future<AppUser> fetchCurrentUser() async {
+  AppUser _user;
+  final List<Member> _members;
+  final List<UserMemberAssociation> _associations;
+
+  /// Sparse — matches the real schema's "absence means enabled" rule.
+  final Map<ReminderType, bool> _reminderOverrides;
+
+  static AppUser _seedUser() {
     final joinedAt = DateTime.now().subtract(const Duration(days: 400));
     return AppUser(
       id: _userId,
       firstName: 'John',
       lastName: 'Smith',
       email: _selfEmail,
+      isRemindersEnabled: true,
       createdAt: joinedAt,
       lastModifiedAt: joinedAt,
     );
   }
 
-  @override
-  Future<List<Member>> fetchMembers() async {
+  static List<Member> _seedMembers() {
     final now = DateTime.now();
     final joinedAt = now.subtract(const Duration(days: 400));
     return [
@@ -81,8 +131,7 @@ class StaticProfileRepository implements ProfileRepository {
     ];
   }
 
-  @override
-  Future<List<UserMemberAssociation>> fetchAssociations() async {
+  static List<UserMemberAssociation> _seedAssociations() {
     final joinedAt = DateTime.now().subtract(const Duration(days: 400));
     return [
       UserMemberAssociation(
@@ -121,38 +170,289 @@ class StaticProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<AppUser> fetchCurrentUser() async => _user;
+
+  @override
+  Future<List<Member>> fetchMembers() async => List.unmodifiable(_members);
+
+  @override
+  Future<List<UserMemberAssociation>> fetchAssociations() async => List.unmodifiable(_associations);
+
+  @override
   Future<List<ReminderGroup>> fetchReminders() async {
-    return const [
-      ReminderGroup(
-        title: 'Field Guide',
-        reminders: [
-          ReminderSetting(id: 'daily-reading', label: 'Daily Reading', timeLabel: '7:00 AM', enabled: true),
-          ReminderSetting(id: 'evening-seal', label: 'Evening Seal', timeLabel: '9:00 PM', enabled: false),
-        ],
-      ),
-      ReminderGroup(
-        title: 'Weekly Challenges',
-        reminders: [
-          ReminderSetting(
-            id: 'introduction',
-            label: 'Introduction',
-            timeLabel: 'Wednesdays at 7AM',
-            enabled: true,
-          ),
-          ReminderSetting(id: 'last-chance', label: 'Last Chance', timeLabel: 'Mondays at 6PM', enabled: true),
-        ],
-      ),
-      ReminderGroup(
-        title: 'Events',
-        reminders: [
-          ReminderSetting(
-            id: 'start-of-event',
-            label: 'Start of Event',
-            timeLabel: '30 minutes before',
-            enabled: true,
-          ),
-        ],
-      ),
+    return [
+      for (final entry in ReminderGroup.groupedTypes.entries)
+        ReminderGroup(
+          title: entry.key,
+          reminders: [
+            for (final type in entry.value) ReminderSetting(type: type, enabled: _reminderOverrides[type] ?? true),
+          ],
+        ),
     ];
   }
+
+  @override
+  Future<void> updateProfile(AppUser user) async {
+    _user = user;
+  }
+
+  @override
+  Future<void> updateMember(Member member) async {
+    final index = _members.indexWhere((m) => m.id == member.id);
+    if (index == -1) return;
+    _members[index] = member;
+  }
+
+  @override
+  Future<String> createChildMember({
+    required String firstName,
+    required String lastName,
+    required String chapterId,
+    required DateTime birthday,
+    String? email,
+  }) async {
+    final now = DateTime.now();
+    final id = 'child-${now.microsecondsSinceEpoch}';
+    _members.add(
+      Member(
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        role: MemberRole.brother,
+        chapterId: chapterId,
+        birthday: birthday,
+        email: email,
+        createdAt: now,
+        lastModifiedAt: now,
+      ),
+    );
+
+    final hadBirthdayThisYear =
+        now.month > birthday.month || (now.month == birthday.month && now.day >= birthday.day);
+    final age = now.year - birthday.year - (hadBirthdayThisYear ? 0 : 1);
+    final requiresConsent = age < 13;
+
+    _associations.add(
+      UserMemberAssociation(
+        id: '$_userId-$id',
+        userId: _userId,
+        memberId: id,
+        relationship: AssociationRelationship.guardian,
+        consentStatus: requiresConsent ? ConsentStatus.pending : null,
+        createdAt: now,
+        lastModifiedAt: now,
+      ),
+    );
+    return id;
+  }
+
+  @override
+  Future<String> completeCaptainSignup({
+    required String chapterId,
+    required String firstName,
+    required String lastName,
+    required DateTime birthday,
+  }) async {
+    final now = DateTime.now();
+    final id = 'self-${now.microsecondsSinceEpoch}';
+    _members.add(
+      Member(
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        role: MemberRole.captain,
+        chapterId: chapterId,
+        birthday: birthday,
+        email: _user.email,
+        createdAt: now,
+        lastModifiedAt: now,
+      ),
+    );
+    _associations.add(
+      UserMemberAssociation(
+        id: '$_userId-$id',
+        userId: _userId,
+        memberId: id,
+        relationship: AssociationRelationship.self,
+        createdAt: now,
+        lastModifiedAt: now,
+      ),
+    );
+    return id;
+  }
+
+  @override
+  Future<void> revokeConsent(String memberId) async {
+    final index = _associations.indexWhere(
+      (a) => a.memberId == memberId && a.relationship == AssociationRelationship.guardian,
+    );
+    if (index == -1) return;
+    final existing = _associations[index];
+    _associations[index] = UserMemberAssociation(
+      id: existing.id,
+      userId: existing.userId,
+      memberId: existing.memberId,
+      relationship: existing.relationship,
+      consentStatus: ConsentStatus.revoked,
+      consentDate: existing.consentDate,
+      consentMethod: existing.consentMethod,
+      createdAt: existing.createdAt,
+      lastModifiedAt: DateTime.now(),
+    );
+  }
+
+  @override
+  Future<void> deleteMember(String memberId) async {
+    _members.removeWhere((m) => m.id == memberId);
+    _associations.removeWhere((a) => a.memberId == memberId);
+  }
+
+  @override
+  Future<void> setReminderEnabled(ReminderType type, bool enabled) async {
+    _reminderOverrides[type] = enabled;
+  }
+
+  @override
+  Future<void> setRemindersEnabled(bool enabled) async {
+    _user = _user.copyWith(isRemindersEnabled: enabled);
+  }
+}
+
+/// Supabase-backed implementation. RLS (see supabase/migrations) enforces
+/// that the caller can only read/write their own User row and Members
+/// they have a Self or Guardian association with — this repository doesn't
+/// re-check that client-side.
+class SupabaseProfileRepository implements ProfileRepository {
+  SupabaseProfileRepository(this._client);
+
+  final SupabaseClient _client;
+
+  String get _userId => _client.auth.currentUser!.id;
+
+  @override
+  Future<AppUser> fetchCurrentUser() async {
+    final json = await _client.from('users').select().eq('id', _userId).single();
+    return AppUser.fromJson(json);
+  }
+
+  @override
+  Future<List<Member>> fetchMembers() async {
+    final rows = await _client.from('user_member_associations').select('members(*)').eq('user_id', _userId);
+    return [for (final row in rows) Member.fromJson(row['members'] as Map<String, dynamic>)];
+  }
+
+  @override
+  Future<List<UserMemberAssociation>> fetchAssociations() async {
+    final rows = await _client.from('user_member_associations').select().eq('user_id', _userId);
+    return [for (final row in rows) UserMemberAssociation.fromJson(row)];
+  }
+
+  @override
+  Future<List<ReminderGroup>> fetchReminders() async {
+    final rows = await _client.from('user_reminders').select('type, is_enabled').eq('user_id', _userId);
+    final overrides = {
+      for (final row in rows) ReminderType.fromJson(row['type'] as String): row['is_enabled'] as bool,
+    };
+    return [
+      for (final entry in ReminderGroup.groupedTypes.entries)
+        ReminderGroup(
+          title: entry.key,
+          reminders: [
+            for (final type in entry.value) ReminderSetting(type: type, enabled: overrides[type] ?? true),
+          ],
+        ),
+    ];
+  }
+
+  @override
+  Future<void> updateProfile(AppUser user) async {
+    await _client
+        .from('users')
+        .update({'first_name': user.firstName, 'last_name': user.lastName, 'email': user.email})
+        .eq('id', _userId);
+  }
+
+  @override
+  Future<void> updateMember(Member member) async {
+    await _client
+        .from('members')
+        .update({
+          'first_name': member.firstName,
+          'last_name': member.lastName,
+          'birthday': _isoDate(member.birthday),
+          'email': member.email,
+          'chapter_id': member.chapterId,
+        })
+        .eq('id', member.id);
+  }
+
+  @override
+  Future<String> createChildMember({
+    required String firstName,
+    required String lastName,
+    required String chapterId,
+    required DateTime birthday,
+    String? email,
+  }) async {
+    final result = await _client.rpc(
+      'create_child_member',
+      params: {
+        'p_first_name': firstName,
+        'p_last_name': lastName,
+        'p_chapter_id': chapterId,
+        'p_birthday': _isoDate(birthday),
+        'p_email': email,
+      },
+    );
+    return result as String;
+  }
+
+  @override
+  Future<String> completeCaptainSignup({
+    required String chapterId,
+    required String firstName,
+    required String lastName,
+    required DateTime birthday,
+  }) async {
+    final result = await _client.rpc(
+      'complete_captain_signup',
+      params: {
+        'p_chapter_id': chapterId,
+        'p_first_name': firstName,
+        'p_last_name': lastName,
+        'p_birthday': _isoDate(birthday),
+      },
+    );
+    return result as String;
+  }
+
+  @override
+  Future<void> revokeConsent(String memberId) async {
+    await _client
+        .from('user_member_associations')
+        .update({'consent_status': 'revoked'})
+        .eq('member_id', memberId)
+        .eq('relationship', 'guardian');
+  }
+
+  @override
+  Future<void> deleteMember(String memberId) async {
+    await _client.rpc('delete_member_data', params: {'target_member_id': memberId});
+  }
+
+  @override
+  Future<void> setReminderEnabled(ReminderType type, bool enabled) async {
+    await _client.from('user_reminders').upsert({
+      'type': type.toJson(),
+      'is_enabled': enabled,
+    }, onConflict: 'user_id,type');
+  }
+
+  @override
+  Future<void> setRemindersEnabled(bool enabled) async {
+    await _client.from('users').update({'is_reminders_enabled': enabled}).eq('id', _userId);
+  }
+
+  static String _isoDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }

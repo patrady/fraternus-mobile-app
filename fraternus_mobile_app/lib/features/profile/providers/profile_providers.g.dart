@@ -61,7 +61,7 @@ final class ProfileRepositoryProvider
   }
 }
 
-String _$profileRepositoryHash() => r'2c6efdd0685a3bf97f71d01c25551930e32bf3fe';
+String _$profileRepositoryHash() => r'f251b6c9b7ba03ff45e660eafeb575f03c60080e';
 
 @ProviderFor(CurrentUser)
 const currentUserProvider = CurrentUserProvider._();
@@ -87,7 +87,7 @@ final class CurrentUserProvider
   CurrentUser create() => CurrentUser();
 }
 
-String _$currentUserHash() => r'f2874fe2372ade68cd4db79248d1fe39b8a3e5e5';
+String _$currentUserHash() => r'a652ee4743e16f4517fd4f368d42e6693cda0d77';
 
 abstract class _$CurrentUser extends $AsyncNotifier<AppUser> {
   FutureOr<AppUser> build();
@@ -110,22 +110,19 @@ abstract class _$CurrentUser extends $AsyncNotifier<AppUser> {
 
 /// Every Member the current User is associated with (Self or Guardian) —
 /// "household" matches the word Today/Challenge/Guide already use for the
-/// same John+Jack+Thomas group. In-memory edits reset on app restart, same
-/// as ChallengeProgress/EventRsvp.
+/// same John+Jack+Thomas group.
 
 @ProviderFor(HouseholdMembers)
 const householdMembersProvider = HouseholdMembersProvider._();
 
 /// Every Member the current User is associated with (Self or Guardian) —
 /// "household" matches the word Today/Challenge/Guide already use for the
-/// same John+Jack+Thomas group. In-memory edits reset on app restart, same
-/// as ChallengeProgress/EventRsvp.
+/// same John+Jack+Thomas group.
 final class HouseholdMembersProvider
     extends $AsyncNotifierProvider<HouseholdMembers, List<Member>> {
   /// Every Member the current User is associated with (Self or Guardian) —
   /// "household" matches the word Today/Challenge/Guide already use for the
-  /// same John+Jack+Thomas group. In-memory edits reset on app restart, same
-  /// as ChallengeProgress/EventRsvp.
+  /// same John+Jack+Thomas group.
   const HouseholdMembersProvider._()
     : super(
         from: null,
@@ -145,12 +142,11 @@ final class HouseholdMembersProvider
   HouseholdMembers create() => HouseholdMembers();
 }
 
-String _$householdMembersHash() => r'bedfd68f688c35124ade870f184098c6029a4443';
+String _$householdMembersHash() => r'33a80b02051f86e28298ffafa16c86454c9ba3de';
 
 /// Every Member the current User is associated with (Self or Guardian) —
 /// "household" matches the word Today/Challenge/Guide already use for the
-/// same John+Jack+Thomas group. In-memory edits reset on app restart, same
-/// as ChallengeProgress/EventRsvp.
+/// same John+Jack+Thomas group.
 
 abstract class _$HouseholdMembers extends $AsyncNotifier<List<Member>> {
   FutureOr<List<Member>> build();
@@ -171,15 +167,39 @@ abstract class _$HouseholdMembers extends $AsyncNotifier<List<Member>> {
   }
 }
 
-@ProviderFor(HouseholdAssociations)
+/// This User's UserMemberAssociation rows. Read-only from the client's
+/// perspective now — creation is atomic (create_child_member /
+/// complete_captain_signup), consent revocation is its own repository
+/// method, and deletion only ever happens via HouseholdMembers.remove's
+/// cascade. A plain function provider rather than a Notifier class, since
+/// nothing here mutates local state directly anymore.
+
+@ProviderFor(householdAssociations)
 const householdAssociationsProvider = HouseholdAssociationsProvider._();
+
+/// This User's UserMemberAssociation rows. Read-only from the client's
+/// perspective now — creation is atomic (create_child_member /
+/// complete_captain_signup), consent revocation is its own repository
+/// method, and deletion only ever happens via HouseholdMembers.remove's
+/// cascade. A plain function provider rather than a Notifier class, since
+/// nothing here mutates local state directly anymore.
 
 final class HouseholdAssociationsProvider
     extends
-        $AsyncNotifierProvider<
-          HouseholdAssociations,
-          List<UserMemberAssociation>
-        > {
+        $FunctionalProvider<
+          AsyncValue<List<UserMemberAssociation>>,
+          List<UserMemberAssociation>,
+          FutureOr<List<UserMemberAssociation>>
+        >
+    with
+        $FutureModifier<List<UserMemberAssociation>>,
+        $FutureProvider<List<UserMemberAssociation>> {
+  /// This User's UserMemberAssociation rows. Read-only from the client's
+  /// perspective now — creation is atomic (create_child_member /
+  /// complete_captain_signup), consent revocation is its own repository
+  /// method, and deletion only ever happens via HouseholdMembers.remove's
+  /// cascade. A plain function provider rather than a Notifier class, since
+  /// nothing here mutates local state directly anymore.
   const HouseholdAssociationsProvider._()
     : super(
         from: null,
@@ -196,39 +216,18 @@ final class HouseholdAssociationsProvider
 
   @$internal
   @override
-  HouseholdAssociations create() => HouseholdAssociations();
+  $FutureProviderElement<List<UserMemberAssociation>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<UserMemberAssociation>> create(Ref ref) {
+    return householdAssociations(ref);
+  }
 }
 
 String _$householdAssociationsHash() =>
-    r'f315e1ab6d09043f265f33f76371852c10852e40';
-
-abstract class _$HouseholdAssociations
-    extends $AsyncNotifier<List<UserMemberAssociation>> {
-  FutureOr<List<UserMemberAssociation>> build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref =
-        this.ref
-            as $Ref<
-              AsyncValue<List<UserMemberAssociation>>,
-              List<UserMemberAssociation>
-            >;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<UserMemberAssociation>>,
-                List<UserMemberAssociation>
-              >,
-              AsyncValue<List<UserMemberAssociation>>,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
+    r'aa800f8ddf384835eff0da9345b550b17e9681b2';
 
 /// The current User's own Member record (Relationship = Self), or null if
 /// they've never attended as a Captain — mirrors app_concept.md's "the
@@ -342,7 +341,7 @@ final class ProfileRemindersProvider
   ProfileReminders create() => ProfileReminders();
 }
 
-String _$profileRemindersHash() => r'2e2c703b40caf08eb28b76fc5df0918b9475a771';
+String _$profileRemindersHash() => r'db3d8bf0f6cf44a3b33663ad4691776620d85111';
 
 abstract class _$ProfileReminders extends $AsyncNotifier<List<ReminderGroup>> {
   FutureOr<List<ReminderGroup>> build();

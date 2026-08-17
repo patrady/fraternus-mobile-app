@@ -33,4 +33,20 @@ class UserMemberAssociation {
   final String? consentMethod;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
+
+  factory UserMemberAssociation.fromJson(Map<String, dynamic> json) {
+    return UserMemberAssociation(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      memberId: json['member_id'] as String,
+      relationship: AssociationRelationship.values.byName(json['relationship'] as String),
+      consentStatus: json['consent_status'] == null
+          ? null
+          : ConsentStatus.values.byName(json['consent_status'] as String),
+      consentDate: json['consent_date'] == null ? null : DateTime.parse(json['consent_date'] as String),
+      consentMethod: json['consent_method'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

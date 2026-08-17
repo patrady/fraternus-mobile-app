@@ -162,8 +162,8 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
           label: 'Save',
           fullWidth: true,
           disabled: selfMember != null && _birthday == null,
-          onPressed: () {
-            ref
+          onPressed: () async {
+            await ref
                 .read(currentUserProvider.notifier)
                 .save(
                   widget.user.copyWith(
@@ -173,9 +173,9 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                   ),
                 );
             if (selfMember != null && _chapterId != null && _birthday != null) {
-              ref
+              await ref
                   .read(householdMembersProvider.notifier)
-                  .upsert(
+                  .updateMember(
                     selfMember.copyWith(
                       firstName: _firstNameController.text,
                       lastName: _lastNameController.text,
@@ -184,7 +184,7 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                     ),
                   );
             }
-            context.pop();
+            if (context.mounted) context.pop();
           },
         ),
         const SizedBox(height: 24),

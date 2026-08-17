@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/supabase_provider.dart';
 import '../data/profile_repository.dart';
 import '../models/app_user.dart';
 import '../models/member.dart';
@@ -12,7 +13,7 @@ part 'profile_providers.g.dart';
 /// from — nothing downstream needs to change.
 @riverpod
 ProfileRepository profileRepository(Ref ref) {
-  return const StaticProfileRepository();
+  return SupabaseProfileRepository(ref.watch(supabaseClientProvider));
 }
 
 @riverpod
@@ -25,13 +26,23 @@ class CurrentUser extends _$CurrentUser {
   // Named `save` rather than `update` — AsyncNotifier already defines an
   // `update(FutureOr<T> Function(T)) -> Future<T>` method, which this would
   // otherwise collide with.
-  void save(AppUser updated) => state = AsyncData(updated);
+  Future<void> save(AppUser updated) async {
+    await ref.read(profileRepositoryProvider).updateProfile(updated);
+    ref.invalidateSelf();
+  }
+
+  /// The master reminders switch — [AppUser.isRemindersEnabled].
+  Future<void> toggleRemindersEnabled() async {
+    final current = state.value;
+    if (current == null) return;
+    await ref.read(profileRepositoryProvider).setRemindersEnabled(!current.isRemindersEnabled);
+    ref.invalidateSelf();
+  }
 }
 
 /// Every Member the current User is associated with (Self or Guardian) —
 /// "household" matches the word Today/Challenge/Guide already use for the
-/// same John+Jack+Thomas group. In-memory edits reset on app restart, same
-/// as ChallengeProgress/EventRsvp.
+/// same John+Jack+Thomas group.
 @riverpod
 class HouseholdMembers extends _$HouseholdMembers {
   @override
@@ -39,56 +50,38 @@ class HouseholdMembers extends _$HouseholdMembers {
     return ref.watch(profileRepositoryProvider).fetchMembers();
   }
 
-  void upsert(Member member) {
-    final current = state.value ?? const [];
-    final exists = current.any((m) => m.id == member.id);
-    state = AsyncData(
-      exists ? [for (final m in current) m.id == member.id ? member : m] : [...current, member],
-    );
+  /// Editing an existing household member. Creating a new child is a
+  /// separate, atomic operation (createChildMember, called directly from
+  /// the Add Child screen) — not this method, since there's no
+  /// pre-existing Member to update. Named `updateMember`, not `update` —
+  /// AsyncNotifier already defines its own generic `update` method, which
+  /// this would otherwise collide with (same reason CurrentUser's method is
+  /// `save`, not `update`).
+  Future<void> updateMember(Member member) async {
+    await ref.read(profileRepositoryProvider).updateMember(member);
+    ref.invalidateSelf();
   }
 
-  void remove(String memberId) {
-    final current = state.value ?? const [];
-    state = AsyncData(current.where((m) => m.id != memberId).toList());
+  /// docs/adrs/003_coppa_child_data_deletion.md — deletes the Member and,
+  /// via cascade, everything referencing them (including their
+  /// UserMemberAssociation row, so householdAssociationsProvider needs
+  /// invalidating too).
+  Future<void> remove(String memberId) async {
+    await ref.read(profileRepositoryProvider).deleteMember(memberId);
+    ref.invalidateSelf();
+    ref.invalidate(householdAssociationsProvider);
   }
 }
 
+/// This User's UserMemberAssociation rows. Read-only from the client's
+/// perspective now — creation is atomic (create_child_member /
+/// complete_captain_signup), consent revocation is its own repository
+/// method, and deletion only ever happens via HouseholdMembers.remove's
+/// cascade. A plain function provider rather than a Notifier class, since
+/// nothing here mutates local state directly anymore.
 @riverpod
-class HouseholdAssociations extends _$HouseholdAssociations {
-  @override
-  Future<List<UserMemberAssociation>> build() {
-    return ref.watch(profileRepositoryProvider).fetchAssociations();
-  }
-
-  /// Consent starts Pending for a Member under 13 (COPPA) — every other
-  /// case leaves consent fields unset, per app_concept.md's "applicable
-  /// when Relationship = Guardian and the Member is under 13" rule.
-  void addGuardianAssociation(String userId, Member member) {
-    final now = DateTime.now();
-    final hadBirthdayThisYear =
-        now.month > member.birthday.month || (now.month == member.birthday.month && now.day >= member.birthday.day);
-    final age = now.year - member.birthday.year - (hadBirthdayThisYear ? 0 : 1);
-    final requiresConsent = age < 13;
-
-    final current = state.value ?? const [];
-    state = AsyncData([
-      ...current,
-      UserMemberAssociation(
-        id: '$userId-${member.id}',
-        userId: userId,
-        memberId: member.id,
-        relationship: AssociationRelationship.guardian,
-        consentStatus: requiresConsent ? ConsentStatus.pending : null,
-        createdAt: now,
-        lastModifiedAt: now,
-      ),
-    ]);
-  }
-
-  void remove(String memberId) {
-    final current = state.value ?? const [];
-    state = AsyncData(current.where((a) => a.memberId != memberId).toList());
-  }
+Future<List<UserMemberAssociation>> householdAssociations(Ref ref) {
+  return ref.watch(profileRepositoryProvider).fetchAssociations();
 }
 
 /// The current User's own Member record (Relationship = Self), or null if
@@ -136,16 +129,19 @@ class ProfileReminders extends _$ProfileReminders {
     return ref.watch(profileRepositoryProvider).fetchReminders();
   }
 
-  void toggle(String reminderId) {
+  Future<void> toggle(ReminderType type) async {
     final current = state.value ?? const [];
-    state = AsyncData([
-      for (final group in current)
-        ReminderGroup(
-          title: group.title,
-          reminders: [
-            for (final r in group.reminders) r.id == reminderId ? r.copyWith(enabled: !r.enabled) : r,
-          ],
-        ),
-    ]);
+    ReminderSetting? existing;
+    for (final group in current) {
+      for (final reminder in group.reminders) {
+        if (reminder.type == type) {
+          existing = reminder;
+          break;
+        }
+      }
+    }
+    if (existing == null) return;
+    await ref.read(profileRepositoryProvider).setReminderEnabled(type, !existing.enabled);
+    ref.invalidateSelf();
   }
 }

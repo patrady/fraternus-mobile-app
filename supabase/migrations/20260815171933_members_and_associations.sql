@@ -145,3 +145,15 @@ create policy "guardian can update own guardian associations"
 -- for why these are necessary in addition to the RLS policies above.
 grant select, update on public.members to authenticated;
 grant select, update on public.user_member_associations to authenticated;
+
+-- service_role's BYPASSRLS attribute skips RLS policy checks, but it is
+-- NOT a substitute for a table grant — confirmed against the real local
+-- stack: service_role had the same bare TRUNCATE/REFERENCES/TRIGGER/
+-- MAINTAIN default as authenticated, and a direct service_role query
+-- against user_member_associations failed with "permission denied" until
+-- this grant was added. Only tables a service_role caller queries
+-- *directly* (not through a security definer function, which runs as the
+-- function's owner regardless of caller) need this — the
+-- notify-event-cancellation Edge Function queries this table directly to
+-- resolve which Users to notify.
+grant select on public.user_member_associations to service_role;

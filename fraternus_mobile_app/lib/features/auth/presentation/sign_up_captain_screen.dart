@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
 import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../../profile/presentation/widgets/birthday_field.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../providers/auth_providers.dart';
 
 /// app_concept.md's Profile section literally lists Captain signup fields
@@ -17,12 +18,11 @@ import '../providers/auth_providers.dart';
 /// docs/adrs — the prose has the bug, not the schema), so birthday is
 /// collected here even though the Profile section's prose omits it.
 ///
-/// The User half happens here via [AuthRepository.signUp]. The Member/UMA
-/// half (the `complete_captain_signup` RPC from
-/// docs/adrs/002_supabase_backend_poc.md §5) is wired up once the
-/// `members`/`chapters` tables exist — see the TODO below. Chapter options
-/// come from the bundled [seedChapters] until the Chapter table itself
-/// moves to Supabase (plan phase 10).
+/// The User half happens via [AuthRepository.signUp]; the Member/Self
+/// association half via `completeCaptainSignup` (the `complete_captain_signup`
+/// RPC — docs/adrs/002_supabase_backend_poc.md §5). Chapter options come
+/// from the bundled [seedChapters] until the Chapter table itself moves to
+/// Supabase (plan phase 10).
 class SignUpCaptainScreen extends ConsumerStatefulWidget {
   const SignUpCaptainScreen({super.key});
 
@@ -82,11 +82,16 @@ class _SignUpCaptainScreenState extends ConsumerState<SignUpCaptainScreen> {
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
           );
-      // TODO(phase-3): once `members`/`chapters` exist, call
-      // ProfileRepository.completeCaptainSignup(_chapterId!) here (the
-      // `complete_captain_signup` RPC) to create the Captain's Member +
-      // Self UserMemberAssociation. Until then, the router's redirect just
-      // sends a newly-signed-up Captain to /today with no Member record.
+      await ref
+          .read(profileRepositoryProvider)
+          .completeCaptainSignup(
+            chapterId: _chapterId!,
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+            birthday: _birthday!,
+          );
+      // The router's redirect (see app/router/app_router.dart) takes over
+      // navigation to /today as soon as the session is established.
     } catch (_) {
       if (mounted) {
         setState(() => _errorMessage = 'Could not create your account. Try again in a moment.');

@@ -14,6 +14,8 @@ import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart
 import 'package:fraternus_mobile_app/features/guide/data/guide_repository.dart';
 import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_option_list.dart';
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
+import 'package:fraternus_mobile_app/features/profile/data/profile_repository.dart';
+import 'package:fraternus_mobile_app/features/profile/providers/profile_providers.dart';
 
 /// A date far outside the single seeded Field Guide week, for exercising
 /// the "nothing to read" fallback.
@@ -93,6 +95,7 @@ class _FakeAuthRepository implements AuthRepository {
 List<Override> _testOverrides({bool signedIn = true}) => [
   authRepositoryProvider.overrideWithValue(_FakeAuthRepository(signedIn: signedIn)),
   guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
+  profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
 ];
 
 void main() {
@@ -391,14 +394,47 @@ void main() {
     expect(find.text('Jack'), findsOneWidget);
     expect(find.text('Smith'), findsOneWidget);
 
+    // Jack is under 13 and seeded with Granted consent — the consent
+    // section should show it and offer revocation.
+    expect(find.text('GRANTED'), findsOneWidget);
+    expect(find.text('REVOKE CONSENT'), findsOneWidget);
+
+    await tester.tap(find.text('REVOKE CONSENT'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'This stops all further data collection for this child — no new readings, '
+        'challenges, or event data can be recorded on their behalf until consent is '
+        'granted again.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('REVOKE'));
+    await tester.pumpAndSettle();
+
+    // Revocation calls through to the repository and the association is
+    // re-fetched — the tag flips and the revoke button disappears (it only
+    // shows for Granted).
+    expect(find.text('REVOKED'), findsOneWidget);
+    expect(find.text('GRANTED'), findsNothing);
+    expect(find.text('REVOKE CONSENT'), findsNothing);
+
     await tester.ensureVisible(find.text('REMOVE CHILD'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('REMOVE CHILD'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Are you sure you want to remove Jack Smith? This cannot be undone.'), findsOneWidget);
+    // docs/adrs/003_coppa_child_data_deletion.md — the confirmation spells
+    // out that this is a real data-deletion request, not just a list edit.
+    expect(
+      find.text(
+        "This will permanently delete Jack Smith's data — every reading, "
+        'challenge, and RSVP recorded for them. This cannot be undone.',
+      ),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('REMOVE'));
+    await tester.tap(find.text('DELETE'));
     await tester.pumpAndSettle();
 
     expect(find.text('MY KIDS'), findsOneWidget);
@@ -425,7 +461,7 @@ void main() {
     expect(find.text('BIRTHDAY'), findsOneWidget);
   });
 
-  testWidgets('Reminders shows the grouped toggles', (WidgetTester tester) async {
+  testWidgets('Reminders shows the master switch and all 7 grouped toggles', (WidgetTester tester) async {
     await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
@@ -435,8 +471,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('REMINDERS'), findsOneWidget);
+    expect(find.text('All Reminders'), findsOneWidget);
+    expect(find.text('FIELD GUIDE'), findsOneWidget);
+    expect(find.text('WEEKLY CHALLENGES'), findsOneWidget);
+    expect(find.text('EVENTS'), findsWidgets); // also the bottom-tab label
+
+    // All 7 ReminderType values represented — the pre-Supabase static data
+    // only had 5 (missing challenge_mid_week and one of the two event
+    // types), fixed as part of the Supabase migration.
     expect(find.text('Daily Reading'), findsOneWidget);
-    expect(find.text('7:00 AM'), findsOneWidget);
+    expect(find.text('Evening Seal'), findsOneWidget);
+    expect(find.text('Introduction'), findsOneWidget);
+    expect(find.text('Midweek Check-In'), findsOneWidget);
+    expect(find.text('Last Chance'), findsOneWidget);
+    expect(find.text('24 Hours Before'), findsOneWidget);
+    expect(find.text('1 Hour Before'), findsOneWidget);
+
+    // Toggling a single reminder calls through to the repository (not just
+    // local state) and the new value survives popping this route and
+    // pushing it again — proving it's re-fetched, not just a locally-held
+    // bool that would reset the moment the widget is disposed.
+    expect(tester.widget<FraternusSwitch>(find.byType(FraternusSwitch).at(1)).value, isTrue);
+    await tester.tap(find.byType(FraternusSwitch).at(1)); // first reminder row, index 0 is the master switch
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Back')); // Reminders -> Profile, disposing this screen
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reminders')); // fresh push, fresh fetch
+    await tester.pumpAndSettle();
+    expect(tester.widget<FraternusSwitch>(find.byType(FraternusSwitch).at(1)).value, isFalse);
+
+    // The master switch dims (and disables) every individual toggle below
+    // it. `.last` — not `.first` — since ListRow itself wraps its content
+    // in its own (always opacity: 1 at rest) Opacity for press feedback;
+    // the outermost one is _RemindersList's.
+    await tester.tap(find.byType(FraternusSwitch).first);
+    await tester.pumpAndSettle();
+    final opacity = tester.widget<Opacity>(
+      find.ancestor(of: find.text('Daily Reading'), matching: find.byType(Opacity)).last,
+    );
+    expect(opacity.opacity, lessThan(1));
   });
 
   testWidgets('Log Out shows a confirmation dialog and confirming signs out to the sign-in screen', (

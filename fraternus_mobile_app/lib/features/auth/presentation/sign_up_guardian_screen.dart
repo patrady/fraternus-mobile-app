@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
 import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../../profile/presentation/widgets/birthday_field.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../providers/auth_providers.dart';
 
 /// app_concept.md's Profile section: "If it's a Guardian signing up: their
@@ -18,12 +19,12 @@ import '../providers/auth_providers.dart';
 /// SignUpCaptainScreen: the Member Data Model requires it for every role,
 /// even though this Profile-section prose only mentions chapter.
 ///
-/// The User half happens here via [AuthRepository.signUp]. The optional
-/// Member/UMA half (also `complete_captain_signup` — nothing about that RPC
-/// is Captain-signup-specific beyond naming, see
-/// docs/adrs/002_supabase_backend_poc.md §5) is wired up once
-/// `members`/`chapters` exist — see the TODO below. Child creation happens
-/// later, from the Profile tab, not during signup.
+/// The User half happens via [AuthRepository.signUp]. The optional
+/// Member/Self association half (also `completeCaptainSignup` — nothing
+/// about that RPC is Captain-signup-specific beyond naming, see
+/// docs/adrs/002_supabase_backend_poc.md §5) runs when `_alsoAttends` is
+/// on. Child creation happens later, from the Profile tab, not during
+/// signup.
 class SignUpGuardianScreen extends ConsumerStatefulWidget {
   const SignUpGuardianScreen({super.key});
 
@@ -83,11 +84,19 @@ class _SignUpGuardianScreenState extends ConsumerState<SignUpGuardianScreen> {
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
           );
-      // TODO(phase-3): if _alsoAttends, once `members`/`chapters` exist,
-      // call ProfileRepository.completeCaptainSignup(_chapterId!) here
-      // (same RPC the Captain flow uses) to create this Guardian's own
-      // Member(role=captain) + Self association. Child Member creation
-      // happens later, from Profile > My Kids, via create_child_member.
+      if (_alsoAttends) {
+        await ref
+            .read(profileRepositoryProvider)
+            .completeCaptainSignup(
+              chapterId: _chapterId!,
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              birthday: _birthday!,
+            );
+      }
+      // The router's redirect (see app/router/app_router.dart) takes over
+      // navigation to /today as soon as the session is established. Child
+      // Member creation happens later, from Profile > My Kids.
     } catch (_) {
       if (mounted) {
         setState(() => _errorMessage = 'Could not create your account. Try again in a moment.');
