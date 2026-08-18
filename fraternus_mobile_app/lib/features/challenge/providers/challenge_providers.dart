@@ -1,44 +1,54 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/supabase_provider.dart';
+import '../../profile/models/member.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../data/challenge_repository.dart';
 import '../models/challenge_household_member.dart';
-import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 
 part 'challenge_providers.g.dart';
 
-/// Swap this provider's implementation to change where Challenge's data
-/// comes from — nothing downstream needs to change.
 @riverpod
 ChallengeRepository challengeRepository(Ref ref) {
-  return const StaticChallengeRepository();
+  return SupabaseChallengeRepository(ref.watch(supabaseClientProvider));
 }
 
-/// The current user's household, for the Challenge tab's person tabs —
-/// every Member is eligible for every Challenge per the schema, so this is
-/// fetched once rather than per challenge (unlike Events, which have real
-/// per-event eligibility tables).
+/// Every household Member's own chapter should in practice be the same one
+/// (app_concept.md doesn't describe a multi-chapter household) — the first
+/// member's chapter stands in for "the household's chapter", same
+/// simplification guide_providers.dart makes for Field Guide content.
+String? _householdChapterId(List<Member> members) => members.isEmpty ? null : members.first.chapterId;
+
+/// The current user's household, for the Challenge tab's person tabs.
+/// Sourced from Profile's real Member data now — every Member is eligible
+/// for every Challenge per the schema (no per-challenge eligibility table
+/// the way Events has), so this stays a plain household-wide list.
 @riverpod
 Future<List<ChallengeHouseholdMember>> challengeHousehold(Ref ref) async {
-  final repository = ref.watch(challengeRepositoryProvider);
-  return repository.fetchHousehold();
+  final members = await ref.watch(householdMembersProvider.future);
+  return [for (final member in members) ChallengeHouseholdMember(memberId: member.id, label: member.firstName)];
 }
 
-/// All challenges, most recently started first.
+/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
 @riverpod
 Future<List<WeeklyChallenge>> allChallenges(Ref ref) async {
   final repository = ref.watch(challengeRepositoryProvider);
-  final challenges = await repository.fetchChallenges(asOf: DateTime.now());
-  return challenges..sort(
-    (a, b) => b.fratNightTemplate.startOfWeekDate.compareTo(a.fratNightTemplate.startOfWeekDate),
+  final members = await ref.watch(householdMembersProvider.future);
+  final chapterId = _householdChapterId(members);
+  if (chapterId == null) return const [];
+  return repository.fetchChallenges(
+    asOf: DateTime.now(),
+    chapterId: chapterId,
+    memberLabels: {for (final member in members) member.id: member.firstName},
   );
 }
 
 @riverpod
-Future<WeeklyChallenge> currentChallenge(Ref ref) async {
+Future<WeeklyChallenge?> currentChallenge(Ref ref) async {
   final challenges = await ref.watch(allChallengesProvider.future);
-  return challenges.first;
+  return challenges.isEmpty ? null : challenges.first;
 }
 
 @riverpod
@@ -84,10 +94,11 @@ class ChallengeSelectedPerson extends _$ChallengeSelectedPerson {
   void select(String key) => state = key;
 }
 
-/// In-memory accept/complete edits for one challenge's household rows,
-/// keyed by person. Seeded from the challenge's own data, then locally
-/// overridden as the user accepts or completes reps — edits reset on app
-/// restart, same as [EventRsvp].
+/// Per-person progress for one challenge, read straight through from
+/// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+/// repository and invalidates allChallengesProvider (which this provider
+/// derives from via challengeByIdProvider), so a write is only ever
+/// reflected once the repository actually reports it back.
 @riverpod
 class ChallengeProgress extends _$ChallengeProgress {
   @override
@@ -97,71 +108,26 @@ class ChallengeProgress extends _$ChallengeProgress {
   }
 
   /// Accepting is what creates the `Challenge Member` row in the first
-  /// place (mirroring `Event RSVP`'s "no row until submitted" rule), so
-  /// this builds a fresh [PersonChallengeProgress] rather than editing a
-  /// pre-existing placeholder — there isn't one.
-  void accept(String personKey) {
+  /// place (mirroring `Event RSVP`'s "no row until submitted" rule).
+  Future<void> accept(String personKey) async {
     final current = state.value ?? const {};
     if (current.containsKey(personKey)) return;
-
-    final household = ref.read(challengeHouseholdProvider).value;
-    String? label;
-    for (final member in household ?? const []) {
-      if (member.memberId == personKey) {
-        label = member.label;
-        break;
-      }
-    }
-    if (label == null) return;
-
-    final now = DateTime.now();
-    final progress = PersonChallengeProgress(
-      id: '$challengeId-$personKey',
-      memberId: personKey,
-      challengeId: challengeId,
-      label: label,
-      committedDate: now,
-      reps: const [],
-      createdAt: now,
-      lastModifiedAt: now,
-    );
-    state = AsyncData({...current, personKey: progress});
+    await ref.read(challengeRepositoryProvider).acceptChallenge(memberId: personKey, challengeId: challengeId);
+    ref.invalidate(allChallengesProvider);
   }
 
   /// Marks the rep at [repIndex] complete (today's date) if it's currently
   /// incomplete, or clears it back to incomplete if it's already done —
   /// used both for "Mark Complete" on the current challenge's next rep and
-  /// for Past Challenges' any-order retroactive dot taps. Both call sites
-  /// only ever touch the boundary rep (the next incomplete slot, or the
-  /// most recently completed one), matching the schema's "a Challenge
-  /// Member Rep row only exists once completed" rule.
-  void toggleRep(String personKey, int repIndex) {
+  /// for Past Challenges' any-order retroactive dot taps.
+  Future<void> toggleRep(String personKey, int repIndex) async {
     final current = state.value ?? const {};
     final existing = current[personKey];
     if (existing == null) return;
-
-    final repNumber = repIndex + 1;
-    final hasRep = existing.reps.any((rep) => rep.number == repNumber);
-    final reps = hasRep
-        ? existing.reps.where((rep) => rep.number != repNumber).toList()
-        : [
-            ...existing.reps,
-            ChallengeMemberRep(
-              id: '${existing.id}-rep-$repNumber',
-              challengeMemberId: existing.id,
-              completedByUserId: 'user-john',
-              number: repNumber,
-              createdAt: DateTime.now(),
-            ),
-          ];
-
-    final repsTotal = ref.read(challengeByIdProvider(challengeId)).value?.repsTotal;
-    final isNowComplete = repsTotal != null && reps.length == repsTotal;
-    final updated = existing.copyWith(
-      reps: reps,
-      completedDate: isNowComplete ? DateTime.now() : null,
-      clearCompletedDate: !isNowComplete,
+    await ref.read(challengeRepositoryProvider).toggleChallengeRep(
+      challengeMemberId: existing.id,
+      repNumber: repIndex + 1,
     );
-    state = AsyncData({...current, personKey: updated});
+    ref.invalidate(allChallengesProvider);
   }
 }

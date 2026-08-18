@@ -66,4 +66,23 @@ class PersonChallengeProgress {
       lastModifiedAt: lastModifiedAt,
     );
   }
+
+  /// [label] isn't a schema field (see the class doc) so it can't come from
+  /// [json] alone — callers resolve it separately (from the household
+  /// member list) and pass it in. Expects the nested-embed shape
+  /// (`challenge_member_reps(*)`) for [reps] — see SupabaseChallengeRepository.
+  factory PersonChallengeProgress.fromJson(Map<String, dynamic> json, {required String label}) {
+    final repsJson = json['challenge_member_reps'] as List<dynamic>? ?? const [];
+    return PersonChallengeProgress(
+      id: json['id'] as String,
+      memberId: json['member_id'] as String,
+      challengeId: json['challenge_id'] as String,
+      label: label,
+      committedDate: DateTime.parse(json['committed_date'] as String),
+      completedDate: json['completed_date'] == null ? null : DateTime.parse(json['completed_date'] as String),
+      reps: [for (final repJson in repsJson) ChallengeMemberRep.fromJson(repJson as Map<String, dynamic>)],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

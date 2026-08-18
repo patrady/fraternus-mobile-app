@@ -37,4 +37,30 @@ class WeeklyChallenge {
   /// Only the household members who have actually accepted — a
   /// `Challenge Member` row doesn't exist until then.
   final List<PersonChallengeProgress> progress;
+
+  /// Expects the nested-embed shape
+  /// `*, frat_night_templates(*, frat_night_virtues(*)), challenge_members(*, challenge_member_reps(*))`
+  /// — see SupabaseChallengeRepository. RLS already scopes the embedded
+  /// `challenge_members` rows to the caller's own household, so nothing
+  /// further is filtered here. [memberLabels] resolves each progress row's
+  /// display name (not a schema field — see PersonChallengeProgress) from
+  /// the household member list fetched separately.
+  factory WeeklyChallenge.fromJson(Map<String, dynamic> json, {required Map<String, String> memberLabels}) {
+    final progressJson = json['challenge_members'] as List<dynamic>? ?? const [];
+    return WeeklyChallenge(
+      id: json['id'] as String,
+      fratNightTemplateId: json['frat_night_template_id'] as String,
+      fratNightTemplate: FratNightTemplate.fromJson(json['frat_night_templates'] as Map<String, dynamic>),
+      title: json['title'] as String,
+      description: json['description'] as String,
+      repsTotal: json['reps'] as int,
+      progress: [
+        for (final progressRow in progressJson)
+          PersonChallengeProgress.fromJson(
+            progressRow as Map<String, dynamic>,
+            label: memberLabels[progressRow['member_id']] ?? '',
+          ),
+      ],
+    );
+  }
 }

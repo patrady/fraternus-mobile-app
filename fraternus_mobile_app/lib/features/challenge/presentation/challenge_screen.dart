@@ -26,7 +26,12 @@ class ChallengeScreen extends ConsumerWidget {
             const Heading('WEEKLY CHALLENGE', level: HeadingLevel.h2),
             const SizedBox(height: 20),
             challengeAsync.when(
-              data: (challenge) => _ChallengeContent(challenge: challenge),
+              data: (challenge) => challenge == null
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: BodyText('No challenge yet — check back after the next Frat Night.'),
+                    )
+                  : _ChallengeContent(challenge: challenge),
               loading: () => const SizedBox.shrink(),
               error: (error, stackTrace) => const BodyText('Something went wrong loading the challenge.'),
             ),

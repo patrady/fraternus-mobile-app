@@ -5,4 +5,8 @@ class FratNightVirtue {
 
   final String id;
   final String name;
+
+  factory FratNightVirtue.fromJson(Map<String, dynamic> json) {
+    return FratNightVirtue(id: json['id'] as String, name: json['name'] as String);
+  }
 }

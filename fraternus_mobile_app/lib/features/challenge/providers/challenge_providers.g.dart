@@ -8,14 +8,9 @@ part of 'challenge_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Swap this provider's implementation to change where Challenge's data
-/// comes from — nothing downstream needs to change.
 
 @ProviderFor(challengeRepository)
 const challengeRepositoryProvider = ChallengeRepositoryProvider._();
-
-/// Swap this provider's implementation to change where Challenge's data
-/// comes from — nothing downstream needs to change.
 
 final class ChallengeRepositoryProvider
     extends
@@ -25,8 +20,6 @@ final class ChallengeRepositoryProvider
           ChallengeRepository
         >
     with $Provider<ChallengeRepository> {
-  /// Swap this provider's implementation to change where Challenge's data
-  /// comes from — nothing downstream needs to change.
   const ChallengeRepositoryProvider._()
     : super(
         from: null,
@@ -62,20 +55,20 @@ final class ChallengeRepositoryProvider
 }
 
 String _$challengeRepositoryHash() =>
-    r'273c09e879b07f8df1b1379bc6b3f3cec0a54b16';
+    r'05add44338b30ccb79d95c4a6e1274ed497a57b1';
 
-/// The current user's household, for the Challenge tab's person tabs —
-/// every Member is eligible for every Challenge per the schema, so this is
-/// fetched once rather than per challenge (unlike Events, which have real
-/// per-event eligibility tables).
+/// The current user's household, for the Challenge tab's person tabs.
+/// Sourced from Profile's real Member data now — every Member is eligible
+/// for every Challenge per the schema (no per-challenge eligibility table
+/// the way Events has), so this stays a plain household-wide list.
 
 @ProviderFor(challengeHousehold)
 const challengeHouseholdProvider = ChallengeHouseholdProvider._();
 
-/// The current user's household, for the Challenge tab's person tabs —
-/// every Member is eligible for every Challenge per the schema, so this is
-/// fetched once rather than per challenge (unlike Events, which have real
-/// per-event eligibility tables).
+/// The current user's household, for the Challenge tab's person tabs.
+/// Sourced from Profile's real Member data now — every Member is eligible
+/// for every Challenge per the schema (no per-challenge eligibility table
+/// the way Events has), so this stays a plain household-wide list.
 
 final class ChallengeHouseholdProvider
     extends
@@ -87,10 +80,10 @@ final class ChallengeHouseholdProvider
     with
         $FutureModifier<List<ChallengeHouseholdMember>>,
         $FutureProvider<List<ChallengeHouseholdMember>> {
-  /// The current user's household, for the Challenge tab's person tabs —
-  /// every Member is eligible for every Challenge per the schema, so this is
-  /// fetched once rather than per challenge (unlike Events, which have real
-  /// per-event eligibility tables).
+  /// The current user's household, for the Challenge tab's person tabs.
+  /// Sourced from Profile's real Member data now — every Member is eligible
+  /// for every Challenge per the schema (no per-challenge eligibility table
+  /// the way Events has), so this stays a plain household-wide list.
   const ChallengeHouseholdProvider._()
     : super(
         from: null,
@@ -118,14 +111,14 @@ final class ChallengeHouseholdProvider
 }
 
 String _$challengeHouseholdHash() =>
-    r'1b998b010062d3662f0548f139080e2432e3f27b';
+    r'3efdf57c8bc7e475ef2f8e2872e5bd47783f9d16';
 
-/// All challenges, most recently started first.
+/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
 
 @ProviderFor(allChallenges)
 const allChallengesProvider = AllChallengesProvider._();
 
-/// All challenges, most recently started first.
+/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
 
 final class AllChallengesProvider
     extends
@@ -137,7 +130,7 @@ final class AllChallengesProvider
     with
         $FutureModifier<List<WeeklyChallenge>>,
         $FutureProvider<List<WeeklyChallenge>> {
-  /// All challenges, most recently started first.
+  /// All challenges, current one first (see ChallengeRepository.fetchChallenges).
   const AllChallengesProvider._()
     : super(
         from: null,
@@ -164,7 +157,7 @@ final class AllChallengesProvider
   }
 }
 
-String _$allChallengesHash() => r'b329a0083aaabe131ff307c2c522fa4adbe70011';
+String _$allChallengesHash() => r'772b22873c5e4a8cbf0f97a36d1da7d3eba22ed4';
 
 @ProviderFor(currentChallenge)
 const currentChallengeProvider = CurrentChallengeProvider._();
@@ -172,11 +165,11 @@ const currentChallengeProvider = CurrentChallengeProvider._();
 final class CurrentChallengeProvider
     extends
         $FunctionalProvider<
-          AsyncValue<WeeklyChallenge>,
-          WeeklyChallenge,
-          FutureOr<WeeklyChallenge>
+          AsyncValue<WeeklyChallenge?>,
+          WeeklyChallenge?,
+          FutureOr<WeeklyChallenge?>
         >
-    with $FutureModifier<WeeklyChallenge>, $FutureProvider<WeeklyChallenge> {
+    with $FutureModifier<WeeklyChallenge?>, $FutureProvider<WeeklyChallenge?> {
   const CurrentChallengeProvider._()
     : super(
         from: null,
@@ -193,17 +186,17 @@ final class CurrentChallengeProvider
 
   @$internal
   @override
-  $FutureProviderElement<WeeklyChallenge> $createElement(
+  $FutureProviderElement<WeeklyChallenge?> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<WeeklyChallenge> create(Ref ref) {
+  FutureOr<WeeklyChallenge?> create(Ref ref) {
     return currentChallenge(ref);
   }
 }
 
-String _$currentChallengeHash() => r'743e46fc8f07c0b96d17d8583380be25b9aaed34';
+String _$currentChallengeHash() => r'84384da872fe1e01b9539c94cc00e98888fec513';
 
 @ProviderFor(pastChallenges)
 const pastChallengesProvider = PastChallengesProvider._();
@@ -482,28 +475,31 @@ abstract class _$ChallengeSelectedPerson extends $Notifier<String> {
   }
 }
 
-/// In-memory accept/complete edits for one challenge's household rows,
-/// keyed by person. Seeded from the challenge's own data, then locally
-/// overridden as the user accepts or completes reps — edits reset on app
-/// restart, same as [EventRsvp].
+/// Per-person progress for one challenge, read straight through from
+/// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+/// repository and invalidates allChallengesProvider (which this provider
+/// derives from via challengeByIdProvider), so a write is only ever
+/// reflected once the repository actually reports it back.
 
 @ProviderFor(ChallengeProgress)
 const challengeProgressProvider = ChallengeProgressFamily._();
 
-/// In-memory accept/complete edits for one challenge's household rows,
-/// keyed by person. Seeded from the challenge's own data, then locally
-/// overridden as the user accepts or completes reps — edits reset on app
-/// restart, same as [EventRsvp].
+/// Per-person progress for one challenge, read straight through from
+/// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+/// repository and invalidates allChallengesProvider (which this provider
+/// derives from via challengeByIdProvider), so a write is only ever
+/// reflected once the repository actually reports it back.
 final class ChallengeProgressProvider
     extends
         $AsyncNotifierProvider<
           ChallengeProgress,
           Map<String, PersonChallengeProgress>
         > {
-  /// In-memory accept/complete edits for one challenge's household rows,
-  /// keyed by person. Seeded from the challenge's own data, then locally
-  /// overridden as the user accepts or completes reps — edits reset on app
-  /// restart, same as [EventRsvp].
+  /// Per-person progress for one challenge, read straight through from
+  /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+  /// repository and invalidates allChallengesProvider (which this provider
+  /// derives from via challengeByIdProvider), so a write is only ever
+  /// reflected once the repository actually reports it back.
   const ChallengeProgressProvider._({
     required ChallengeProgressFamily super.from,
     required String super.argument,
@@ -540,12 +536,13 @@ final class ChallengeProgressProvider
   }
 }
 
-String _$challengeProgressHash() => r'ab1ab8198ab8246cadea9bde8678b3e8c064433e';
+String _$challengeProgressHash() => r'3ae8002b8eadde8bb86eab4d85ff9d2fca39735d';
 
-/// In-memory accept/complete edits for one challenge's household rows,
-/// keyed by person. Seeded from the challenge's own data, then locally
-/// overridden as the user accepts or completes reps — edits reset on app
-/// restart, same as [EventRsvp].
+/// Per-person progress for one challenge, read straight through from
+/// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+/// repository and invalidates allChallengesProvider (which this provider
+/// derives from via challengeByIdProvider), so a write is only ever
+/// reflected once the repository actually reports it back.
 
 final class ChallengeProgressFamily extends $Family
     with
@@ -565,10 +562,11 @@ final class ChallengeProgressFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// In-memory accept/complete edits for one challenge's household rows,
-  /// keyed by person. Seeded from the challenge's own data, then locally
-  /// overridden as the user accepts or completes reps — edits reset on app
-  /// restart, same as [EventRsvp].
+  /// Per-person progress for one challenge, read straight through from
+  /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+  /// repository and invalidates allChallengesProvider (which this provider
+  /// derives from via challengeByIdProvider), so a write is only ever
+  /// reflected once the repository actually reports it back.
 
   ChallengeProgressProvider call(String challengeId) =>
       ChallengeProgressProvider._(argument: challengeId, from: this);
@@ -577,10 +575,11 @@ final class ChallengeProgressFamily extends $Family
   String toString() => r'challengeProgressProvider';
 }
 
-/// In-memory accept/complete edits for one challenge's household rows,
-/// keyed by person. Seeded from the challenge's own data, then locally
-/// overridden as the user accepts or completes reps — edits reset on app
-/// restart, same as [EventRsvp].
+/// Per-person progress for one challenge, read straight through from
+/// [ChallengeRepository] — no local edit buffer. Every mutation calls the
+/// repository and invalidates allChallengesProvider (which this provider
+/// derives from via challengeByIdProvider), so a write is only ever
+/// reflected once the repository actually reports it back.
 
 abstract class _$ChallengeProgress
     extends $AsyncNotifier<Map<String, PersonChallengeProgress>> {

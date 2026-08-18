@@ -39,4 +39,21 @@ class FratNightTemplate {
   final FratNightVirtue virtue;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
+
+  /// Expects the nested-embed shape (`frat_night_virtues(*)`) — see
+  /// SupabaseChallengeRepository.
+  factory FratNightTemplate.fromJson(Map<String, dynamic> json) {
+    return FratNightTemplate(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      reading: json['reading'] as String,
+      liturgicalDay: json['liturgical_day'] as String,
+      startOfWeekDate: DateTime.parse(json['start_of_week_date'] as String),
+      fratNightVirtueId: json['frat_night_virtue_id'] as String,
+      virtue: FratNightVirtue.fromJson(json['frat_night_virtues'] as Map<String, dynamic>),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

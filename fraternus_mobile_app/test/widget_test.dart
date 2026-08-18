@@ -11,6 +11,8 @@ import 'package:fraternus_mobile_app/app/fraternus_app.dart';
 import 'package:fraternus_mobile_app/design_system/design_system.dart';
 import 'package:fraternus_mobile_app/features/auth/data/auth_repository.dart';
 import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart';
+import 'package:fraternus_mobile_app/features/challenge/data/challenge_repository.dart';
+import 'package:fraternus_mobile_app/features/challenge/providers/challenge_providers.dart';
 import 'package:fraternus_mobile_app/features/guide/data/guide_repository.dart';
 import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_option_list.dart';
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
@@ -95,6 +97,7 @@ class _FakeAuthRepository implements AuthRepository {
 List<Override> _testOverrides({bool signedIn = true}) => [
   authRepositoryProvider.overrideWithValue(_FakeAuthRepository(signedIn: signedIn)),
   guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
+  challengeRepositoryProvider.overrideWithValue(StaticChallengeRepository()),
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
 ];
 

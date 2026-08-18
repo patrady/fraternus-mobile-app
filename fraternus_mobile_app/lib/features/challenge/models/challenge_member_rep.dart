@@ -21,4 +21,14 @@ class ChallengeMemberRep {
   /// Which rep this is, e.g. 2 of 3.
   final int number;
   final DateTime createdAt;
+
+  factory ChallengeMemberRep.fromJson(Map<String, dynamic> json) {
+    return ChallengeMemberRep(
+      id: json['id'] as String,
+      challengeMemberId: json['challenge_member_id'] as String,
+      completedByUserId: json['completed_by_user_id'] as String? ?? '',
+      number: json['number'] as int,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
 }
