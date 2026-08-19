@@ -13,6 +13,8 @@ import 'package:fraternus_mobile_app/features/auth/data/auth_repository.dart';
 import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart';
 import 'package:fraternus_mobile_app/features/challenge/data/challenge_repository.dart';
 import 'package:fraternus_mobile_app/features/challenge/providers/challenge_providers.dart';
+import 'package:fraternus_mobile_app/features/events/data/events_repository.dart';
+import 'package:fraternus_mobile_app/features/events/providers/events_providers.dart';
 import 'package:fraternus_mobile_app/features/guide/data/guide_repository.dart';
 import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_option_list.dart';
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
@@ -99,6 +101,7 @@ List<Override> _testOverrides({bool signedIn = true}) => [
   guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
   challengeRepositoryProvider.overrideWithValue(StaticChallengeRepository()),
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+  eventsRepositoryProvider.overrideWithValue(StaticEventsRepository()),
 ];
 
 void main() {

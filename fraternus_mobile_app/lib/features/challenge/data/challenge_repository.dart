@@ -76,7 +76,7 @@ class StaticChallengeRepository implements ChallengeRepository {
     // caught by "Cold Shower Challenge" no longer being findable in tests.
     required String title,
     required String description,
-    required String virtueId,
+    required String virtueKey,
     required String virtueName,
     required DateTime startOfWeekDate,
     required int repsTotal,
@@ -90,8 +90,8 @@ class StaticChallengeRepository implements ChallengeRepository {
         reading: description,
         liturgicalDay: 'Ordinary Time',
         startOfWeekDate: startOfWeekDate,
-        fratNightVirtueId: virtueId,
-        virtue: FratNightVirtue(id: virtueId, name: virtueName),
+        fratNightVirtueKey: virtueKey,
+        virtue: FratNightVirtue(id: virtueKey, key: virtueKey, name: virtueName),
         createdAt: startOfWeekDate,
         lastModifiedAt: startOfWeekDate,
       ),
@@ -136,7 +136,7 @@ class StaticChallengeRepository implements ChallengeRepository {
           '30–60 seconds fully cold. This trains you to stay calm and decisive under '
           'discomfort — a small, repeatable act of will that carries over into '
           'everything else you do this week.',
-      virtueId: 'fortitude',
+      virtueKey: 'fortitude',
       virtueName: 'Fortitude',
       startOfWeekDate: coldShowerWeekStart,
       repsTotal: 3,
@@ -181,7 +181,7 @@ class StaticChallengeRepository implements ChallengeRepository {
           'Spend the first 10 minutes of your morning in total silence — no phone, '
           'no music, no conversation. Just be present before the day pulls you in '
           'a dozen directions.',
-      virtueId: 'prudence',
+      virtueKey: 'prudence',
       virtueName: 'Prudence',
       startOfWeekDate: morningSilenceWeekStart,
       repsTotal: 3,
@@ -209,7 +209,7 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Go five full days without complaining — out loud or in your head. Notice '
           'how often the urge shows up, and choose gratitude instead.',
-      virtueId: 'patience',
+      virtueKey: 'patience',
       virtueName: 'Patience',
       startOfWeekDate: noComplainingWeekStart,
       repsTotal: 5,
@@ -239,7 +239,7 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Close each day with a short examen: where did you see God today, where '
           'did you fall short, and what will you carry into tomorrow.',
-      virtueId: 'humility',
+      virtueKey: 'humility',
       virtueName: 'Humility',
       startOfWeekDate: examenWeekStart,
       repsTotal: 7,

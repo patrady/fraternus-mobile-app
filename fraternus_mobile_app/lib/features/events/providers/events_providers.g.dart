@@ -60,7 +60,7 @@ final class EventsRepositoryProvider
   }
 }
 
-String _$eventsRepositoryHash() => r'48397ba7c2508402834d1f9d899469586d49fe48';
+String _$eventsRepositoryHash() => r'626a2b7a22dcbdb82f11255b0198d25e61636779';
 
 /// Events sorted by start date ascending, filtered to those still within
 /// 12 hours of their end — a business rule, so it lives here rather than in
@@ -110,7 +110,7 @@ final class VisibleEventsProvider
   }
 }
 
-String _$visibleEventsHash() => r'e1c508f93b75df2f7df3dceb24667126d8af571c';
+String _$visibleEventsHash() => r'01705ccd50650c82a33e0ef68b44ce8c4fd8e37e';
 
 @ProviderFor(eventById)
 const eventByIdProvider = EventByIdFamily._();
@@ -181,30 +181,27 @@ final class EventByIdFamily extends $Family
   String toString() => r'eventByIdProvider';
 }
 
-/// In-memory RSVP edits for one event's household rows, keyed by person.
-/// Seeded from the event's own data, then locally overridden as the user
-/// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state. Absence of a key
-/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-/// a row is only created once they actually respond.
+/// Per-event household RSVP state, read straight through from
+/// [EventsRepository] — no local edit buffer, same reasoning as
+/// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+/// RSVP` row exists yet for that member — a row is only created once they
+/// actually respond.
 
 @ProviderFor(EventRsvp)
 const eventRsvpProvider = EventRsvpFamily._();
 
-/// In-memory RSVP edits for one event's household rows, keyed by person.
-/// Seeded from the event's own data, then locally overridden as the user
-/// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state. Absence of a key
-/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-/// a row is only created once they actually respond.
+/// Per-event household RSVP state, read straight through from
+/// [EventsRepository] — no local edit buffer, same reasoning as
+/// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+/// RSVP` row exists yet for that member — a row is only created once they
+/// actually respond.
 final class EventRsvpProvider
     extends $AsyncNotifierProvider<EventRsvp, Map<String, RsvpStatus>> {
-  /// In-memory RSVP edits for one event's household rows, keyed by person.
-  /// Seeded from the event's own data, then locally overridden as the user
-  /// taps [RsvpToggle] — edits reset on app restart, same as
-  /// [TodaySelectedPerson] living purely in provider state. Absence of a key
-  /// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-  /// a row is only created once they actually respond.
+  /// Per-event household RSVP state, read straight through from
+  /// [EventsRepository] — no local edit buffer, same reasoning as
+  /// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+  /// RSVP` row exists yet for that member — a row is only created once they
+  /// actually respond.
   const EventRsvpProvider._({
     required EventRsvpFamily super.from,
     required String super.argument,
@@ -241,14 +238,13 @@ final class EventRsvpProvider
   }
 }
 
-String _$eventRsvpHash() => r'31d74661e5b5d0f85f91e98eda1d9febb99b7418';
+String _$eventRsvpHash() => r'98147e1ed41ccf9d5e2a9530301b1bb110862461';
 
-/// In-memory RSVP edits for one event's household rows, keyed by person.
-/// Seeded from the event's own data, then locally overridden as the user
-/// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state. Absence of a key
-/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-/// a row is only created once they actually respond.
+/// Per-event household RSVP state, read straight through from
+/// [EventsRepository] — no local edit buffer, same reasoning as
+/// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+/// RSVP` row exists yet for that member — a row is only created once they
+/// actually respond.
 
 final class EventRsvpFamily extends $Family
     with
@@ -268,12 +264,11 @@ final class EventRsvpFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// In-memory RSVP edits for one event's household rows, keyed by person.
-  /// Seeded from the event's own data, then locally overridden as the user
-  /// taps [RsvpToggle] — edits reset on app restart, same as
-  /// [TodaySelectedPerson] living purely in provider state. Absence of a key
-  /// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-  /// a row is only created once they actually respond.
+  /// Per-event household RSVP state, read straight through from
+  /// [EventsRepository] — no local edit buffer, same reasoning as
+  /// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+  /// RSVP` row exists yet for that member — a row is only created once they
+  /// actually respond.
 
   EventRsvpProvider call(String eventId) =>
       EventRsvpProvider._(argument: eventId, from: this);
@@ -282,12 +277,11 @@ final class EventRsvpFamily extends $Family
   String toString() => r'eventRsvpProvider';
 }
 
-/// In-memory RSVP edits for one event's household rows, keyed by person.
-/// Seeded from the event's own data, then locally overridden as the user
-/// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state. Absence of a key
-/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-/// a row is only created once they actually respond.
+/// Per-event household RSVP state, read straight through from
+/// [EventsRepository] — no local edit buffer, same reasoning as
+/// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+/// RSVP` row exists yet for that member — a row is only created once they
+/// actually respond.
 
 abstract class _$EventRsvp extends $AsyncNotifier<Map<String, RsvpStatus>> {
   late final _$args = ref.$arg as String;

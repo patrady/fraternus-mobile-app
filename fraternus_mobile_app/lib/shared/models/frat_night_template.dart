@@ -7,7 +7,7 @@ import 'frat_night_virtue.dart';
 ///
 /// [virtue] is nested here as a read-model convenience (same join-and-nest
 /// pattern as `FieldGuideWeek.quotes`/`devotionals`), resolved from
-/// [fratNightVirtueId].
+/// [fratNightVirtueKey].
 class FratNightTemplate {
   const FratNightTemplate({
     required this.id,
@@ -16,7 +16,7 @@ class FratNightTemplate {
     required this.reading,
     required this.liturgicalDay,
     required this.startOfWeekDate,
-    required this.fratNightVirtueId,
+    required this.fratNightVirtueKey,
     required this.virtue,
     required this.createdAt,
     required this.lastModifiedAt,
@@ -35,7 +35,7 @@ class FratNightTemplate {
   /// e.g. 2026-01-01. Unique per the schema — drives both which week's
   /// Challenge is "current" and which week's Frat Night reading is shown.
   final DateTime startOfWeekDate;
-  final String fratNightVirtueId;
+  final String fratNightVirtueKey;
   final FratNightVirtue virtue;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
@@ -50,7 +50,7 @@ class FratNightTemplate {
       reading: json['reading'] as String,
       liturgicalDay: json['liturgical_day'] as String,
       startOfWeekDate: DateTime.parse(json['start_of_week_date'] as String),
-      fratNightVirtueId: json['frat_night_virtue_id'] as String,
+      fratNightVirtueKey: json['frat_night_virtue_key'] as String,
       virtue: FratNightVirtue.fromJson(json['frat_night_virtues'] as Map<String, dynamic>),
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),

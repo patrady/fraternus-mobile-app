@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/supabase_provider.dart';
 import '../../../design_system/design_system.dart' show RsvpStatus;
+import '../../profile/providers/profile_providers.dart';
 import '../data/events_repository.dart';
 import '../models/event.dart';
 
@@ -10,7 +12,7 @@ part 'events_providers.g.dart';
 /// from — nothing downstream needs to change.
 @riverpod
 EventsRepository eventsRepository(Ref ref) {
-  return const StaticEventsRepository();
+  return SupabaseEventsRepository(ref.watch(supabaseClientProvider));
 }
 
 /// Events sorted by start date ascending, filtered to those still within
@@ -19,8 +21,12 @@ EventsRepository eventsRepository(Ref ref) {
 @riverpod
 Future<List<Event>> visibleEvents(Ref ref) async {
   final repository = ref.watch(eventsRepositoryProvider);
+  final members = await ref.watch(householdMembersProvider.future);
   final now = DateTime.now();
-  final events = await repository.fetchEvents(asOf: now);
+  final events = await repository.fetchEvents(
+    asOf: now,
+    memberLabels: {for (final member in members) member.id: member.firstName},
+  );
   return events.where((event) => now.isBefore(event.endAt.add(const Duration(hours: 12)))).toList()
     ..sort((a, b) => a.startAt.compareTo(b.startAt));
 }
@@ -34,12 +40,11 @@ Future<Event?> eventById(Ref ref, String eventId) async {
   return null;
 }
 
-/// In-memory RSVP edits for one event's household rows, keyed by person.
-/// Seeded from the event's own data, then locally overridden as the user
-/// taps [RsvpToggle] — edits reset on app restart, same as
-/// [TodaySelectedPerson] living purely in provider state. Absence of a key
-/// means no `HouseholdRsvp`/`Event RSVP` row exists yet for that member —
-/// a row is only created once they actually respond.
+/// Per-event household RSVP state, read straight through from
+/// [EventsRepository] — no local edit buffer, same reasoning as
+/// ChallengeProgress. Absence of a key means no `HouseholdRsvp`/`Event
+/// RSVP` row exists yet for that member — a row is only created once they
+/// actually respond.
 @riverpod
 class EventRsvp extends _$EventRsvp {
   @override
@@ -50,15 +55,10 @@ class EventRsvp extends _$EventRsvp {
 
   /// Tapping the already-selected option clears the RSVP back to
   /// unanswered rather than re-selecting it — matches how a real RSVP
-  /// toggle should behave (tap again to undo). "Unanswered" means no row
-  /// at all, so that case removes the key instead of nulling it.
-  void toggleStatus(String personKey, RsvpStatus status) {
-    final current = {...(state.value ?? const {})};
-    if (current[personKey] == status) {
-      current.remove(personKey);
-    } else {
-      current[personKey] = status;
-    }
-    state = AsyncData(current);
+  /// toggle should behave (tap again to undo); the repository's
+  /// submitRsvp implements that toggle-to-delete semantics.
+  Future<void> toggleStatus(String personKey, RsvpStatus status) async {
+    await ref.read(eventsRepositoryProvider).submitRsvp(eventId: eventId, memberId: personKey, status: status);
+    ref.invalidate(visibleEventsProvider);
   }
 }

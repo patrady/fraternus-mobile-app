@@ -74,4 +74,70 @@ class Event {
 
   /// The UI only needs cancelled-or-not, not when it was cancelled.
   bool get isCancelled => cancellationDate != null;
+
+  static EventType _typeFromDb(String value) => switch (value) {
+    'frat_night' => EventType.fratNight,
+    'excursion' => EventType.excursion,
+    'ranch' => EventType.ranch,
+    'custom' => EventType.custom,
+    _ => throw ArgumentError('Unknown event_type: $value'),
+  };
+
+  /// Expects the nested-embed shape `*, event_frat_night_details(*),
+  /// event_excursion_details(*), event_ranch_details(*),
+  /// event_attendees_chapter(*), event_attendees_specific(*),
+  /// event_rsvps(*)` — see SupabaseEventsRepository. RLS already scopes the
+  /// embedded `event_rsvps`/`event_attendees_specific` rows to the caller's
+  /// own household, so [householdRsvps] needs no further filtering here.
+  ///
+  /// [eligibleMemberIds] and [memberLabels] resolve [eligibleHouseholdMembers]
+  /// — not a schema entity, so it isn't part of the embed — from a separate
+  /// `get_event_eligible_members` RPC call and the household member list,
+  /// both fetched by the repository, not this factory. [othersAttending] is
+  /// resolved the same way, from a separate `get_event_attendees` RPC call
+  /// — see EventAttendee's doc for why that's its own cross-household RPC
+  /// rather than part of this embed.
+  factory Event.fromJson(
+    Map<String, dynamic> json, {
+    required Map<String, String> memberLabels,
+    required List<String> eligibleMemberIds,
+    required List<EventAttendee> othersAttending,
+  }) {
+    final attendeesChapterJson = json['event_attendees_chapter'] as List<dynamic>? ?? const [];
+    final attendeesSpecificJson = json['event_attendees_specific'] as List<dynamic>? ?? const [];
+    final rsvpsJson = json['event_rsvps'] as List<dynamic>? ?? const [];
+    final fratNightDetailsJson = json['event_frat_night_details'] as Map<String, dynamic>?;
+    final excursionDetailsJson = json['event_excursion_details'] as Map<String, dynamic>?;
+    final ranchDetailsJson = json['event_ranch_details'] as Map<String, dynamic>?;
+
+    return Event(
+      id: json['id'] as String,
+      type: _typeFromDb(json['type'] as String),
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      location: json['location'] as String?,
+      startAt: DateTime.parse(json['start_date'] as String),
+      endAt: DateTime.parse(json['end_date'] as String),
+      cancellationDate: (json['cancellation_date'] as String?) == null
+          ? null
+          : DateTime.parse(json['cancellation_date'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+      attendeesChapter: [
+        for (final row in attendeesChapterJson) EventAttendeesChapter.fromJson(row as Map<String, dynamic>),
+      ],
+      attendeesSpecific: [
+        for (final row in attendeesSpecificJson) EventAttendeesSpecific.fromJson(row as Map<String, dynamic>),
+      ],
+      fratNightDetails: fratNightDetailsJson == null ? null : EventFratNightDetails.fromJson(fratNightDetailsJson),
+      excursionDetails: excursionDetailsJson == null ? null : EventExcursionDetails.fromJson(excursionDetailsJson),
+      ranchDetails: ranchDetailsJson == null ? null : EventRanchDetails.fromJson(ranchDetailsJson),
+      eligibleHouseholdMembers: [
+        for (final memberId in eligibleMemberIds)
+          if (memberLabels[memberId] case final label?) EventEligibleMember(memberId: memberId, label: label),
+      ],
+      householdRsvps: [for (final row in rsvpsJson) HouseholdRsvp.fromJson(row as Map<String, dynamic>)],
+      othersAttending: othersAttending,
+    );
+  }
 }

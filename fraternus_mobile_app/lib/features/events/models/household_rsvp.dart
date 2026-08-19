@@ -20,9 +20,38 @@ class HouseholdRsvp {
   final String memberId;
 
   /// The User (Guardian/Captain, or the Member themselves) who submitted
-  /// this RSVP.
-  final String submittedByUserId;
+  /// this RSVP. Nullable because the schema's FK is `on delete set null` —
+  /// same treatment as `FieldGuideDailyDevotionalMember.submittedByUserId`.
+  final String? submittedByUserId;
   final RsvpStatus status;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
+
+  /// The db's `rsvp_response` enum values don't match `RsvpStatus`'s
+  /// literal wording (carried over as-is from app_concept.md) — this is
+  /// the one place that mapping happens, both directions.
+  static RsvpStatus _statusFromDb(String value) => switch (value) {
+    'accepted' => RsvpStatus.yes,
+    'declined' => RsvpStatus.no,
+    'tentative' => RsvpStatus.tentative,
+    _ => throw ArgumentError('Unknown rsvp_response: $value'),
+  };
+
+  static String statusToDb(RsvpStatus status) => switch (status) {
+    RsvpStatus.yes => 'accepted',
+    RsvpStatus.no => 'declined',
+    RsvpStatus.tentative => 'tentative',
+  };
+
+  factory HouseholdRsvp.fromJson(Map<String, dynamic> json) {
+    return HouseholdRsvp(
+      id: json['id'] as String,
+      eventId: json['event_id'] as String,
+      memberId: json['member_id'] as String,
+      submittedByUserId: json['submitted_by_user_id'] as String?,
+      status: _statusFromDb(json['response'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      lastModifiedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }

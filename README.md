@@ -11,7 +11,7 @@ The Fraternus app supports two types of users: **Captains** (adult mentors/leade
 - **Events** — Frat Nights, Excursions, Ranch (Summer Camp), HAWC Nights, and other chapter events. Supports RSVPs and calendar integration.
 - **Profile** — Account management for Captains and Guardians, including Brother member records and COPPA-compliant consent tracking for members under 13.
 
-Authentication is handled via Auth0 (username/password or passkey).
+Authentication and data are backed by [Supabase](https://supabase.com).
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ Authentication is handled via Auth0 (username/password or passkey).
 - [Dart SDK](https://dart.dev/get-dart) (bundled with Flutter)
 - [Xcode](https://developer.apple.com/xcode/) (for iOS development, macOS only)
 - [Android Studio](https://developer.android.com/studio) with Android SDK (for Android development)
-- An Auth0 tenant configured for this app
+- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (for running a local Supabase stack) and [Docker](https://docs.docker.com/get-docker/) (required by the Supabase CLI)
 
 Verify your Flutter environment:
 
@@ -33,18 +33,46 @@ flutter doctor
 flutter pub get
 ```
 
+## Local Supabase Setup
+
+Start the local Supabase stack (requires Docker running):
+
+```bash
+supabase start
+```
+
+Copy `fraternus_mobile_app/env/local.example.json` to `fraternus_mobile_app/env/local.json` and fill in the anon key printed by `supabase start` (or `supabase status`):
+
+```bash
+cp fraternus_mobile_app/env/local.example.json fraternus_mobile_app/env/local.json
+```
+
+`env/local.json` is gitignored — each developer keeps their own copy.
+
+### Viewing the Database
+
+**Supabase Studio (GUI):** with the stack running, open [http://127.0.0.1:54323](http://127.0.0.1:54323) for a table browser and SQL editor.
+
+**psql:**
+
+```bash
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+```
+
 ## Running the App
+
+All run commands must pass the env file via `--dart-define-from-file` so the app can reach Supabase:
 
 **iOS Simulator:**
 
 ```bash
-flutter run -d ios
+flutter run -d ios --dart-define-from-file=env/local.json
 ```
 
 **Android Emulator:**
 
 ```bash
-flutter run -d android
+flutter run -d android --dart-define-from-file=env/local.json
 ```
 
 **List available devices:**
@@ -56,7 +84,7 @@ flutter devices
 **Run on a specific device:**
 
 ```bash
-flutter run -d <device-id>
+flutter run -d <device-id> --dart-define-from-file=env/local.json
 ```
 
 ## Running Tests

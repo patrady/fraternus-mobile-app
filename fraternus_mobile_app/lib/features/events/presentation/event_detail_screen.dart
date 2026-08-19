@@ -135,17 +135,19 @@ class _EventDetailContent extends ConsumerWidget {
           disabled: cancelled,
           onPressed: _addToDeviceCalendar,
         ),
-        const SizedBox(height: 24),
-        const Subheading('Others Attending'),
-        const SizedBox(height: 12),
-        Column(
-          children: [
-            for (var i = 0; i < event.othersAttending.length; i++) ...[
-              _AttendeeRow(attendee: event.othersAttending[i]),
-              if (i != event.othersAttending.length - 1) const HairlineDivider(),
+        if (event.othersAttending.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Subheading('Others Attending'),
+          const SizedBox(height: 12),
+          Column(
+            children: [
+              for (var i = 0; i < event.othersAttending.length; i++) ...[
+                _AttendeeRow(attendee: event.othersAttending[i]),
+                if (i != event.othersAttending.length - 1) const HairlineDivider(),
+              ],
             ],
-          ],
-        ),
+          ),
+        ],
         const SizedBox(height: 24),
       ],
     );

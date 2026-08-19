@@ -7,4 +7,12 @@ class EventAttendeesSpecific {
   final String id;
   final String eventId;
   final String memberId;
+
+  factory EventAttendeesSpecific.fromJson(Map<String, dynamic> json) {
+    return EventAttendeesSpecific(
+      id: json['id'] as String,
+      eventId: json['event_id'] as String,
+      memberId: json['member_id'] as String,
+    );
+  }
 }

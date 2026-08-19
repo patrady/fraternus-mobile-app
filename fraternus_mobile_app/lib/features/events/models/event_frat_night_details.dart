@@ -15,4 +15,13 @@ class EventFratNightDetails {
   /// Also present on `Event Attendees Chapter` for the same event — the
   /// schema notes these two must be kept from deviating.
   final String chapterId;
+
+  factory EventFratNightDetails.fromJson(Map<String, dynamic> json) {
+    return EventFratNightDetails(
+      id: json['id'] as String,
+      eventId: json['event_id'] as String,
+      fratNightTemplateId: json['frat_night_template_id'] as String,
+      chapterId: json['chapter_id'] as String,
+    );
+  }
 }
