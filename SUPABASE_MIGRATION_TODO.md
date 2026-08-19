@@ -71,11 +71,12 @@ Earlier real-stack bugs (Phases 5–6, for reference — keep testing every phas
 - ~~`HouseholdAssociations.remove`~~ — done, removed; the whole class was simplified to a plain function provider since nothing mutates it directly anymore.
 - **ADR 0002 §3 supersession note.** This work moved reference content (Chapters, Field Guide content, Frat Night templates, Events) into Postgres, which is broader than ADR 0002 §3's literal framing ("reference content stays bundled"). Worth a short note added to ADR 0002 itself acknowledging this, same pattern ADR 0002 used against ADR 0001 — not yet written.
 
-## Known doc/spec bugs to fix (found during implementation, not yet corrected in the docs themselves)
+## Known doc/spec bugs (fixed)
 
-- `docs/app_concept.md`'s Field Guide algorithm section says `Day Number = ... mod 7` (implying 0–6). The already-shipped Dart code and this migration's SQL both use 1–7, Monday-anchored (matching `DateTime.weekday`) — the doc prose has the bug, the code doesn't. Worth a one-line fix to the doc.
-- `docs/app_concept.md`'s Profile section lists Captain signup fields as "first name, last name, email, and chapter" — no birthday — but the Member Data Model (and the already-built Dart model) require birthday for every role. The sign-up screens already collect it (fixed in Phase 2); the doc prose should be corrected to match.
-- `README.md` (repo root) and its "An Auth0 tenant configured for this app" prerequisite still describe Auth0 as the auth provider — needs updating to Supabase now that ADR 0002 §2 superseded that decision.
+- ~~`docs/app_concept.md`'s Field Guide algorithm section said `Day Number = ... mod 7` (implying 0–6)~~ — fixed to `(... mod 7) + 1`, matching the shipped 1–7 Monday-anchored convention.
+- ~~`docs/app_concept.md`'s Profile section omitted birthday from the Captain/self-attending-Guardian signup field list~~ — fixed to include it, matching the Member Data Model and what the sign-up screens actually collect (since Phase 2).
+- ~~`docs/app_concept.md`'s Authentication section still said "Auth0 will be used"~~ — fixed to Supabase Auth, with a pointer to ADR 0002 §2. (Root `README.md` never had this problem — it was already Supabase-only by the time this note was written.)
+- Root `README.md` also got a real setup-completeness pass: `supabase db reset` (how new migrations actually get applied to an existing local stack) and a "Seeding test data" note (only Chapters/Frat Night Virtues are seeded by migrations — Guide/Challenge/Events are legitimately empty on a fresh stack, not broken) were both previously undocumented gaps, not just wording bugs. Also added an "Architecture & Decisions" section linking all 3 ADRs + this file, and clarified `env/local.json` needs the `sb_publishable_...` key specifically (`supabase status` now also prints an older JWT-format anon key that works but isn't what this app is tested against).
 
 ## Local dev environment notes
 

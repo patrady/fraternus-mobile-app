@@ -8,8 +8,8 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 
 ### Authentication
 
-- Auth0 will be used
-- Authentication methods include username/password or passkey
+- Supabase Auth is used (see [ADR 0002](adrs/002_supabase_backend_poc.md) §2 — this superseded an earlier Auth0-based design; see [ADR 0001](adrs/001_initial_archectural_decisions.md) §6 for that original decision)
+- Authentication methods include username/password, with OAuth providers as needed
 - Forget password flow is implemented
 - Confirm email flow is implemented
 
@@ -18,10 +18,10 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - When creating an account, the user must choose between two options: Captain or Guardian. A captain is an adult that is involved with Fraternus (e.g. a mentor/leader). A guardian is an adult that is not personally involved with Fraternus but has a child (or children) in it.
 - A user is someone who has an account. A member is someone that is registered with Fraternus (a Brother, Captain, or Commander).
 - Brothers cannot sign up for their own account yet. A Guardian creates their Brother's Member record on the Brother's behalf. A future invite flow will let a Brother claim their own account against an existing Member record their Guardian created.
-- If it's a Captain signing up: their first name, last name, email, and chapter must be provided. This creates a User, a Member (Role = Captain), and a User Member Association (Relationship = Self).
-- If it's a Guardian signing up: their first name, last name, and email must be provided (creates a User only). If the Guardian is also going to Fraternus meetings themselves, a Member record (Role = Captain) is also created for them along with a chapter selection, and a User Member Association (Relationship = Self) is created. Otherwise, the Guardian has no Member record of their own.
+- If it's a Captain signing up: their first name, last name, email, chapter, and birthday must be provided (birthday is required for every Member regardless of role — see the Member Data Model). This creates a User, a Member (Role = Captain), and a User Member Association (Relationship = Self).
+- If it's a Guardian signing up: their first name, last name, and email must be provided (creates a User only). If the Guardian is also going to Fraternus meetings themselves, a Member record (Role = Captain) is also created for them along with a chapter selection and birthday, and a User Member Association (Relationship = Self) is created. Otherwise, the Guardian has no Member record of their own.
 - During or after Guardian/Captain signup, Member records for each of their children can be created (Role = Brother). These fields are required for a member: first name, last name, chapter (prefilled based on the Guardian's), and birthday must be provided; email is optional since Brothers may not have one. Each child creation also creates a User Member Association (Relationship = Guardian) linking the Guardian's User Id to the new Member Id. Since these Member records are being created for the first time, there's no need to search for or link an existing Member.
-- The chapter will be a drop-down selection from a predefined list. This should be hard coded at first but built in a way later that it can be an API call. Look at the Chapter data model for more information.
+- The chapter is a drop-down selection, sourced from the `Chapter` table via Supabase (readable by unauthenticated clients too, since chapter selection happens before signup completes — see the Chapter data model for more information).
 - A member can only belong to one chapter
 - A user can have a relationship to a member as either Self or Guardian
 
@@ -49,7 +49,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Take that record's Field Guide Start Date and calculate how many days it has been since that date using today's date (`days_since_field_guide_start_date`)
     - Find the Field Guide Daily Devotional record where:
         - `Field Guide Daily Devotional`.`Field Guide Week`.`Week Number` = floor(days_since_field_guide_start_date / 7)
-        - `Field Guide Daily Devotional`.`Day Number` = days_since_field_guide_start_date mod 7
+        - `Field Guide Daily Devotional`.`Day Number` = (days_since_field_guide_start_date mod 7) + 1 — 1–7, Monday-anchored, matching `DateTime.weekday` (Monday = 1 .. Sunday = 7); `Field Guide Start Date` must fall on a Monday for this to line up
     - If that record exists, find or create a Field Guide Daily Devotional Member record
     - If that record doesn't exist, show a "you've completed the field guide" screen
 - When the user (or their Guardian/Captain on their behalf) selects a sword for the day, populate `Field Guide Daily Devotional Member`.`Sword`, and set `Submitted By User Id` to whoever submitted it
