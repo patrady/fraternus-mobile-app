@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
+import '../../../shared/providers/chapter_providers.dart';
 import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../models/app_user.dart';
 import '../models/member.dart';
@@ -17,6 +18,7 @@ class EditProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
     final selfMemberAsync = ref.watch(selfMemberProvider);
+    final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
 
     return ScreenShell(
       child: Column(
@@ -28,7 +30,7 @@ class EditProfileScreen extends ConsumerWidget {
             child: userAsync.when(
               data: (user) => selfMemberAsync.when(
                 data: (selfMember) =>
-                    _EditProfileForm(user: user, selfMember: selfMember),
+                    _EditProfileForm(user: user, selfMember: selfMember, chapters: chapters),
                 loading: () => const SizedBox.shrink(),
                 error: (error, stackTrace) => const BodyText(
                   'Something went wrong loading your profile.',
@@ -46,10 +48,11 @@ class EditProfileScreen extends ConsumerWidget {
 }
 
 class _EditProfileForm extends ConsumerStatefulWidget {
-  const _EditProfileForm({required this.user, required this.selfMember});
+  const _EditProfileForm({required this.user, required this.selfMember, required this.chapters});
 
   final AppUser user;
   final Member? selfMember;
+  final List<Chapter> chapters;
 
   @override
   ConsumerState<_EditProfileForm> createState() => _EditProfileFormState();
@@ -151,7 +154,7 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
           SelectField(
             value: _chapterId,
             options: {
-              for (final chapter in seedChapters) chapter.id: chapter.name,
+              for (final chapter in widget.chapters) chapter.id: chapter.name,
             },
             placeholder: 'Select a chapter',
             onChanged: (value) => setState(() => _chapterId = value),

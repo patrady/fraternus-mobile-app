@@ -12,11 +12,6 @@ import 'widgets/fraternus_date_picker.dart';
 import 'widgets/guide_date_header.dart';
 import 'widgets/sword_option_list.dart';
 
-/// Labels for the fixed you/jack/thomas household, hardcoded per-feature —
-/// same established (if duplicated) pattern as Today/Challenge, which
-/// don't share a household-members provider either.
-const _personLabels = {'you': 'You', 'jack': 'Jack', 'thomas': 'Thomas'};
-
 bool _isLiked(Set<String> likedItems, String personKey, String itemId) =>
     likedItems.contains('$personKey:$itemId');
 
@@ -83,26 +78,31 @@ class _GuideContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedKey = ref.watch(guideSelectedPersonProvider);
+    final householdAsync = ref.watch(guideHouseholdProvider);
     final progressAsync = ref.watch(guideDevotionalProgressProvider(date));
     final likedItems = ref.watch(guideLikedItemsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        progressAsync.when(
-          data: (progressByPerson) => PersonTabs(
-            people: [
-              for (final member in devotional.members)
-                PersonTabItem(
-                  key: member.memberId,
-                  label: _personLabels[member.memberId] ?? member.memberId,
-                  status: progressByPerson[member.memberId]?.isCompleted == true
-                      ? PersonTabStatus.done
-                      : PersonTabStatus.none,
-                ),
-            ],
-            activeKey: selectedKey,
-            onChanged: (key) => ref.read(guideSelectedPersonProvider.notifier).select(key),
+        householdAsync.when(
+          data: (household) => progressAsync.when(
+            data: (progressByPerson) => PersonTabs(
+              people: [
+                for (final member in household)
+                  PersonTabItem(
+                    key: member.memberId,
+                    label: member.label,
+                    status: progressByPerson[member.memberId]?.isCompleted == true
+                        ? PersonTabStatus.done
+                        : PersonTabStatus.none,
+                  ),
+              ],
+              activeKey: selectedKey,
+              onChanged: (key) => ref.read(guideSelectedPersonProvider.notifier).select(key),
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (error, stackTrace) => const SizedBox.shrink(),
           ),
           loading: () => const SizedBox.shrink(),
           error: (error, stackTrace) => const SizedBox.shrink(),

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
-import '../../../shared/models/chapter.dart';
+import '../../../shared/providers/chapter_providers.dart';
 import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../../profile/presentation/widgets/birthday_field.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -21,8 +21,8 @@ import '../providers/auth_providers.dart';
 /// The User half happens via [AuthRepository.signUp]; the Member/Self
 /// association half via `completeCaptainSignup` (the `complete_captain_signup`
 /// RPC — docs/adrs/002_supabase_backend_poc.md §5). Chapter options come
-/// from the bundled [seedChapters] until the Chapter table itself moves to
-/// Supabase (plan phase 10).
+/// from [chaptersProvider] — readable pre-auth since chapters are public,
+/// non-sensitive directory data (see the "chapters_anon_read" migration).
 class SignUpCaptainScreen extends ConsumerStatefulWidget {
   const SignUpCaptainScreen({super.key});
 
@@ -162,7 +162,9 @@ class _SignUpCaptainScreenState extends ConsumerState<SignUpCaptainScreen> {
                 const FieldLabel(label: 'Chapter'),
                 SelectField(
                   value: _chapterId,
-                  options: {for (final chapter in seedChapters) chapter.id: chapter.name},
+                  options: {
+                    for (final chapter in ref.watch(chaptersProvider).value ?? const []) chapter.id: chapter.name,
+                  },
                   placeholder: 'Select a chapter',
                   onChanged: (value) => setState(() => _chapterId = value),
                 ),

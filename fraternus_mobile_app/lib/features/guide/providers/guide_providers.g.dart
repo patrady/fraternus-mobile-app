@@ -51,6 +51,55 @@ final class GuideRepositoryProvider
 
 String _$guideRepositoryHash() => r'2c7705346b2d51ddb2058fcd9b9f339b2d4de863';
 
+/// The current user's household, for the Guide tab's person tabs — same
+/// shape and reasoning as Challenge's `challengeHouseholdProvider`.
+
+@ProviderFor(guideHousehold)
+const guideHouseholdProvider = GuideHouseholdProvider._();
+
+/// The current user's household, for the Guide tab's person tabs — same
+/// shape and reasoning as Challenge's `challengeHouseholdProvider`.
+
+final class GuideHouseholdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GuideHouseholdMember>>,
+          List<GuideHouseholdMember>,
+          FutureOr<List<GuideHouseholdMember>>
+        >
+    with
+        $FutureModifier<List<GuideHouseholdMember>>,
+        $FutureProvider<List<GuideHouseholdMember>> {
+  /// The current user's household, for the Guide tab's person tabs — same
+  /// shape and reasoning as Challenge's `challengeHouseholdProvider`.
+  const GuideHouseholdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'guideHouseholdProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$guideHouseholdHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GuideHouseholdMember>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GuideHouseholdMember>> create(Ref ref) {
+    return guideHousehold(ref);
+  }
+}
+
+String _$guideHouseholdHash() => r'c2ce8d0e9d62ec0c4ce546fd3828300aab928446';
+
 /// [date] must already be truncated to year/month/day — see
 /// [GuideSelectedDate] — since DateTime equality (Riverpod's family-arg
 /// cache key) would otherwise cache-miss on time-of-day noise.

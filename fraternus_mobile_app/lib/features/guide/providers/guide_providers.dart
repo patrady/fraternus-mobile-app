@@ -6,6 +6,7 @@ import '../../profile/providers/profile_providers.dart';
 import '../data/guide_repository.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
+import '../models/guide_household_member.dart';
 import '../models/temperament.dart';
 
 part 'guide_providers.g.dart';
@@ -27,6 +28,14 @@ Member? _memberById(List<Member> members, String memberId) {
     if (member.id == memberId) return member;
   }
   return null;
+}
+
+/// The current user's household, for the Guide tab's person tabs — same
+/// shape and reasoning as Challenge's `challengeHouseholdProvider`.
+@riverpod
+Future<List<GuideHouseholdMember>> guideHousehold(Ref ref) async {
+  final members = await ref.watch(householdMembersProvider.future);
+  return [for (final member in members) GuideHouseholdMember(memberId: member.id, label: member.firstName)];
 }
 
 /// [date] must already be truncated to year/month/day — see

@@ -43,7 +43,17 @@ class _TodayContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPerson = dashboard.people.firstWhere((person) => person.memberId == selectedKey);
+    // dashboard.people can be genuinely empty — a Guardian with no Member
+    // record of their own (see selfMemberProvider's doc) who hasn't added
+    // a child yet — and selectedKey's 'you' default (see
+    // TodaySelectedPerson) won't match any real Member id, so this can't
+    // be a bare firstWhere the way the original static-data version was.
+    final selectedPerson = dashboard.people.isEmpty
+        ? null
+        : dashboard.people.firstWhere(
+            (person) => person.memberId == selectedKey,
+            orElse: () => dashboard.people.first,
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,15 +75,22 @@ class _TodayContent extends ConsumerWidget {
         const SizedBox(height: 16),
         const Subheading('Today'),
         const SizedBox(height: 4),
-        PersonTabs(
-          people: dashboard.people
-              .map((person) => PersonTabItem(key: person.memberId, label: person.label, status: person.status))
-              .toList(),
-          activeKey: selectedKey,
-          onChanged: (key) => ref.read(todaySelectedPersonProvider.notifier).select(key),
-        ),
-        const SizedBox(height: 16),
-        _TodayTaskCard(person: selectedPerson),
+        if (selectedPerson == null)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: BodyText('Add a household member from Profile to get started.'),
+          )
+        else ...[
+          PersonTabs(
+            people: dashboard.people
+                .map((person) => PersonTabItem(key: person.memberId, label: person.label, status: person.status))
+                .toList(),
+            activeKey: selectedPerson.memberId,
+            onChanged: (key) => ref.read(todaySelectedPersonProvider.notifier).select(key),
+          ),
+          const SizedBox(height: 16),
+          _TodayTaskCard(person: selectedPerson),
+        ],
         const SizedBox(height: 20),
         const HairlineDivider(),
         const SizedBox(height: 16),

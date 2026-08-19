@@ -14,6 +14,11 @@ String formatEventDateRange(DateTime start, DateTime end) {
   return '$startLabel – $endLabel';
 }
 
+/// "Fri, Jul 24" — a single-date label, for contexts (like the Today
+/// dashboard's "Events later this week" rows) that show a date without a
+/// time range.
+String formatEventDayLabel(DateTime date) => _weekdayMonthDay.format(date);
+
 /// A countdown badge label ("IN 30 MINUTES", "IN 2 HOURS") for an event
 /// starting soon, or null once it's more than [within] away (or already
 /// started) — callers treat null as "show no badge".

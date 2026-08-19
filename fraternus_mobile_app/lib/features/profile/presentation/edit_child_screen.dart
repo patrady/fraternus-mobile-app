@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../shared/models/chapter.dart';
+import '../../../shared/providers/chapter_providers.dart';
 import '../models/member.dart';
 import '../models/user_member_association.dart';
 import '../providers/profile_providers.dart';
@@ -17,6 +19,7 @@ class EditChildScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final membersAsync = ref.watch(householdMembersProvider);
     final associationsAsync = ref.watch(householdAssociationsProvider);
+    final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
 
     return ScreenShell(
       child: Column(
@@ -56,6 +59,7 @@ class EditChildScreen extends ConsumerWidget {
                     ],
                     ChildForm(
                       initial: member,
+                      chapters: chapters,
                       onSave: ({required firstName, required lastName, required birthday, required email, required chapterId}) async {
                         await ref
                             .read(householdMembersProvider.notifier)

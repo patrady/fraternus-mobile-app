@@ -14,12 +14,18 @@ class ChildForm extends StatefulWidget {
   const ChildForm({
     super.key,
     this.initial,
+    required this.chapters,
     required this.onSave,
     this.onRemove,
   });
 
   /// Null means "new child" — all fields start empty.
   final Member? initial;
+
+  /// Sourced from `chaptersProvider` by the caller (AddChildScreen /
+  /// EditChildScreen) — kept plain (not repository-aware) here since this
+  /// widget already only talks to its parent via callbacks.
+  final List<Chapter> chapters;
   final void Function({
     required String firstName,
     required String lastName,
@@ -119,7 +125,7 @@ class _ChildFormState extends State<ChildForm> {
               SelectField(
                 value: _chapterId,
                 options: {
-                  for (final chapter in seedChapters) chapter.id: chapter.name,
+                  for (final chapter in widget.chapters) chapter.id: chapter.name,
                 },
                 placeholder: 'Select a chapter',
                 onChanged: (value) => setState(() => _chapterId = value),

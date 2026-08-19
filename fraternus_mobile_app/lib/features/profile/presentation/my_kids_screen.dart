@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
+import '../../../shared/providers/chapter_providers.dart';
 import '../models/member.dart';
 import '../providers/profile_providers.dart';
 
@@ -14,6 +15,7 @@ class MyKidsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childrenAsync = ref.watch(guardianMembersProvider);
+    final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
 
     return ScreenShell(
       child: Column(
@@ -23,7 +25,7 @@ class MyKidsScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: childrenAsync.when(
-              data: (children) => _MyKidsList(children: children),
+              data: (children) => _MyKidsList(children: children, chapters: chapters),
               loading: () => const SizedBox.shrink(),
               error: (error, stackTrace) => const BodyText('Something went wrong loading your kids.'),
             ),
@@ -35,12 +37,13 @@ class MyKidsScreen extends ConsumerWidget {
 }
 
 class _MyKidsList extends StatelessWidget {
-  const _MyKidsList({required this.children});
+  const _MyKidsList({required this.children, required this.chapters});
 
   final List<Member> children;
+  final List<Chapter> chapters;
 
   String _chapterName(String chapterId) {
-    for (final chapter in seedChapters) {
+    for (final chapter in chapters) {
       if (chapter.id == chapterId) return chapter.name;
     }
     return '';

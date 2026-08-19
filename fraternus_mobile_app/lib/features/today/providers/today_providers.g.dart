@@ -8,67 +8,20 @@ part of 'today_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Swap this provider's implementation to change where Today's data comes
-/// from — nothing downstream (the dashboard provider, the screen) needs to
-/// change.
-
-@ProviderFor(todayDashboardRepository)
-const todayDashboardRepositoryProvider = TodayDashboardRepositoryProvider._();
-
-/// Swap this provider's implementation to change where Today's data comes
-/// from — nothing downstream (the dashboard provider, the screen) needs to
-/// change.
-
-final class TodayDashboardRepositoryProvider
-    extends
-        $FunctionalProvider<
-          TodayDashboardRepository,
-          TodayDashboardRepository,
-          TodayDashboardRepository
-        >
-    with $Provider<TodayDashboardRepository> {
-  /// Swap this provider's implementation to change where Today's data comes
-  /// from — nothing downstream (the dashboard provider, the screen) needs to
-  /// change.
-  const TodayDashboardRepositoryProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'todayDashboardRepositoryProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$todayDashboardRepositoryHash();
-
-  @$internal
-  @override
-  $ProviderElement<TodayDashboardRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  TodayDashboardRepository create(Ref ref) {
-    return todayDashboardRepository(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(TodayDashboardRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<TodayDashboardRepository>(value),
-    );
-  }
-}
-
-String _$todayDashboardRepositoryHash() =>
-    r'9ddff3de39fa108e2864ff5d2b1b1d738bd46767';
+/// Composed client-side from Guide/Challenge/Events/Profile's own providers
+/// rather than a dedicated backend aggregator — reuses each tab's
+/// already-migrated logic (Field Guide week/devotional resolution, current
+/// challenge resolution, event visibility filtering) instead of duplicating
+/// it in SQL. See the migration plan's decision notes.
 
 @ProviderFor(todayDashboard)
 const todayDashboardProvider = TodayDashboardProvider._();
+
+/// Composed client-side from Guide/Challenge/Events/Profile's own providers
+/// rather than a dedicated backend aggregator — reuses each tab's
+/// already-migrated logic (Field Guide week/devotional resolution, current
+/// challenge resolution, event visibility filtering) instead of duplicating
+/// it in SQL. See the migration plan's decision notes.
 
 final class TodayDashboardProvider
     extends
@@ -78,6 +31,11 @@ final class TodayDashboardProvider
           FutureOr<TodayDashboard>
         >
     with $FutureModifier<TodayDashboard>, $FutureProvider<TodayDashboard> {
+  /// Composed client-side from Guide/Challenge/Events/Profile's own providers
+  /// rather than a dedicated backend aggregator — reuses each tab's
+  /// already-migrated logic (Field Guide week/devotional resolution, current
+  /// challenge resolution, event visibility filtering) instead of duplicating
+  /// it in SQL. See the migration plan's decision notes.
   const TodayDashboardProvider._()
     : super(
         from: null,
@@ -104,7 +62,7 @@ final class TodayDashboardProvider
   }
 }
 
-String _$todayDashboardHash() => r'3bfc1bd6a3938b5af1730bc56ad8cfd65e3767ee';
+String _$todayDashboardHash() => r'6b8c960384978b3ed06eb6b6de782bd3aa988505';
 
 /// Which household member (You/Jack/Thomas) is active in the [PersonTabs]
 /// switcher. Lives in a provider rather than local widget state so it

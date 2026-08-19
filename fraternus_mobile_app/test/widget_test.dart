@@ -20,6 +20,8 @@ import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_o
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
 import 'package:fraternus_mobile_app/features/profile/data/profile_repository.dart';
 import 'package:fraternus_mobile_app/features/profile/providers/profile_providers.dart';
+import 'package:fraternus_mobile_app/shared/data/chapter_repository.dart';
+import 'package:fraternus_mobile_app/shared/providers/chapter_providers.dart';
 
 /// A date far outside the single seeded Field Guide week, for exercising
 /// the "nothing to read" fallback.
@@ -102,6 +104,7 @@ List<Override> _testOverrides({bool signedIn = true}) => [
   challengeRepositoryProvider.overrideWithValue(StaticChallengeRepository()),
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
   eventsRepositoryProvider.overrideWithValue(StaticEventsRepository()),
+  chapterRepositoryProvider.overrideWithValue(const StaticChapterRepository()),
 ];
 
 void main() {

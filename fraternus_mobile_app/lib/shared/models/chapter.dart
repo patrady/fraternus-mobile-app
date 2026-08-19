@@ -36,11 +36,27 @@ class Chapter {
   /// e.g. '20:30'.
   final String fratNightEndTime;
   final String fratNightLocation;
+
+  factory Chapter.fromJson(Map<String, dynamic> json) {
+    return Chapter(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      city: json['city'] as String,
+      state: json['state'] as String,
+      zipCode: json['zip_code'] as String,
+      timezone: json['timezone'] as String,
+      church: json['church'] as String,
+      fratNightDayOfWeek: json['frat_night_day_of_week'] as String,
+      fratNightStartTime: json['frat_night_start_time'] as String,
+      fratNightEndTime: json['frat_night_end_time'] as String,
+      fratNightLocation: json['frat_night_location'] as String,
+    );
+  }
 }
 
-/// Hardcoded stand-in for a future Chapters API — same seam pattern as
-/// every other Static*Repository in this app (see e.g.
-/// StaticChallengeRepository's own doc comment).
+/// Backing data for [StaticChapterRepository] (widget tests / Widgetbook)
+/// now that screens read chapters through [chaptersProvider] instead of
+/// this list directly — see chapter_repository.dart.
 const seedChapters = [
   Chapter(
     id: 'st-philips-franklin',

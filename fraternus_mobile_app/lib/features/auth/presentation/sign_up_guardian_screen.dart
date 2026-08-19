@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
-import '../../../shared/models/chapter.dart';
+import '../../../shared/providers/chapter_providers.dart';
 import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../../profile/presentation/widgets/birthday_field.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -180,7 +180,9 @@ class _SignUpGuardianScreenState extends ConsumerState<SignUpGuardianScreen> {
                   const FieldLabel(label: 'Chapter'),
                   SelectField(
                     value: _chapterId,
-                    options: {for (final chapter in seedChapters) chapter.id: chapter.name},
+                    options: {
+                      for (final chapter in ref.watch(chaptersProvider).value ?? const []) chapter.id: chapter.name,
+                    },
                     placeholder: 'Select a chapter',
                     onChanged: (value) => setState(() => _chapterId = value),
                   ),
