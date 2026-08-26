@@ -114,4 +114,4 @@ final class ChaptersProvider
   }
 }
 
-String _$chaptersHash() => r'1a400935f1c1c1bb84788adf5674e9655ef66370';
+String _$chaptersHash() => r'160aadfa732668f66e242d20e57004b4579bf5c8';

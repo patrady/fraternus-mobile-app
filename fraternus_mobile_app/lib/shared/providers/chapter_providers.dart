@@ -18,6 +18,7 @@ ChapterRepository chapterRepository(Ref ref) {
 /// the "chapters_anon_read" migration) and the post-auth profile/child
 /// forms.
 @riverpod
-Future<List<Chapter>> chapters(Ref ref) {
-  return ref.watch(chapterRepositoryProvider).fetchChapters();
+Future<List<Chapter>> chapters(Ref ref) async {
+  final chapters = await ref.watch(chapterRepositoryProvider).fetchChapters();
+  return chapters.toList()..sort((a, b) => a.displayName.compareTo(b.displayName));
 }

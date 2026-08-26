@@ -23,6 +23,9 @@ class Chapter {
   final String state;
   final String zipCode;
 
+  /// e.g. 'St. Philips Franklin - Franklin, TN'.
+  String get displayName => '$name - $city, $state';
+
   /// IANA identifier, e.g. 'America/Chicago'.
   final String timezone;
   final String church;

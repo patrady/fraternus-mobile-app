@@ -7,10 +7,11 @@
 /// `GoRoute.path` values reference them directly instead of re-typing the
 /// literal, so a rename here can't silently desync the two files.
 abstract final class RoutePaths {
+  static const welcome = '/welcome';
   static const signIn = '/sign-in';
   static const signUp = '/sign-up';
-  static const signUpCaptain = '$signUp/captain';
-  static const signUpGuardian = '$signUp/guardian';
+  static const signUpBrother = '$signUp/brother';
+  static const signUpAccount = '$signUp/account';
   static const forgotPassword = '/forgot-password';
 
   static const today = '/today';

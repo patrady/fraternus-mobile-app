@@ -54,8 +54,7 @@ class _FakeAuthRepository implements AuthRepository {
     createdAt: DateTime(2024).toIso8601String(),
   );
 
-  static Session _newSession() =>
-      Session(accessToken: 'test-access-token', tokenType: 'bearer', user: _user);
+  static Session _newSession() => Session(accessToken: 'test-access-token', tokenType: 'bearer', user: _user);
 
   @override
   Stream<AuthState> get authStateChanges => _controller.stream;
@@ -63,16 +62,24 @@ class _FakeAuthRepository implements AuthRepository {
   @override
   Session? get currentSession => _session;
 
+  /// Lets tests assert on how many times Resend Code actually reached the
+  /// repository — the cooldown guard lives in SignUpAccountScreen, not
+  /// here, so this only proves the guard is doing its job.
+  int sendEmailOtpCallCount = 0;
+
   @override
-  Future<void> signUp({
-    required String email,
-    required String password,
-    required String firstName,
-    required String lastName,
-  }) async {
+  Future<void> sendEmailOtp(String email) async {
+    sendEmailOtpCallCount++;
+  }
+
+  @override
+  Future<void> verifyEmailOtp({required String email, required String token}) async {
     _session = _newSession();
     _controller.add(AuthState(AuthChangeEvent.signedIn, _session));
   }
+
+  @override
+  Future<void> setPassword(String password) async {}
 
   @override
   Future<void> signIn({required String email, required String password}) async {
@@ -98,8 +105,8 @@ class _FakeAuthRepository implements AuthRepository {
 // keep running without a live Supabase connection. A fresh
 // StaticGuideRepository per call means each test gets its own isolated
 // mutable state, same isolation _FakeAuthRepository already gives auth.
-List<Override> _testOverrides({bool signedIn = true}) => [
-  authRepositoryProvider.overrideWithValue(_FakeAuthRepository(signedIn: signedIn)),
+List<Override> _testOverrides({bool signedIn = true, AuthRepository? authRepository}) => [
+  authRepositoryProvider.overrideWithValue(authRepository ?? _FakeAuthRepository(signedIn: signedIn)),
   guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
   challengeRepositoryProvider.overrideWithValue(StaticChallengeRepository()),
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
@@ -147,9 +154,7 @@ void main() {
     expect(find.text('OTHERS ATTENDING'), findsOneWidget);
   });
 
-  testWidgets('Challenge tab renders all 3 states and links to Past Challenges', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Challenge tab renders all 3 states and links to Past Challenges', (WidgetTester tester) async {
     await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
@@ -382,7 +387,9 @@ void main() {
     expect(find.text('HUMILITY'), findsOneWidget);
   });
 
-  testWidgets('My Kids lists both children and Edit -> Remove Child removes one', (WidgetTester tester) async {
+  testWidgets('My Kids lists both children and Edit -> Remove Child removes one', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
@@ -521,7 +528,7 @@ void main() {
     expect(opacity.opacity, lessThan(1));
   });
 
-  testWidgets('Log Out shows a confirmation dialog and confirming signs out to the sign-in screen', (
+  testWidgets('Log Out shows a confirmation dialog and confirming signs out to the welcome screen', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
@@ -549,7 +556,7 @@ void main() {
     // real wiring, not just that the dialog closed.
     expect(find.text('Are you sure you want to log out?'), findsNothing);
     expect(find.text('HUMILITY'), findsNothing);
-    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
   });
 
   testWidgets('Tapping the Profile screen back button returns to Today', (WidgetTester tester) async {
@@ -628,9 +635,7 @@ void main() {
     expect(find.text('PRIMARY'), findsOneWidget);
   });
 
-  testWidgets('Take Again on Profile opens the quiz for the current result', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Take Again on Profile opens the quiz for the current result', (WidgetTester tester) async {
     await tester.pumpWidget(ProviderScope(overrides: _testOverrides(), child: const FraternusApp()));
     await tester.pumpAndSettle();
 
@@ -644,7 +649,7 @@ void main() {
     expect(find.text('THE FOUR TEMPERAMENTS'), findsOneWidget);
   });
 
-  testWidgets('Signed-out app redirects straight to sign-in, not the tab shell', (
+  testWidgets('Signed-out app redirects straight to the welcome screen, not the tab shell', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -652,7 +657,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
     expect(find.text('TODAY'), findsNothing);
   });
 
@@ -664,16 +669,40 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField).first, 'guardian@example.com');
     await tester.enterText(find.byType(TextField).last, 'correct-horse-battery-staple');
-    await tester.tap(find.text('SIGN IN'));
+    // "SIGN IN" now also renders as this screen's ScreenHeader title
+    // (see the back-button addition below), so the submit button is
+    // disambiguated by taking the last match.
+    await tester.tap(find.text('SIGN IN').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome Back'), findsNothing);
     expect(find.text('TODAY'), findsWidgets);
   });
 
-  testWidgets('Sign-up flow: role choice branches to Captain and Guardian forms', (
+  testWidgets('Sign In has a back button that returns to the welcome screen', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome Back'), findsOneWidget);
+
+    await tester.tap(find.byIcon(FraternusIcons.resolve('chevron-left')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Welcome Back'), findsNothing);
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+  });
+
+  testWidgets('Sign-up flow: Brother is blocked, Parent or Volunteer continues to the wizard', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -681,50 +710,254 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text("DON'T HAVE AN ACCOUNT? SIGN UP"));
+    await tester.tap(find.text('CREATE ACCOUNT'));
     await tester.pumpAndSettle();
 
     expect(find.text('Which best describes you?'), findsOneWidget);
 
-    await tester.tap(find.text('CAPTAIN'));
+    // Continue starts disabled until a role is picked. Selecting Brother
+    // and continuing routes to the blocked info screen instead of the
+    // wizard. SelectableCard uppercases its title.
+    await tester.tap(find.text('BROTHER'));
     await tester.pumpAndSettle();
-    expect(find.text('CHAPTER'), findsOneWidget);
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+    expect(find.text('WE LOVE THE ENTHUSIASM'), findsOneWidget);
 
     await tester.tap(find.byIcon(FraternusIcons.resolve('chevron-left')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('GUARDIAN'));
+
+    // Switching the selection to Parent or Captain and continuing routes
+    // to the wizard instead.
+    await tester.tap(find.text('PARENT OR CAPTAIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
     await tester.pumpAndSettle();
 
-    expect(find.text('I also attend Fraternus meetings myself'), findsOneWidget);
-    // Chapter picker only appears once "also attends" is toggled on.
-    expect(find.text('CHAPTER'), findsNothing);
-    await tester.tap(find.byType(FraternusSwitch));
-    await tester.pumpAndSettle();
-    expect(find.text('CHAPTER'), findsOneWidget);
+    expect(find.text("WHAT'S YOUR EMAIL?"), findsOneWidget);
   });
 
-  testWidgets('Completing Guardian sign-up redirects to the tab shell', (WidgetTester tester) async {
+  testWidgets('Backing out of the signup wizard twice returns to the welcome screen without crashing', (
+    WidgetTester tester,
+  ) async {
+    // Regression test: welcome -> create account -> parent/volunteer ->
+    // back -> back used to throw a go_router "nothing to pop" exception.
     await tester.pumpWidget(
       ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text("DON'T HAVE AN ACCOUNT? SIGN UP"));
+    await tester.tap(find.text('CREATE ACCOUNT'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('GUARDIAN'));
+    await tester.tap(find.text('PARENT OR CAPTAIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
     await tester.pumpAndSettle();
 
-    final textFields = find.byType(TextField);
-    await tester.enterText(textFields.at(0), 'Jane');
-    await tester.enterText(textFields.at(1), 'Doe');
-    await tester.enterText(textFields.at(2), 'jane@example.com');
-    await tester.enterText(textFields.at(3), 'correct-horse-battery-staple');
+    expect(find.text("WHAT'S YOUR EMAIL?"), findsOneWidget);
+
+    // Back from the wizard's first step to the role screen.
+    await tester.tap(find.byIcon(FraternusIcons.resolve('chevron-left')));
+    await tester.pumpAndSettle();
+    expect(find.text('Which best describes you?'), findsOneWidget);
+
+    // Back again from the role screen — this is the step that used to
+    // throw, since the wizard previously used `go()` to get here, which
+    // wipes the stack this pop needs.
+    await tester.tap(find.byIcon(FraternusIcons.resolve('chevron-left')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+    expect(find.text('Which best describes you?'), findsNothing);
+  });
+
+  testWidgets('Resend Code is disabled for 10 seconds after each press', (WidgetTester tester) async {
+    final fakeAuth = _FakeAuthRepository(signedIn: false);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _testOverrides(signedIn: false, authRepository: fakeAuth),
+        child: const FraternusApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('CREATE ACCOUNT'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('PARENT OR CAPTAIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'jane@example.com');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHECK YOUR EMAIL'), findsOneWidget);
+    expect(fakeAuth.sendEmailOtpCallCount, 1);
+
+    // Ready immediately after arriving on the code step.
+    expect(find.text('RESEND CODE'), findsOneWidget);
+
+    await tester.tap(find.text('RESEND CODE'));
+    await tester.pump();
+    expect(fakeAuth.sendEmailOtpCallCount, 2);
+
+    // Now disabled and counting down — the plain "RESEND CODE" label is
+    // gone, and repeated taps on the countdown label don't fire another
+    // send since Button.disabled blocks the tap outright.
+    expect(find.text('RESEND CODE'), findsNothing);
+    expect(find.text('RESEND CODE (10S)'), findsOneWidget);
+    await tester.tap(find.text('RESEND CODE (10S)'));
+    await tester.pump();
+    expect(fakeAuth.sendEmailOtpCallCount, 2);
+
+    // Partway through the cooldown it's still disabled...
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('RESEND CODE (5S)'), findsOneWidget);
+    await tester.tap(find.text('RESEND CODE (5S)'));
+    await tester.pump();
+    expect(fakeAuth.sendEmailOtpCallCount, 2);
+
+    // ...and re-enabled once the full 10 seconds have passed.
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('RESEND CODE'), findsOneWidget);
+    await tester.tap(find.text('RESEND CODE'));
+    await tester.pump();
+    expect(fakeAuth.sendEmailOtpCallCount, 3);
+  });
+
+  testWidgets('Completing the signup wizard as a non-attending Guardian redirects to the tab shell', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CREATE ACCOUNT'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PARENT OR CAPTAIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Email step — verifying establishes the fake session immediately.
+    await tester.enterText(find.byType(TextField).first, 'jane@example.com');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Code step.
+    expect(find.text('CHECK YOUR EMAIL'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, '123456');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Password step.
+    expect(find.text('CREATE A PASSWORD'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'correct-horse-battery-staple');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Name step.
+    expect(find.text("WHAT'S YOUR NAME?"), findsOneWidget);
+    final nameFields = find.byType(TextField);
+    await tester.enterText(nameFields.at(0), 'Jane');
+    await tester.enterText(nameFields.at(1), 'Doe');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Attendance step — say No, which hides Chapter and skips the Captain
+    // Member creation entirely.
+    expect(find.text('WILL YOU BE ATTENDING WEEKLY FRAT NIGHTS?'), findsOneWidget);
+    await tester.tap(find.text('No'));
+    await tester.pumpAndSettle();
+    expect(find.text('CHAPTER'), findsNothing);
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Kids step — skip via "I don't have any kids".
+    expect(find.text('ADD YOUR KIDS'), findsOneWidget);
+    await tester.tap(find.text("I DON'T HAVE ANY KIDS"));
+    await tester.pumpAndSettle();
+
+    expect(find.text("YOU'RE ALL SET"), findsOneWidget);
+    await tester.tap(find.text("LET'S GET STARTED"));
+    await tester.pumpAndSettle();
 
     expect(find.text('Which best describes you?'), findsNothing);
     expect(find.text('TODAY'), findsWidgets);
+  });
+
+  testWidgets('The finished step shows the user, a divider, then each added kid', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(overrides: _testOverrides(signedIn: false), child: const FraternusApp()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CREATE ACCOUNT'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PARENT OR CAPTAIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'jane@example.com');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, '123456');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'correct-horse-battery-staple');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    final nameFields = find.byType(TextField);
+    await tester.enterText(nameFields.at(0), 'Jane');
+    await tester.enterText(nameFields.at(1), 'Doe');
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('No'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Kids step — add one child. The birthday picker opens on
+    // _InlineChildFormState._pickBirthday's own initialDate already
+    // selected, so tapping OK without touching the calendar grid confirms
+    // that date — no need to navigate the picker itself for this test.
+    expect(find.text('ADD YOUR KIDS'), findsOneWidget);
+    await tester.tap(find.text('ADD CHILD'));
+    await tester.pumpAndSettle();
+
+    final childFields = find.byType(TextField);
+    await tester.enterText(childFields.at(0), 'Jack');
+    await tester.enterText(childFields.at(1), 'Doe');
+
+    await tester.tap(find.bySemanticsLabel('Birthday'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Jack Doe'), findsOneWidget);
+
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // Finished step: the user's own card, then a divider, then the kid.
+    expect(find.text("YOU'RE ALL SET"), findsOneWidget);
+    expect(find.text('YOU'), findsOneWidget);
+    expect(find.text('Jane Doe'), findsOneWidget);
+    expect(find.byType(HairlineDivider), findsOneWidget);
+    expect(find.text('YOUR KIDS'), findsOneWidget);
+    expect(find.text('Jack Doe'), findsOneWidget);
   });
 }

@@ -6,9 +6,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
-import '../../features/auth/presentation/sign_up_captain_screen.dart';
-import '../../features/auth/presentation/sign_up_guardian_screen.dart';
+import '../../features/auth/presentation/sign_up_account_screen.dart';
+import '../../features/auth/presentation/sign_up_brother_blocked_screen.dart';
 import '../../features/auth/presentation/sign_up_role_screen.dart';
+import '../../features/auth/presentation/sign_up_welcome_screen.dart';
 import '../../features/auth/providers/auth_providers.dart';
 import '../../features/challenge/presentation/challenge_screen.dart';
 import '../../features/challenge/presentation/past_challenges_screen.dart';
@@ -51,10 +52,9 @@ class _GoRouterRefreshStream extends ChangeNotifier {
 }
 
 const _authRoutePaths = {
+  RoutePaths.welcome,
   RoutePaths.signIn,
-  RoutePaths.signUp,
-  RoutePaths.signUpCaptain,
-  RoutePaths.signUpGuardian,
+  RoutePaths.signUp, // prefix-matches the nested brother/account routes too
   RoutePaths.forgotPassword,
 };
 
@@ -72,31 +72,40 @@ GoRouter appRouter(Ref ref) {
     refreshListenable: refreshStream,
     redirect: (context, state) {
       final signedIn = authRepository.currentSession != null;
-      final onAuthRoute = _authRoutePaths.any((path) => state.matchedLocation.startsWith(path));
-      if (!signedIn && !onAuthRoute) return RoutePaths.signIn;
-      if (signedIn && onAuthRoute) return RoutePaths.today;
+      final location = state.matchedLocation;
+      final onAuthRoute = _authRoutePaths.any((path) => location.startsWith(path));
+      // SignUpAccountScreen (the OTP-based signup wizard) establishes a
+      // session partway through — right after the email code is verified,
+      // several steps before the wizard actually finishes (see that
+      // screen's doc comment). Without this exemption, becoming signed-in
+      // mid-wizard would immediately redirect away from it.
+      //
+      // Read via a provider flag, not by matching `location` against
+      // RoutePaths.signUpAccount: `refreshListenable`-triggered redirects
+      // (as opposed to ones triggered by an actual navigation) re-validate
+      // every entry still on the imperative push stack, not just the
+      // current top one — matching on the current location alone left
+      // earlier stack entries (e.g. the welcome screen) redirecting to
+      // /today and collapsing the stack out from under the wizard.
+      final wizardActive = ref.read(signUpWizardActiveProvider);
+      if (!signedIn && !onAuthRoute) return RoutePaths.welcome;
+      if (signedIn && onAuthRoute && !wizardActive) return RoutePaths.today;
       return null;
     },
     routes: [
+      GoRoute(path: RoutePaths.welcome, builder: (context, state) => const SignUpWelcomeScreen()),
       GoRoute(path: RoutePaths.signIn, builder: (context, state) => const SignInScreen()),
       GoRoute(path: RoutePaths.forgotPassword, builder: (context, state) => const ForgotPasswordScreen()),
       GoRoute(
         path: RoutePaths.signUp,
         builder: (context, state) => const SignUpRoleScreen(),
         routes: [
-          GoRoute(
-            path: 'captain',
-            builder: (context, state) => const SignUpCaptainScreen(),
-          ),
-          GoRoute(
-            path: 'guardian',
-            builder: (context, state) => const SignUpGuardianScreen(),
-          ),
+          GoRoute(path: 'brother', builder: (context, state) => const SignUpBrotherBlockedScreen()),
+          GoRoute(path: 'account', builder: (context, state) => const SignUpAccountScreen()),
         ],
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -122,9 +131,8 @@ GoRouter appRouter(Ref ref) {
                           ),
                           GoRoute(
                             path: ':memberId',
-                            builder: (context, state) => EditChildScreen(
-                              memberId: state.pathParameters['memberId']!,
-                            ),
+                            builder: (context, state) =>
+                                EditChildScreen(memberId: state.pathParameters['memberId']!),
                           ),
                         ],
                       ),
@@ -186,9 +194,7 @@ GoRouter appRouter(Ref ref) {
                 routes: [
                   GoRoute(
                     path: ':eventId',
-                    builder: (context, state) => EventDetailScreen(
-                      eventId: state.pathParameters['eventId']!,
-                    ),
+                    builder: (context, state) => EventDetailScreen(eventId: state.pathParameters['eventId']!),
                   ),
                 ],
               ),

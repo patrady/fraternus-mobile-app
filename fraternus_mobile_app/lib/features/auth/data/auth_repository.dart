@@ -10,18 +10,25 @@ abstract class AuthRepository {
 
   Session? get currentSession;
 
-  /// [firstName]/[lastName] are passed as signUp metadata, not written
-  /// directly to any table — the `handle_new_auth_user()` Postgres trigger
-  /// (supabase/migrations) reads them off `raw_user_meta_data` to populate
-  /// `public.users`. Chapter selection and Member/UserMemberAssociation
-  /// creation happen separately via ProfileRepository once those tables
-  /// exist (see docs/adrs/002_supabase_backend_poc.md §5).
-  Future<void> signUp({
-    required String email,
-    required String password,
-    required String firstName,
-    required String lastName,
-  });
+  /// Step 1 of the signup wizard (see SignUpAccountScreen): creates the
+  /// underlying auth user (if one doesn't already exist) in an unconfirmed
+  /// state and emails a 6-digit code to [email]. Also used to resend the
+  /// code — calling it again just re-sends. No session exists yet after
+  /// this; that only happens once the code is verified (see
+  /// [verifyEmailOtp]), which is why first/last name (collected later in
+  /// the wizard) aren't passed here — [ProfileRepository.updateProfile]
+  /// fills them in afterward, once authenticated.
+  Future<void> sendEmailOtp(String email);
+
+  /// Step 2: verifying the code both confirms the email and establishes a
+  /// session — ahead of the user choosing a password (see [setPassword]).
+  /// The `handle_new_auth_user()` Postgres trigger (supabase/migrations)
+  /// populates `public.users` at this point with blank names.
+  Future<void> verifyEmailOtp({required String email, required String token});
+
+  /// Step 3: sets a password on the session [verifyEmailOtp] established.
+  /// Requires an authenticated session.
+  Future<void> setPassword(String password);
 
   Future<void> signIn({required String email, required String password});
 
@@ -42,17 +49,18 @@ class SupabaseAuthRepository implements AuthRepository {
   Session? get currentSession => _client.auth.currentSession;
 
   @override
-  Future<void> signUp({
-    required String email,
-    required String password,
-    required String firstName,
-    required String lastName,
-  }) async {
-    await _client.auth.signUp(
-      email: email,
-      password: password,
-      data: {'first_name': firstName, 'last_name': lastName},
-    );
+  Future<void> sendEmailOtp(String email) async {
+    await _client.auth.signInWithOtp(email: email, shouldCreateUser: true);
+  }
+
+  @override
+  Future<void> verifyEmailOtp({required String email, required String token}) async {
+    await _client.auth.verifyOTP(type: OtpType.email, email: email, token: token);
+  }
+
+  @override
+  Future<void> setPassword(String password) async {
+    await _client.auth.updateUser(UserAttributes(password: password));
   }
 
   @override

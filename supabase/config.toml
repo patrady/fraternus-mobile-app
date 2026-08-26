@@ -248,6 +248,17 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# signInWithOtp() (see AuthRepository.sendEmailOtp, used by the signup
+# wizard's email-verification step) sends this template. The stock
+# Supabase "Magic Link" template only renders {{ .ConfirmationURL }} — a
+# clickable link — even though the server always generates {{ .Token }}
+# (the digit code) too, per otp_length above. The wizard's "Check Your
+# Email" step asks the user to type a code, so the template needs to
+# actually show it.
+[auth.email.template.magic_link]
+subject = "Your Fraternus verification code"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

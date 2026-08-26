@@ -45,6 +45,7 @@ abstract final class FraternusIcons {
     'map-pin': IconData(0xf3c0, fontFamily: _fontFamily, fontPackage: _fontPackage),
     'calendar-plus': IconData(0xf1da, fontFamily: _fontFamily, fontPackage: _fontPackage),
     'sun': IconData(0xf50f, fontFamily: _fontFamily, fontPackage: _fontPackage),
+    'shield': IconData(0xf4bf, fontFamily: _fontFamily, fontPackage: _fontPackage),
   };
 
   /// Falls back to `circle-check` for an unknown name, matching the JSX

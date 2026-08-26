@@ -10,13 +10,18 @@
 
 # Frat Nights
 
-| type       | title         | description                    | location                    | start_date             | end_date               | frat_night_template_id | chapter_id  |
-| ---------- | ------------- | ------------------------------ | --------------------------- | ---------------------- | ---------------------- | ---------------------- | ----------- |
-| frat_night | Rush Night #1 | First week of Fraternus Rush   | St. Philips Catholic Church | 2026-08-18 18:30:00-06 | 2026-08-18 20:30:00-06 |
-| frat_night | Rush Night #2 | Second week of Fraternus Rush  | St. Philips Catholic Church | 2026-08-25 18:30:00-06 | 2026-08-25 20:30:00-06 |
-| frat_night | Rush Night #3 | Third week of Fraternus Rush   | St. Philips Catholic Church | 2026-09-01 18:30:00-06 | 2026-09-01 20:30:00-06 |
-| frat_night | Rush Night #4 | Fourth week of Fraternus Rush  | St. Philips Catholic Church | 2026-09-08 18:30:00-06 | 2026-09-08 20:30:00-06 |
+| type       | title         | description                   | location                    | start_date             | end_date               | frat_night_template_id | chapter_id |
+| ---------- | ------------- | ----------------------------- | --------------------------- | ---------------------- | ---------------------- | ---------------------- | ---------- |
+| frat_night | Rush Night #1 | First week of Fraternus Rush  | St. Philips Catholic Church | 2026-08-18 18:30:00-06 | 2026-08-18 20:30:00-06 |
+| frat_night | Rush Night #2 | Second week of Fraternus Rush | St. Philips Catholic Church | 2026-08-25 18:30:00-06 | 2026-08-25 20:30:00-06 |
+| frat_night | Rush Night #3 | Third week of Fraternus Rush  | St. Philips Catholic Church | 2026-09-01 18:30:00-06 | 2026-09-01 20:30:00-06 |
+| frat_night | Rush Night #4 | Fourth week of Fraternus Rush | St. Philips Catholic Church | 2026-09-08 18:30:00-06 | 2026-09-08 20:30:00-06 |
 
+# Frat Night Templates
+
+| title            | description | reading | liturgical_day | start_of_week_date | frat_night_virtue_key |
+| ---------------- | ----------- | ------- | -------------- | ------------------ | --------------------- |
+| First Squad Time |             |
 
 # Excursions
 

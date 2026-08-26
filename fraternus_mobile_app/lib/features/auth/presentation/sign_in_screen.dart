@@ -34,13 +34,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     try {
       await ref
           .read(authRepositoryProvider)
-          .signIn(email: _emailController.text.trim(), password: _passwordController.text);
+          .signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
       // On success, the router's redirect (re-evaluated via
       // GoRouterRefreshStream watching authStateChanges) takes over
       // navigation to /today — nothing to do here.
     } catch (_) {
       if (mounted) {
-        setState(() => _errorMessage = 'Could not sign in. Check your email and password and try again.');
+        setState(
+          () => _errorMessage =
+              'Could not sign in. Check your email and password and try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -50,52 +56,62 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return ScreenShell(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            const Heading('Welcome Back'),
-            const SizedBox(height: 8),
-            const BodyText('Sign in to continue.'),
-            const SizedBox(height: 32),
-            const FieldLabel(label: 'Email'),
-            FormTextField(controller: _emailController, keyboardType: TextInputType.emailAddress),
-            const SizedBox(height: 16),
-            const FieldLabel(label: 'Password'),
-            FormTextField(controller: _passwordController, obscureText: true),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Button(
-                label: 'Forgot Password?',
-                variant: ButtonVariant.underlined,
-                size: ButtonSize.small,
-                onPressed: () => context.push(RoutePaths.forgotPassword),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The only route that ever pushes here is the welcome screen's
+          // "Sign In" button (see app/router/app_router.dart), so a plain
+          // pop always lands back there — no wizard-style "which auth
+          // route am I really under" complication like SignUpAccountScreen
+          // has to account for.
+          ScreenHeader(title: 'Sign In', onBack: () => context.pop()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                const Heading('Welcome Back'),
+                const SizedBox(height: 32),
+                const FieldLabel(label: 'Email'),
+                FormTextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                const FieldLabel(label: 'Password'),
+                FormTextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 8),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _errorMessage!,
+                    style: FraternusTypography.small(
+                      color: FraternusColors.error,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Button(
+                  label: _isSubmitting ? 'Signing In…' : 'Sign In',
+                  fullWidth: true,
+                  disabled: _isSubmitting,
+                  onPressed: _submit,
+                ),
+                const SizedBox(height: 16),
+                Button(
+                  label: "Forgot Password",
+                  fullWidth: true,
+                  variant: .ghost,
+                  onPressed: () => context.push(RoutePaths.forgotPassword),
+                ),
+              ],
             ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 8),
-              Text(_errorMessage!, style: FraternusTypography.small(color: FraternusColors.error)),
-            ],
-            const SizedBox(height: 16),
-            Button(
-              label: _isSubmitting ? 'Signing In…' : 'Sign In',
-              fullWidth: true,
-              disabled: _isSubmitting,
-              onPressed: _submit,
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: Button(
-                label: "Don't have an account? Sign Up",
-                variant: ButtonVariant.underlined,
-                onPressed: () => context.push(RoutePaths.signUp),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
