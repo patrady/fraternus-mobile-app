@@ -75,7 +75,8 @@ HouseholdPerson _buildPerson({
 /// it in SQL. See the migration plan's decision notes.
 @riverpod
 Future<TodayDashboard> todayDashboard(Ref ref) async {
-  final today = _dateOnly(DateTime.now());
+  final now = DateTime.now();
+  final today = _dateOnly(now);
 
   final user = await ref.watch(currentUserProvider.future);
   final members = await ref.watch(householdMembersProvider.future);

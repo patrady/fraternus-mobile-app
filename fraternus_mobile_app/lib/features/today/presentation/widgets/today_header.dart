@@ -36,22 +36,35 @@ const _monthNames = [
 /// that doesn't fit [Subheading] (always uppercase) or [Heading] (no
 /// custom-color param) — hence the raw [Text] here.
 class TodayHeader extends StatelessWidget {
-  const TodayHeader({super.key, required this.date, required this.greetingName, this.onProfileTap});
+  const TodayHeader({
+    super.key,
+    required this.date,
+    required this.greetingName,
+    this.onProfileTap,
+  });
 
   final DateTime date;
   final String greetingName;
   final VoidCallback? onProfileTap;
 
-  String get _dateLabel {
+  String get _weekDayLabel {
     final weekday = _weekdayNames[date.weekday - 1];
+
+    return weekday.toUpperCase();
+  }
+
+  String get _monthLabel {
     final month = _monthNames[date.month - 1];
-    return '$weekday, $month ${date.day}'.toUpperCase();
+
+    return month.toUpperCase();
   }
 
   String get _greeting {
     final hour = date.hour;
+
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
+
     return 'Good evening';
   }
 
@@ -65,10 +78,13 @@ class TodayHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Heading(_dateLabel, level: HeadingLevel.h2),
+              Heading(_weekDayLabel, level: HeadingLevel.h2),
+              Heading(_monthLabel, level: HeadingLevel.h3),
               Text(
                 '$_greeting, $greetingName',
-                style: FraternusTypography.h4(color: FraternusColors.accentPrimary),
+                style: FraternusTypography.h4(
+                  color: FraternusColors.accentPrimary,
+                ),
               ),
             ],
           ),

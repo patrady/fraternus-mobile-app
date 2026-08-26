@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' show InputBorder, InputDecoration, TextField;
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -648,7 +650,7 @@ class _CodeStep extends StatelessWidget {
         BodyText('Enter the 6-digit code we sent to $email.', size: BodyTextSize.small),
         const SizedBox(height: 16),
         const FieldLabel(label: 'Verification Code'),
-        FormTextField(controller: controller, keyboardType: TextInputType.number, placeholder: '123456'),
+        _CodeInput(controller: controller),
         const SizedBox(height: 8),
         Button(
           label: onCooldown ? 'Resend Code (${resendCooldownSeconds}s)' : 'Resend Code',
@@ -659,6 +661,116 @@ class _CodeStep extends StatelessWidget {
         ),
         _ErrorText(errorMessage),
       ],
+    );
+  }
+}
+
+/// Six single-digit boxes standing in for one text field — `widget.controller`
+/// (the wizard's shared `_codeController`) stays the single source of truth
+/// that `_verifyCode` reads from; this widget's only job is keeping it in
+/// sync with whatever's currently split across the boxes below.
+class _CodeInput extends StatefulWidget {
+  const _CodeInput({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  State<_CodeInput> createState() => _CodeInputState();
+}
+
+class _CodeInputState extends State<_CodeInput> {
+  static const _length = 6;
+
+  final _digitControllers = List.generate(_length, (_) => TextEditingController());
+  final _focusNodes = List.generate(_length, (_) => FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    _applyDigits(widget.controller.text);
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _digitControllers) {
+      controller.dispose();
+    }
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  void _applyDigits(String code) {
+    final digits = code.replaceAll(RegExp(r'\D'), '');
+    for (var i = 0; i < _length; i++) {
+      _digitControllers[i].text = i < digits.length ? digits[i] : '';
+    }
+  }
+
+  void _syncCode() {
+    widget.controller.text = _digitControllers.map((controller) => controller.text).join();
+  }
+
+  // TextField has no separate paste callback — a paste (or autofill) just
+  // delivers every digit to whichever box currently has focus in one
+  // onChanged call, so any value longer than a single digit here is
+  // treated as the whole code rather than just that box's own input.
+  void _onChanged(int index, String rawValue) {
+    final digits = rawValue.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length > 1) {
+      _applyDigits(digits);
+      _syncCode();
+      final filledCount = digits.length > _length ? _length : digits.length;
+      _focusNodes[filledCount >= _length ? _length - 1 : filledCount].requestFocus();
+      return;
+    }
+
+    _syncCode();
+    if (digits.isNotEmpty && index < _length - 1) {
+      _focusNodes[index + 1].requestFocus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < _length; i++) ...[
+          if (i > 0) const SizedBox(width: 4),
+          Expanded(child: _digitBox(i)),
+        ],
+      ],
+    );
+  }
+
+  Widget _digitBox(int index) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: FraternusColors.white,
+        border: Border.all(color: FraternusColors.borderSubtle),
+        borderRadius: BorderRadius.circular(FraternusRadii.sm),
+      ),
+      alignment: Alignment.center,
+      child: TextField(
+        controller: _digitControllers[index],
+        focusNode: _focusNodes[index],
+        autofocus: index == 0,
+        textAlign: TextAlign.center,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        maxLength: _length,
+        style: FraternusTypography.body().copyWith(fontSize: 20, fontWeight: FontWeight.w600),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          counterText: '',
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+        ),
+        onChanged: (value) => _onChanged(index, value),
+      ),
     );
   }
 }
