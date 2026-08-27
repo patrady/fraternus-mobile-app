@@ -14,6 +14,7 @@ class ChildForm extends StatefulWidget {
   const ChildForm({
     super.key,
     this.initial,
+    this.initialChapterId,
     required this.chapters,
     required this.onSave,
     this.onRemove,
@@ -21,6 +22,10 @@ class ChildForm extends StatefulWidget {
 
   /// Null means "new child" — all fields start empty.
   final Member? initial;
+
+  /// Prefill for a brand-new child (e.g. the parent's own chapter) — ignored
+  /// when [initial] is set, since an existing child's chapter takes priority.
+  final String? initialChapterId;
 
   /// Sourced from `chaptersProvider` by the caller (AddChildScreen /
   /// EditChildScreen) — kept plain (not repository-aware) here since this
@@ -51,7 +56,7 @@ class _ChildFormState extends State<ChildForm> {
     text: widget.initial?.email,
   );
   late DateTime? _birthday = widget.initial?.birthday;
-  late String? _chapterId = widget.initial?.chapterId;
+  late String? _chapterId = widget.initial?.chapterId ?? widget.initialChapterId;
 
   @override
   void dispose() {

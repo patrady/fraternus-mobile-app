@@ -11,69 +11,50 @@ import '../models/member.dart';
 import '../providers/profile_providers.dart';
 import 'widgets/birthday_field.dart';
 
-class EditProfileScreen extends ConsumerWidget {
+/// A ConsumerStatefulWidget (not the split ConsumerWidget+ConsumerStatefulWidget
+/// shape used before) so the Save button can live in [ScreenShell]'s pinned
+/// `footer` slot — that button needs the same field state (controllers,
+/// `_chapterId`, `_birthday`) that builds the form body, and only this
+/// widget's State has both in scope at once.
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(currentUserProvider);
-    final selfMemberAsync = ref.watch(selfMemberProvider);
-    final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
+}
 
-    return ScreenShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ScreenHeader(title: 'My Profile', onBack: () => context.pop()),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: userAsync.when(
-              data: (user) => selfMemberAsync.when(
-                data: (selfMember) =>
-                    _EditProfileForm(user: user, selfMember: selfMember, chapters: chapters),
-                loading: () => const SizedBox.shrink(),
-                error: (error, stackTrace) => const BodyText(
-                  'Something went wrong loading your profile.',
-                ),
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) =>
-                  const BodyText('Something went wrong loading your profile.'),
-            ),
-          ),
-        ],
-      ),
-    );
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  TextEditingController? _firstNameController;
+  TextEditingController? _lastNameController;
+  TextEditingController? _emailController;
+  String? _chapterId;
+  DateTime? _birthday;
+
+  AppUser? _user;
+  Member? _selfMember;
+  bool _initialized = false;
+
+  /// Runs once, the first time `user`/`selfMember` actually resolve —
+  /// [build] re-runs on every provider change, but the controllers/fields
+  /// below are local edit state that shouldn't be clobbered by, say, a
+  /// refetch after Save.
+  void _initFrom(AppUser user, Member? selfMember) {
+    if (_initialized) return;
+    _initialized = true;
+    _user = user;
+    _selfMember = selfMember;
+    _firstNameController = TextEditingController(text: user.firstName);
+    _lastNameController = TextEditingController(text: user.lastName);
+    _emailController = TextEditingController(text: user.email);
+    _chapterId = selfMember?.chapterId;
+    _birthday = selfMember?.birthday;
   }
-}
-
-class _EditProfileForm extends ConsumerStatefulWidget {
-  const _EditProfileForm({required this.user, required this.selfMember, required this.chapters});
-
-  final AppUser user;
-  final Member? selfMember;
-  final List<Chapter> chapters;
-
-  @override
-  ConsumerState<_EditProfileForm> createState() => _EditProfileFormState();
-}
-
-class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
-  late final _firstNameController = TextEditingController(
-    text: widget.user.firstName,
-  );
-  late final _lastNameController = TextEditingController(
-    text: widget.user.lastName,
-  );
-  late final _emailController = TextEditingController(text: widget.user.email);
-  late String? _chapterId = widget.selfMember?.chapterId;
-  late DateTime? _birthday = widget.selfMember?.birthday;
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
+    _firstNameController?.dispose();
+    _lastNameController?.dispose();
+    _emailController?.dispose();
     super.dispose();
   }
 
@@ -88,22 +69,69 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
     if (picked != null) setState(() => _birthday = picked);
   }
 
+  Future<void> _save() async {
+    final user = _user!;
+    final selfMember = _selfMember;
+    await ref
+        .read(currentUserProvider.notifier)
+        .save(user.copyWith(firstName: _firstNameController!.text, lastName: _lastNameController!.text));
+    if (selfMember != null && _chapterId != null && _birthday != null) {
+      await ref
+          .read(householdMembersProvider.notifier)
+          .updateMember(
+            selfMember.copyWith(
+              firstName: _firstNameController!.text,
+              lastName: _lastNameController!.text,
+              birthday: _birthday,
+              chapterId: _chapterId,
+            ),
+          );
+    }
+    if (mounted) context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selfMember = widget.selfMember;
+    final userAsync = ref.watch(currentUserProvider);
+    final selfMemberAsync = ref.watch(selfMemberProvider);
+    final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
 
+    final (body, footer) = userAsync.when(
+      data: (user) => selfMemberAsync.when(
+        data: (selfMember) {
+          _initFrom(user, selfMember);
+          return (_buildFields(selfMember, chapters), _buildFooter(selfMember));
+        },
+        loading: () => (const SizedBox.shrink(), null),
+        error: (error, stackTrace) => (const BodyText('Something went wrong loading your profile.'), null),
+      ),
+      loading: () => (const SizedBox.shrink(), null),
+      error: (error, stackTrace) => (const BodyText('Something went wrong loading your profile.'), null),
+    );
+
+    return ScreenShell(
+      footer: footer,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ScreenHeader(title: 'My Profile', onBack: () => context.pop()),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: body),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFields(Member? selfMember, List<Chapter> chapters) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 12),
-        Avatar(initials: widget.user.initials, size: AvatarSize.large),
+        Avatar(initials: _user!.initials, size: AvatarSize.large),
         const SizedBox(height: 8),
         if (selfMember != null)
           Text(
             selfMember.role.name.toUpperCase(),
-            style: FraternusTypography.eyebrow(
-              color: FraternusColors.accentPrimary,
-            ),
+            style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
           ),
         const SizedBox(height: 24),
         Row(
@@ -131,67 +159,32 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
           ],
         ),
         const SizedBox(height: 16),
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: FieldLabel(label: 'Email'),
-        ),
-        FormTextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-        ),
+        const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Email')),
+        FormTextField(controller: _emailController, keyboardType: TextInputType.emailAddress, readOnly: true),
         if (selfMember != null) ...[
           const SizedBox(height: 16),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: FieldLabel(label: 'Birthday'),
-          ),
+          const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Birthday')),
           BirthdayField(date: _birthday, onTap: _pickBirthday),
           const SizedBox(height: 16),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: FieldLabel(label: 'Chapter'),
-          ),
+          const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Chapter')),
           SelectField(
             value: _chapterId,
-            options: {
-              for (final chapter in widget.chapters) chapter.id: chapter.name,
-            },
+            options: {for (final chapter in chapters) chapter.id: chapter.name},
             placeholder: 'Select a chapter',
             onChanged: (value) => setState(() => _chapterId = value),
           ),
         ],
         const SizedBox(height: 24),
-        Button(
-          label: 'Save',
-          fullWidth: true,
-          disabled: selfMember != null && _birthday == null,
-          onPressed: () async {
-            await ref
-                .read(currentUserProvider.notifier)
-                .save(
-                  widget.user.copyWith(
-                    firstName: _firstNameController.text,
-                    lastName: _lastNameController.text,
-                    email: _emailController.text,
-                  ),
-                );
-            if (selfMember != null && _chapterId != null && _birthday != null) {
-              await ref
-                  .read(householdMembersProvider.notifier)
-                  .updateMember(
-                    selfMember.copyWith(
-                      firstName: _firstNameController.text,
-                      lastName: _lastNameController.text,
-                      birthday: _birthday,
-                      chapterId: _chapterId,
-                    ),
-                  );
-            }
-            if (context.mounted) context.pop();
-          },
-        ),
-        const SizedBox(height: 24),
       ],
+    );
+  }
+
+  Widget _buildFooter(Member? selfMember) {
+    return Button(
+      label: 'Save',
+      fullWidth: true,
+      disabled: selfMember != null && _birthday == null,
+      onPressed: _save,
     );
   }
 }

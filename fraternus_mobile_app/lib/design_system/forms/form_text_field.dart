@@ -15,6 +15,7 @@ class FormTextField extends StatelessWidget {
     this.placeholder,
     this.keyboardType,
     this.obscureText = false,
+    this.readOnly = false,
   });
 
   final TextEditingController? controller;
@@ -25,13 +26,15 @@ class FormTextField extends StatelessWidget {
   /// Set for password entry — no other field in this app needs it today.
   final bool obscureText;
 
+  final bool readOnly;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: FraternusColors.white,
+        color: readOnly ? FraternusColors.surfaceCardDim : FraternusColors.white,
         border: Border.all(color: FraternusColors.borderSubtle),
         borderRadius: BorderRadius.circular(FraternusRadii.sm),
       ),
@@ -40,7 +43,11 @@ class FormTextField extends StatelessWidget {
         onChanged: onChanged,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: FraternusTypography.body().copyWith(fontSize: 15),
+        readOnly: readOnly,
+        enableInteractiveSelection: !readOnly,
+        style: FraternusTypography.body().copyWith(fontSize: 15).copyWith(
+          color: readOnly ? FraternusColors.textOnLightMuted : null,
+        ),
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: FraternusTypography.body(

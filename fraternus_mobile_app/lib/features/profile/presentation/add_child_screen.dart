@@ -14,6 +14,13 @@ class AddChildScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
+    // Most Guardians have no Self Member of their own (they've never
+    // attended as a Captain) — fall back to an existing kid's chapter so
+    // the common "second child, same chapter" case still prefills.
+    final selfMember = ref.watch(selfMemberProvider).value;
+    final existingChildren = ref.watch(guardianMembersProvider).value ?? const [];
+    final initialChapterId =
+        selfMember?.chapterId ?? (existingChildren.isEmpty ? null : existingChildren.first.chapterId);
 
     return ScreenShell(
       child: Column(
@@ -24,6 +31,7 @@ class AddChildScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ChildForm(
               chapters: chapters,
+              initialChapterId: initialChapterId,
               onSave: ({required firstName, required lastName, required birthday, required email, required chapterId}) async {
                 // create_child_member (see ProfileRepository) atomically
                 // creates the Member + Guardian association (+ Pending
