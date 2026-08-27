@@ -100,10 +100,15 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
       if (!_isSameDay(event.startAt, today) && event.startAt.isBefore(today.add(const Duration(days: 7)))) event,
   ];
 
+  // The "This Week's Focus" card is about today's reading specifically —
+  // hidden whenever today itself has no devotional, not just when no week
+  // resolves at all (a week can resolve but not cover every day).
+  final hasTodaysReading = week?.devotionalForDate(today) != null;
+
   return TodayDashboard(
     date: today,
     greetingName: user.firstName,
-    weeklyFocus: WeeklyFocus(virtue: week?.virtue ?? ''),
+    weeklyFocus: hasTodaysReading ? WeeklyFocus(virtue: week!.virtue) : null,
     people: [
       for (final member in members)
         _buildPerson(

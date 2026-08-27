@@ -1,31 +1,11 @@
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../design_system/design_system.dart';
+import '../../../../shared/formatting/ordinal_date_formatting.dart';
 
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+final _weekday = DateFormat('EEEE');
+final _month = DateFormat('MMMM');
 
 /// Date + personalized greeting + profile icon button — only appears on
 /// the Today tab root (other tab roots just show a bare uppercase
@@ -47,17 +27,9 @@ class TodayHeader extends StatelessWidget {
   final String greetingName;
   final VoidCallback? onProfileTap;
 
-  String get _weekDayLabel {
-    final weekday = _weekdayNames[date.weekday - 1];
+  String get _weekDayLabel => _weekday.format(date).toUpperCase();
 
-    return weekday.toUpperCase();
-  }
-
-  String get _monthLabel {
-    final month = _monthNames[date.month - 1];
-
-    return month.toUpperCase();
-  }
+  String get _monthDayLabel => '${_month.format(date).toUpperCase()} ${date.day}${ordinalSuffix(date.day).toUpperCase()}';
 
   String get _greeting {
     final hour = date.hour;
@@ -79,7 +51,8 @@ class TodayHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Heading(_weekDayLabel, level: HeadingLevel.h2),
-              Heading(_monthLabel, level: HeadingLevel.h3),
+              Heading(_monthDayLabel, level: HeadingLevel.h3),
+              const SizedBox(height: 4),
               Text(
                 '$_greeting, $greetingName',
                 style: FraternusTypography.h4(

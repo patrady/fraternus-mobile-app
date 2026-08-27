@@ -26,9 +26,11 @@ class TodayScreen extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: dashboardAsync.when(
-          data: (dashboard) => _TodayContent(dashboard: dashboard, selectedKey: selectedKey),
+          data: (dashboard) =>
+              _TodayContent(dashboard: dashboard, selectedKey: selectedKey),
           loading: () => const SizedBox.shrink(),
-          error: (error, stackTrace) => const BodyText('Something went wrong loading today.'),
+          error: (error, stackTrace) =>
+              const BodyText('Something went wrong loading today.'),
         ),
       ),
     );
@@ -64,29 +66,36 @@ class _TodayContent extends ConsumerWidget {
           greetingName: dashboard.greetingName,
           onProfileTap: () => context.push(RoutePaths.todayProfile),
         ),
+        if (dashboard.weeklyFocus != null) ...[
+          const SizedBox(height: 20),
+          DarkSummaryCard(
+            eyebrow: "This Week's Focus",
+            title: dashboard.weeklyFocus!.virtue,
+            onPressed: () => context.push(RoutePaths.guideVirtue),
+          ),
+        ],
         const SizedBox(height: 20),
-        DarkSummaryCard(
-          eyebrow: "This Week's Focus",
-          title: dashboard.weeklyFocus.virtue,
-          onPressed: () => context.push(RoutePaths.guideVirtue),
-        ),
-        const SizedBox(height: 20),
-        const HairlineDivider(),
-        const SizedBox(height: 16),
-        const Subheading('Today'),
-        const SizedBox(height: 4),
         if (selectedPerson == null)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: BodyText('Add a household member from Profile to get started.'),
+            child: BodyText(
+              'Add a household member from Profile to get started.',
+            ),
           )
         else ...[
           PersonTabs(
             people: dashboard.people
-                .map((person) => PersonTabItem(key: person.memberId, label: person.label, status: person.status))
+                .map(
+                  (person) => PersonTabItem(
+                    key: person.memberId,
+                    label: person.label,
+                    status: person.status,
+                  ),
+                )
                 .toList(),
             activeKey: selectedPerson.memberId,
-            onChanged: (key) => ref.read(todaySelectedPersonProvider.notifier).select(key),
+            onChanged: (key) =>
+                ref.read(todaySelectedPersonProvider.notifier).select(key),
           ),
           const SizedBox(height: 16),
           _TodayTaskCard(person: selectedPerson),
@@ -105,7 +114,11 @@ class _TodayContent extends ConsumerWidget {
           const BodyText('Nothing else on the calendar this week.')
         else
           for (final event in dashboard.upcomingEvents)
-            ListRow(label: event.title, sublabel: event.dateLabel, bordered: false),
+            ListRow(
+              label: event.title,
+              sublabel: event.dateLabel,
+              bordered: false,
+            ),
         const SizedBox(height: 24),
       ],
     );
@@ -119,9 +132,14 @@ class _TodayTaskCard extends ConsumerWidget {
 
   Widget _leadingFor(TodayTaskKind kind, bool isComplete) {
     return switch (kind) {
-      TodayTaskKind.fieldGuideReading || TodayTaskKind.weeklyChallenge => isComplete
-          ? const FraternusIcon(name: 'circle-check', size: 22, tone: FraternusIconTone.success)
-          : const FraternusIcon(name: 'circle', size: 22, opacity: 0.4),
+      TodayTaskKind.fieldGuideReading || TodayTaskKind.weeklyChallenge =>
+        isComplete
+            ? const FraternusIcon(
+                name: 'circle-check',
+                size: 22,
+                tone: FraternusIconTone.success,
+              )
+            : const FraternusIcon(name: 'circle', size: 22, opacity: 0.4),
       TodayTaskKind.event => const FraternusIcon(name: 'calendar', size: 20),
     };
   }
@@ -131,35 +149,61 @@ class _TodayTaskCard extends ConsumerWidget {
     // Events have no completion state of their own — only the two
     // actionable task kinds check against their own feature's real data.
     final isFieldGuideComplete =
-        ref.watch(guideDevotionalProgressProvider(_dateOnly(DateTime.now()))).value?[person.memberId]?.isCompleted ??
+        ref
+            .watch(guideDevotionalProgressProvider(_dateOnly(DateTime.now())))
+            .value?[person.memberId]
+            ?.isCompleted ??
         false;
     final currentChallenge = ref.watch(currentChallengeProvider).value;
     final isChallengeComplete = currentChallenge == null
         ? false
-        : ref.watch(challengeProgressProvider(currentChallenge.id)).value?[person.memberId]?.isCompleted ?? false;
+        : ref
+                  .watch(challengeProgressProvider(currentChallenge.id))
+                  .value?[person.memberId]
+                  ?.isCompleted ??
+              false;
 
     final tasks = person.todayTasks;
+    if (tasks.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FraternusIcon(name: "flame"),
+              SizedBox(height: 6),
+              Text("Nothing for today"),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Box(
       child: Column(
         children: [
           for (var i = 0; i < tasks.length; i++) ...[
             ListRow(
-              leading: _leadingFor(
-                tasks[i].kind,
-                switch (tasks[i].kind) {
-                  TodayTaskKind.fieldGuideReading => isFieldGuideComplete,
-                  TodayTaskKind.weeklyChallenge => isChallengeComplete,
-                  TodayTaskKind.event => false,
-                },
-              ),
+              leading: _leadingFor(tasks[i].kind, switch (tasks[i].kind) {
+                TodayTaskKind.fieldGuideReading => isFieldGuideComplete,
+                TodayTaskKind.weeklyChallenge => isChallengeComplete,
+                TodayTaskKind.event => false,
+              }),
               label: tasks[i].label,
               bordered: false,
               onPressed: switch (tasks[i].kind) {
                 // An event task's id doubles as its event id in the Events
                 // feature's own data — see StaticEventsRepository.
-                TodayTaskKind.event => () => context.push(RoutePaths.eventDetail(tasks[i].id)),
-                TodayTaskKind.weeklyChallenge => () => context.push(RoutePaths.challenge),
-                TodayTaskKind.fieldGuideReading => () => context.push(RoutePaths.guide),
+                TodayTaskKind.event => () => context.push(
+                  RoutePaths.eventDetail(tasks[i].id),
+                ),
+                TodayTaskKind.weeklyChallenge => () => context.push(
+                  RoutePaths.challenge,
+                ),
+                TodayTaskKind.fieldGuideReading => () => context.push(
+                  RoutePaths.guide,
+                ),
               },
             ),
             if (i != tasks.length - 1) const HairlineDivider(),
@@ -188,8 +232,10 @@ class _SeeAllLink extends StatelessWidget {
             children: [
               Text(
                 'SEE ALL',
-                style: FraternusTypography.button(fontSize: 13, color: FraternusColors.forestGreen)
-                    .copyWith(fontWeight: FontWeight.w700),
+                style: FraternusTypography.button(
+                  fontSize: 13,
+                  color: FraternusColors.forestGreen,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
               const FraternusIcon(name: 'chevron-right', size: 16),
             ],

@@ -14,7 +14,12 @@ class TodayDashboard {
 
   final DateTime date;
   final String greetingName;
-  final WeeklyFocus weeklyFocus;
+
+  /// Null when today itself has no Field Guide reading (no resolved week,
+  /// or a week that doesn't cover today) — the Today screen's "This Week's
+  /// Focus" card doesn't render at all rather than showing a focus with
+  /// nothing to read today.
+  final WeeklyFocus? weeklyFocus;
   final List<HouseholdPerson> people;
 
   /// Empty in the current seed data (matches "Nothing else on the calendar
