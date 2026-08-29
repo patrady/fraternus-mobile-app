@@ -166,7 +166,7 @@ final class GuideWeekForDateProvider
   }
 }
 
-String _$guideWeekForDateHash() => r'683d96956763eab768e6931a4fc0022b5a1d581d';
+String _$guideWeekForDateHash() => r'5959895595653b57fbc833b7247a3da7b53f6c15';
 
 /// [date] must already be truncated to year/month/day — see
 /// [GuideSelectedDate] — since DateTime equality (Riverpod's family-arg
@@ -538,7 +538,7 @@ final class GuideBaseStreakProvider
   }
 }
 
-String _$guideBaseStreakHash() => r'0a020bd412df6a7b37fa431aaab30c0ab8133183';
+String _$guideBaseStreakHash() => r'2a46bfa1171fbc95cd104533a92e798a7059e00b';
 
 /// Consecutive-day streak for [personKey] as of the currently selected
 /// date, NOT counting the selected date itself — the screen adds +1 live

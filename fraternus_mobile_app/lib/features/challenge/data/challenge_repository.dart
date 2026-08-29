@@ -1,24 +1,42 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../shared/models/frat_night_template.dart';
-import '../../../shared/models/frat_night_virtue.dart';
 import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
+
+/// How recent the most recent past Frat Night must be for its Challenge to
+/// still be "current" — see [ChallengeRepository.fetchChallenges]. Matches
+/// the cutoff in supabase/migrations' `get_current_challenge`.
+const currentChallengeMaxAge = Duration(days: 21);
+
+/// [challenges] is every challenge the chapter has ever had, by template
+/// date descending. [currentChallengeId] is which one (if any) is current —
+/// see [ChallengeRepository.fetchChallenges].
+class ChallengeFeed {
+  const ChallengeFeed({required this.challenges, required this.currentChallengeId});
+
+  final List<WeeklyChallenge> challenges;
+  final String? currentChallengeId;
+}
 
 /// Source of the Challenge tab's data. Same seam as every other
 /// XRepository — swap the implementation, nothing downstream needs to
 /// change.
 abstract class ChallengeRepository {
-  /// Every challenge the chapter has ever had, current one first (resolved
-  /// per app_concept.md: "the most recent past (non-cancelled) Frat
-  /// Night"), the rest by template date descending. [memberLabels] resolves
-  /// each progress row's display name (not a schema field) from the
-  /// household member list — fetched separately, passed in rather than
-  /// re-queried here.
-  Future<List<WeeklyChallenge>> fetchChallenges({
+  /// Every challenge the chapter has ever had, by template date descending,
+  /// plus [ChallengeFeed.currentChallengeId] identifying which one (if any)
+  /// is current per app_concept.md: "the most recent past (non-cancelled)
+  /// Frat Night", but only within [currentChallengeMaxAge] of [asOf] — a
+  /// chapter that hasn't had a Frat Night in a while has no current
+  /// challenge, not a stale one. `null` means there isn't a current
+  /// challenge right now, not "unknown". [memberLabels] resolves each
+  /// progress row's display name (not a schema field) from the household
+  /// member list — fetched separately, passed in rather than re-queried
+  /// here.
+  Future<ChallengeFeed> fetchChallenges({
     required DateTime asOf,
-    required String chapterId,
+    required String chapterKey,
     required Map<String, String> memberLabels,
   });
 
@@ -76,8 +94,6 @@ class StaticChallengeRepository implements ChallengeRepository {
     // caught by "Cold Shower Challenge" no longer being findable in tests.
     required String title,
     required String description,
-    required String virtueKey,
-    required String virtueName,
     required DateTime startOfWeekDate,
     required int repsTotal,
   }) {
@@ -85,13 +101,14 @@ class StaticChallengeRepository implements ChallengeRepository {
       id: id,
       template: FratNightTemplate(
         id: templateId,
+        // The fake's templateId values are already stable slugs, so they
+        // double as the key — real content, unlike this seed data, doesn't
+        // assume id and key are the same value.
+        key: templateId,
         title: templateTitle,
         description: description,
         reading: description,
-        liturgicalDay: 'Ordinary Time',
         startOfWeekDate: startOfWeekDate,
-        fratNightVirtueKey: virtueKey,
-        virtue: FratNightVirtue(id: virtueKey, key: virtueKey, name: virtueName),
         createdAt: startOfWeekDate,
         lastModifiedAt: startOfWeekDate,
       ),
@@ -136,8 +153,6 @@ class StaticChallengeRepository implements ChallengeRepository {
           '30–60 seconds fully cold. This trains you to stay calm and decisive under '
           'discomfort — a small, repeatable act of will that carries over into '
           'everything else you do this week.',
-      virtueKey: 'fortitude',
-      virtueName: 'Fortitude',
       startOfWeekDate: coldShowerWeekStart,
       repsTotal: 3,
     );
@@ -181,8 +196,6 @@ class StaticChallengeRepository implements ChallengeRepository {
           'Spend the first 10 minutes of your morning in total silence — no phone, '
           'no music, no conversation. Just be present before the day pulls you in '
           'a dozen directions.',
-      virtueKey: 'prudence',
-      virtueName: 'Prudence',
       startOfWeekDate: morningSilenceWeekStart,
       repsTotal: 3,
     );
@@ -209,8 +222,6 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Go five full days without complaining — out loud or in your head. Notice '
           'how often the urge shows up, and choose gratitude instead.',
-      virtueKey: 'patience',
-      virtueName: 'Patience',
       startOfWeekDate: noComplainingWeekStart,
       repsTotal: 5,
     );
@@ -239,8 +250,6 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Close each day with a short examen: where did you see God today, where '
           'did you fall short, and what will you carry into tomorrow.',
-      virtueKey: 'humility',
-      virtueName: 'Humility',
       startOfWeekDate: examenWeekStart,
       repsTotal: 7,
     );
@@ -262,40 +271,56 @@ class StaticChallengeRepository implements ChallengeRepository {
   }
 
   @override
-  Future<List<WeeklyChallenge>> fetchChallenges({
+  Future<ChallengeFeed> fetchChallenges({
     required DateTime asOf,
-    required String chapterId,
+    required String chapterKey,
     required Map<String, String> memberLabels,
   }) async {
     final challenges = _challenges.values.toList()
       ..sort((a, b) => b.template.startOfWeekDate.compareTo(a.template.startOfWeekDate));
 
-    return [
-      for (final challenge in challenges)
-        WeeklyChallenge(
-          id: challenge.id,
-          fratNightTemplateId: challenge.template.id,
-          fratNightTemplate: challenge.template,
-          title: challenge.title,
-          description: challenge.description,
-          repsTotal: challenge.repsTotal,
-          progress: [
-            for (final memberId in memberLabels.keys)
-              if (_progress['${challenge.id}:$memberId'] case final progress?)
-                PersonChallengeProgress(
-                  id: progress.id,
-                  memberId: progress.memberId,
-                  challengeId: progress.challengeId,
-                  label: memberLabels[memberId] ?? '',
-                  committedDate: progress.committedDate,
-                  completedDate: progress.completedDate,
-                  reps: progress.reps,
-                  createdAt: progress.createdAt,
-                  lastModifiedAt: progress.lastModifiedAt,
-                ),
-          ],
-        ),
-    ];
+    // Stand-in for the real repository's Event-driven RPC — this fake has
+    // no Event model of its own, so the template's startOfWeekDate (the
+    // Frat Night's own date) is used directly as the Frat Night date.
+    String? currentChallengeId;
+    for (final challenge in challenges) {
+      if (!challenge.template.startOfWeekDate.isAfter(asOf)) {
+        if (asOf.difference(challenge.template.startOfWeekDate) <= currentChallengeMaxAge) {
+          currentChallengeId = challenge.id;
+        }
+        break;
+      }
+    }
+
+    return ChallengeFeed(
+      currentChallengeId: currentChallengeId,
+      challenges: [
+        for (final challenge in challenges)
+          WeeklyChallenge(
+            id: challenge.id,
+            fratNightTemplateKey: challenge.template.key,
+            fratNightTemplate: challenge.template,
+            title: challenge.title,
+            description: challenge.description,
+            repsTotal: challenge.repsTotal,
+            progress: [
+              for (final memberId in memberLabels.keys)
+                if (_progress['${challenge.id}:$memberId'] case final progress?)
+                  PersonChallengeProgress(
+                    id: progress.id,
+                    memberId: progress.memberId,
+                    challengeId: progress.challengeId,
+                    label: memberLabels[memberId] ?? '',
+                    committedDate: progress.committedDate,
+                    completedDate: progress.completedDate,
+                    reps: progress.reps,
+                    createdAt: progress.createdAt,
+                    lastModifiedAt: progress.lastModifiedAt,
+                  ),
+            ],
+          ),
+      ],
+    );
   }
 
   @override
@@ -371,30 +396,31 @@ class SupabaseChallengeRepository implements ChallengeRepository {
   static String _isoTimestamp(DateTime date) => date.toUtc().toIso8601String();
 
   @override
-  Future<List<WeeklyChallenge>> fetchChallenges({
+  Future<ChallengeFeed> fetchChallenges({
     required DateTime asOf,
-    required String chapterId,
+    required String chapterKey,
     required Map<String, String> memberLabels,
   }) async {
-    final currentChallengeId = await _client.rpc(
-      'get_current_challenge',
-      params: {'p_chapter_id': chapterId, 'p_as_of': _isoTimestamp(asOf)},
-    );
+    // Cutoff (currentChallengeMaxAge) is enforced in the RPC itself, not
+    // here — see get_current_challenge in supabase/migrations. A null
+    // result means either no non-cancelled past Frat Night exists yet, or
+    // the most recent one is too stale to still be current.
+    final currentChallengeId =
+        await _client.rpc(
+          'get_current_challenge',
+          params: {'p_chapter_key': chapterKey, 'p_as_of': _isoTimestamp(asOf)},
+        )
+        as String?;
 
     final rows = await _client
         .from('challenges')
-        .select('*, frat_night_templates(*, frat_night_virtues(*)), challenge_members(*, challenge_member_reps(*))');
+        .select('*, frat_night_templates(*), challenge_members(*, challenge_member_reps(*))');
 
     final challenges = [
       for (final row in rows) WeeklyChallenge.fromJson(row, memberLabels: memberLabels),
     ]..sort((a, b) => b.fratNightTemplate.startOfWeekDate.compareTo(a.fratNightTemplate.startOfWeekDate));
 
-    if (currentChallengeId == null) return challenges;
-    final currentIndex = challenges.indexWhere((c) => c.id == currentChallengeId);
-    if (currentIndex <= 0) return challenges;
-
-    final current = challenges.removeAt(currentIndex);
-    return [current, ...challenges];
+    return ChallengeFeed(challenges: challenges, currentChallengeId: currentChallengeId);
   }
 
   @override

@@ -15,7 +15,7 @@ import 'person_challenge_progress.dart';
 class WeeklyChallenge {
   const WeeklyChallenge({
     required this.id,
-    required this.fratNightTemplateId,
+    required this.fratNightTemplateKey,
     required this.fratNightTemplate,
     required this.title,
     required this.description,
@@ -24,7 +24,7 @@ class WeeklyChallenge {
   });
 
   final String id;
-  final String fratNightTemplateId;
+  final String fratNightTemplateKey;
 
   /// Nested read-model join, same pattern as `FieldGuideWeek.quotes` — gives
   /// direct access to `fratNightTemplate.startOfWeekDate` for the "Week of
@@ -39,7 +39,7 @@ class WeeklyChallenge {
   final List<PersonChallengeProgress> progress;
 
   /// Expects the nested-embed shape
-  /// `*, frat_night_templates(*, frat_night_virtues(*)), challenge_members(*, challenge_member_reps(*))`
+  /// `*, frat_night_templates(*), challenge_members(*, challenge_member_reps(*))`
   /// — see SupabaseChallengeRepository. RLS already scopes the embedded
   /// `challenge_members` rows to the caller's own household, so nothing
   /// further is filtered here. [memberLabels] resolves each progress row's
@@ -49,7 +49,7 @@ class WeeklyChallenge {
     final progressJson = json['challenge_members'] as List<dynamic>? ?? const [];
     return WeeklyChallenge(
       id: json['id'] as String,
-      fratNightTemplateId: json['frat_night_template_id'] as String,
+      fratNightTemplateKey: json['frat_night_template_key'] as String,
       fratNightTemplate: FratNightTemplate.fromJson(json['frat_night_templates'] as Map<String, dynamic>),
       title: json['title'] as String,
       description: json['description'] as String,

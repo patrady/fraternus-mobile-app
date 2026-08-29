@@ -19,7 +19,7 @@ ChallengeRepository challengeRepository(Ref ref) {
 /// (app_concept.md doesn't describe a multi-chapter household) — the first
 /// member's chapter stands in for "the household's chapter", same
 /// simplification guide_providers.dart makes for Field Guide content.
-String? _householdChapterId(List<Member> members) => members.isEmpty ? null : members.first.chapterId;
+String? _householdChapterKey(List<Member> members) => members.isEmpty ? null : members.first.chapterKey;
 
 /// The current user's household, for the Challenge tab's person tabs.
 /// Sourced from Profile's real Member data now — every Member is eligible
@@ -31,30 +31,46 @@ Future<List<ChallengeHouseholdMember>> challengeHousehold(Ref ref) async {
   return [for (final member in members) ChallengeHouseholdMember(memberId: member.id, label: member.firstName)];
 }
 
-/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
+/// Source of truth for [allChallengesProvider]/[currentChallengeProvider]/
+/// [pastChallengesProvider] — fetched once so the three stay consistent
+/// with each other instead of each re-deriving "current" independently.
 @riverpod
-Future<List<WeeklyChallenge>> allChallenges(Ref ref) async {
+Future<ChallengeFeed> _challengeFeed(Ref ref) async {
   final repository = ref.watch(challengeRepositoryProvider);
   final members = await ref.watch(householdMembersProvider.future);
-  final chapterId = _householdChapterId(members);
-  if (chapterId == null) return const [];
+  final chapterKey = _householdChapterKey(members);
+  if (chapterKey == null) return const ChallengeFeed(challenges: [], currentChallengeId: null);
   return repository.fetchChallenges(
     asOf: DateTime.now(),
-    chapterId: chapterId,
+    chapterKey: chapterKey,
     memberLabels: {for (final member in members) member.id: member.firstName},
   );
 }
 
+/// All challenges the chapter has ever had, by template date descending.
+@riverpod
+Future<List<WeeklyChallenge>> allChallenges(Ref ref) async {
+  final feed = await ref.watch(_challengeFeedProvider.future);
+  return feed.challenges;
+}
+
+/// The challenge tied to the most recent past Frat Night, or null if there
+/// isn't one right now (no Frat Night yet, or the most recent one is more
+/// than [currentChallengeMaxAge] old) — see ChallengeRepository.fetchChallenges.
 @riverpod
 Future<WeeklyChallenge?> currentChallenge(Ref ref) async {
-  final challenges = await ref.watch(allChallengesProvider.future);
-  return challenges.isEmpty ? null : challenges.first;
+  final feed = await ref.watch(_challengeFeedProvider.future);
+  if (feed.currentChallengeId == null) return null;
+  for (final challenge in feed.challenges) {
+    if (challenge.id == feed.currentChallengeId) return challenge;
+  }
+  return null;
 }
 
 @riverpod
 Future<List<WeeklyChallenge>> pastChallenges(Ref ref) async {
-  final challenges = await ref.watch(allChallengesProvider.future);
-  return challenges.skip(1).toList();
+  final feed = await ref.watch(_challengeFeedProvider.future);
+  return [for (final challenge in feed.challenges) if (challenge.id != feed.currentChallengeId) challenge];
 }
 
 @riverpod
@@ -96,9 +112,9 @@ class ChallengeSelectedPerson extends _$ChallengeSelectedPerson {
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-/// repository and invalidates allChallengesProvider (which this provider
-/// derives from via challengeByIdProvider), so a write is only ever
-/// reflected once the repository actually reports it back.
+/// repository and invalidates the shared challenge feed (which this
+/// provider derives from via challengeByIdProvider), so a write is only
+/// ever reflected once the repository actually reports it back.
 @riverpod
 class ChallengeProgress extends _$ChallengeProgress {
   @override
@@ -113,7 +129,7 @@ class ChallengeProgress extends _$ChallengeProgress {
     final current = state.value ?? const {};
     if (current.containsKey(personKey)) return;
     await ref.read(challengeRepositoryProvider).acceptChallenge(memberId: personKey, challengeId: challengeId);
-    ref.invalidate(allChallengesProvider);
+    ref.invalidate(_challengeFeedProvider);
   }
 
   /// Marks the rep at [repIndex] complete (today's date) if it's currently
@@ -128,6 +144,6 @@ class ChallengeProgress extends _$ChallengeProgress {
       challengeMemberId: existing.id,
       repNumber: repIndex + 1,
     );
-    ref.invalidate(allChallengesProvider);
+    ref.invalidate(_challengeFeedProvider);
   }
 }

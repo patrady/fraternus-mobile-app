@@ -14,7 +14,7 @@ class ChildForm extends StatefulWidget {
   const ChildForm({
     super.key,
     this.initial,
-    this.initialChapterId,
+    this.initialChapterKey,
     required this.chapters,
     required this.onSave,
     this.onRemove,
@@ -25,7 +25,7 @@ class ChildForm extends StatefulWidget {
 
   /// Prefill for a brand-new child (e.g. the parent's own chapter) — ignored
   /// when [initial] is set, since an existing child's chapter takes priority.
-  final String? initialChapterId;
+  final String? initialChapterKey;
 
   /// Sourced from `chaptersProvider` by the caller (AddChildScreen /
   /// EditChildScreen) — kept plain (not repository-aware) here since this
@@ -36,7 +36,7 @@ class ChildForm extends StatefulWidget {
     required String lastName,
     required DateTime birthday,
     required String? email,
-    required String? chapterId,
+    required String? chapterKey,
   })
   onSave;
   final VoidCallback? onRemove;
@@ -56,7 +56,7 @@ class _ChildFormState extends State<ChildForm> {
     text: widget.initial?.email,
   );
   late DateTime? _birthday = widget.initial?.birthday;
-  late String? _chapterId = widget.initial?.chapterId ?? widget.initialChapterId;
+  late String? _chapterKey = widget.initial?.chapterKey ?? widget.initialChapterKey;
 
   @override
   void dispose() {
@@ -128,12 +128,12 @@ class _ChildFormState extends State<ChildForm> {
               const SizedBox(height: 16),
               const FieldLabel(label: 'Chapter'),
               SelectField(
-                value: _chapterId,
+                value: _chapterKey,
                 options: {
-                  for (final chapter in widget.chapters) chapter.id: chapter.name,
+                  for (final chapter in widget.chapters) chapter.key: chapter.name,
                 },
                 placeholder: 'Select a chapter',
-                onChanged: (value) => setState(() => _chapterId = value),
+                onChanged: (value) => setState(() => _chapterKey = value),
               ),
               const SizedBox(height: 16),
               Button(
@@ -147,7 +147,7 @@ class _ChildFormState extends State<ChildForm> {
                   email: _emailController.text.isEmpty
                       ? null
                       : _emailController.text,
-                  chapterId: _chapterId,
+                  chapterKey: _chapterKey,
                 ),
               ),
             ],

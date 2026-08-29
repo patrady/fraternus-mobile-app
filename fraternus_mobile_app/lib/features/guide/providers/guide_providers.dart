@@ -21,7 +21,7 @@ GuideRepository guideRepository(Ref ref) {
 /// first household member's chapter stands in for "the household's
 /// chapter" when resolving shared Field Guide content. Returns null for an
 /// empty household (no data to show either way).
-String? _householdChapterId(List<Member> members) => members.isEmpty ? null : members.first.chapterId;
+String? _householdChapterKey(List<Member> members) => members.isEmpty ? null : members.first.chapterKey;
 
 Member? _memberById(List<Member> members, String memberId) {
   for (final member in members) {
@@ -45,9 +45,9 @@ Future<List<GuideHouseholdMember>> guideHousehold(Ref ref) async {
 Future<FieldGuideWeek?> guideWeekForDate(Ref ref, DateTime date) async {
   final repository = ref.watch(guideRepositoryProvider);
   final members = await ref.watch(householdMembersProvider.future);
-  final chapterId = _householdChapterId(members);
-  if (chapterId == null) return null;
-  return repository.fetchWeekForDate(date: date, chapterId: chapterId, memberIds: [for (final m in members) m.id]);
+  final chapterKey = _householdChapterKey(members);
+  if (chapterKey == null) return null;
+  return repository.fetchWeekForDate(date: date, chapterKey: chapterKey, memberIds: [for (final m in members) m.id]);
 }
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
@@ -159,7 +159,7 @@ Future<int> guideBaseStreak(Ref ref, String personKey) async {
   final members = await ref.watch(householdMembersProvider.future);
   final member = _memberById(members, personKey);
   if (member == null) return 0;
-  return repository.fetchStreak(memberId: personKey, chapterId: member.chapterId, asOf: date);
+  return repository.fetchStreak(memberId: personKey, chapterKey: member.chapterKey, asOf: date);
 }
 
 /// Fake temperament-quiz-result seed — see models/temperament.dart. Only

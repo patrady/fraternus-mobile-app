@@ -11,7 +11,7 @@ class Member {
     required this.firstName,
     required this.lastName,
     required this.role,
-    required this.chapterId,
+    required this.chapterKey,
     required this.birthday,
     this.email,
     required this.createdAt,
@@ -24,7 +24,7 @@ class Member {
   final MemberRole role;
 
   /// A Member always belongs to exactly one chapter.
-  final String chapterId;
+  final String chapterKey;
 
   /// Required for every Member regardless of role — Brother, Captain, or
   /// Commander all collect a birthday at creation time.
@@ -49,14 +49,14 @@ class Member {
     DateTime? birthday,
     String? email,
     bool clearEmail = false,
-    String? chapterId,
+    String? chapterKey,
   }) {
     return Member(
       id: id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       role: role,
-      chapterId: chapterId ?? this.chapterId,
+      chapterKey: chapterKey ?? this.chapterKey,
       birthday: birthday ?? this.birthday,
       email: clearEmail ? null : (email ?? this.email),
       createdAt: createdAt,
@@ -70,7 +70,7 @@ class Member {
       firstName: json['first_name'] as String,
       lastName: json['last_name'] as String,
       role: MemberRole.values.byName(json['role'] as String),
-      chapterId: json['chapter_id'] as String,
+      chapterKey: json['chapter_key'] as String,
       birthday: DateTime.parse(json['birthday'] as String),
       email: json['email'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),

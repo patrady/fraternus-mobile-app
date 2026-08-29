@@ -65,6 +65,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 
 - A challenge is something that is assigned at Frat Night
 - A challenge that is tied to the most recent past (non-cancelled) Frat Night remains in effect until the next Frat Night takes place
+- If the most recent past (non-cancelled) Frat Night was more than 3 weeks ago, there is no current challenge to display
 - The challenge's title is displayed on the page
 - A Challenge Member consists of a number of reps of something per week. Examples: take a cold shower 3x this next week, pray the rosary 1x this week, make a morning offering every day this week
 - There's a button to display the full description, these are usually very long so it should only be displayed if manually clicked
@@ -130,7 +131,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Last Modified Date
 - Member
     - Id
-    - Chapter Id
+    - Chapter Key (referenced by Key, not Id)
     - Role (Brother, Captain, Commander)
     - First Name
     - Last Name
@@ -151,6 +152,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
         - Unique constraint on (User Id, Member Id)
 - Chapter
     - Id
+    - Key
     - Name
     - City
     - State
@@ -161,9 +163,11 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Frat Night Start Time (ex "19:00")
     - Frat Night End Time (ex "20:30")
     - Frat Night Location
+    - Constraints:
+        - Unique constraint on Key
 - Chapter Field Guide Details
     - Id
-    - Chapter Id
+    - Chapter Key (referenced by Key, not Id)
     - School Year Start Date
     - School Year End Date
     - Field Guide Start Date
@@ -174,19 +178,17 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Title (ex. "the fortitudious man defends his brothers")
     - Description
     - Reading (markdown enabled)
-    - Liturgical Day (ie First Sunday in Ordinary Time)
     - start of week calendar date (Ie 2026-01-01)
-    - Frat Night Virtue Id
+    - Video Clip URL (optional)
+    - Key
     - Created Date
     - Last Modified Date
     - Constraints:
         - Unique constraint on start of week calendar date
-- Frat Night Virtue
-    - Id
-    - Name (ex justice, prudence, temperance)
+        - Unique constraint on Key
 - Challenge
     - Id
-    - Frat Night Template Id
+    - Frat Night Template Key 
     - Title
     - Description
     - Reps (ex 4)
@@ -273,12 +275,12 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - Event Frat Night Details
     - Id
     - Event Id
-    - Frat Night Template Id
-    - Chapter Id
+    - Frat Night Template Key (referenced by Key, not Id)
+    - Chapter Key (referenced by Key, not Id)
 - Event Excursion Details
     - Id
     - Event Id
-    - Host Chapter Id
+    - Host Chapter Key (referenced by Key, not Id)
     - Registration Url
 - Event Ranch Details
     - Id
@@ -287,7 +289,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - Event Attendees Chapter
     - Id
     - Event Id
-    - Chapter Id
+    - Chapter Key (referenced by Key, not Id)
     - Role (one of ["Captains", "Brothers", "Chapter"])
 - Event Attendees Specific
     - Id

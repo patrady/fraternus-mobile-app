@@ -113,12 +113,62 @@ final class ChallengeHouseholdProvider
 String _$challengeHouseholdHash() =>
     r'3efdf57c8bc7e475ef2f8e2872e5bd47783f9d16';
 
-/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
+/// Source of truth for [allChallengesProvider]/[currentChallengeProvider]/
+/// [pastChallengesProvider] — fetched once so the three stay consistent
+/// with each other instead of each re-deriving "current" independently.
+
+@ProviderFor(_challengeFeed)
+const _challengeFeedProvider = _ChallengeFeedProvider._();
+
+/// Source of truth for [allChallengesProvider]/[currentChallengeProvider]/
+/// [pastChallengesProvider] — fetched once so the three stay consistent
+/// with each other instead of each re-deriving "current" independently.
+
+final class _ChallengeFeedProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ChallengeFeed>,
+          ChallengeFeed,
+          FutureOr<ChallengeFeed>
+        >
+    with $FutureModifier<ChallengeFeed>, $FutureProvider<ChallengeFeed> {
+  /// Source of truth for [allChallengesProvider]/[currentChallengeProvider]/
+  /// [pastChallengesProvider] — fetched once so the three stay consistent
+  /// with each other instead of each re-deriving "current" independently.
+  const _ChallengeFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_challengeFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$_challengeFeedHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ChallengeFeed> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ChallengeFeed> create(Ref ref) {
+    return _challengeFeed(ref);
+  }
+}
+
+String _$_challengeFeedHash() => r'f2186e69e64411cd0c67ca6457f32473fc010e06';
+
+/// All challenges the chapter has ever had, by template date descending.
 
 @ProviderFor(allChallenges)
 const allChallengesProvider = AllChallengesProvider._();
 
-/// All challenges, current one first (see ChallengeRepository.fetchChallenges).
+/// All challenges the chapter has ever had, by template date descending.
 
 final class AllChallengesProvider
     extends
@@ -130,7 +180,7 @@ final class AllChallengesProvider
     with
         $FutureModifier<List<WeeklyChallenge>>,
         $FutureProvider<List<WeeklyChallenge>> {
-  /// All challenges, current one first (see ChallengeRepository.fetchChallenges).
+  /// All challenges the chapter has ever had, by template date descending.
   const AllChallengesProvider._()
     : super(
         from: null,
@@ -157,10 +207,18 @@ final class AllChallengesProvider
   }
 }
 
-String _$allChallengesHash() => r'772b22873c5e4a8cbf0f97a36d1da7d3eba22ed4';
+String _$allChallengesHash() => r'2a5353b69f2bc93811ab7b745659902df45688e8';
+
+/// The challenge tied to the most recent past Frat Night, or null if there
+/// isn't one right now (no Frat Night yet, or the most recent one is more
+/// than [currentChallengeMaxAge] old) — see ChallengeRepository.fetchChallenges.
 
 @ProviderFor(currentChallenge)
 const currentChallengeProvider = CurrentChallengeProvider._();
+
+/// The challenge tied to the most recent past Frat Night, or null if there
+/// isn't one right now (no Frat Night yet, or the most recent one is more
+/// than [currentChallengeMaxAge] old) — see ChallengeRepository.fetchChallenges.
 
 final class CurrentChallengeProvider
     extends
@@ -170,6 +228,9 @@ final class CurrentChallengeProvider
           FutureOr<WeeklyChallenge?>
         >
     with $FutureModifier<WeeklyChallenge?>, $FutureProvider<WeeklyChallenge?> {
+  /// The challenge tied to the most recent past Frat Night, or null if there
+  /// isn't one right now (no Frat Night yet, or the most recent one is more
+  /// than [currentChallengeMaxAge] old) — see ChallengeRepository.fetchChallenges.
   const CurrentChallengeProvider._()
     : super(
         from: null,
@@ -196,7 +257,7 @@ final class CurrentChallengeProvider
   }
 }
 
-String _$currentChallengeHash() => r'84384da872fe1e01b9539c94cc00e98888fec513';
+String _$currentChallengeHash() => r'70d5b52d22d986d78e9a08abfa919cf72ab8a4dd';
 
 @ProviderFor(pastChallenges)
 const pastChallengesProvider = PastChallengesProvider._();
@@ -237,7 +298,7 @@ final class PastChallengesProvider
   }
 }
 
-String _$pastChallengesHash() => r'7c70e1c88477a41c2eaef0b8187e591b44c33676';
+String _$pastChallengesHash() => r'424e038cadf9a842e77b123a81b27d59a28191d8';
 
 @ProviderFor(challengeById)
 const challengeByIdProvider = ChallengeByIdFamily._();
@@ -477,18 +538,18 @@ abstract class _$ChallengeSelectedPerson extends $Notifier<String> {
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-/// repository and invalidates allChallengesProvider (which this provider
-/// derives from via challengeByIdProvider), so a write is only ever
-/// reflected once the repository actually reports it back.
+/// repository and invalidates the shared challenge feed (which this
+/// provider derives from via challengeByIdProvider), so a write is only
+/// ever reflected once the repository actually reports it back.
 
 @ProviderFor(ChallengeProgress)
 const challengeProgressProvider = ChallengeProgressFamily._();
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-/// repository and invalidates allChallengesProvider (which this provider
-/// derives from via challengeByIdProvider), so a write is only ever
-/// reflected once the repository actually reports it back.
+/// repository and invalidates the shared challenge feed (which this
+/// provider derives from via challengeByIdProvider), so a write is only
+/// ever reflected once the repository actually reports it back.
 final class ChallengeProgressProvider
     extends
         $AsyncNotifierProvider<
@@ -497,9 +558,9 @@ final class ChallengeProgressProvider
         > {
   /// Per-person progress for one challenge, read straight through from
   /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-  /// repository and invalidates allChallengesProvider (which this provider
-  /// derives from via challengeByIdProvider), so a write is only ever
-  /// reflected once the repository actually reports it back.
+  /// repository and invalidates the shared challenge feed (which this
+  /// provider derives from via challengeByIdProvider), so a write is only
+  /// ever reflected once the repository actually reports it back.
   const ChallengeProgressProvider._({
     required ChallengeProgressFamily super.from,
     required String super.argument,
@@ -536,13 +597,13 @@ final class ChallengeProgressProvider
   }
 }
 
-String _$challengeProgressHash() => r'3ae8002b8eadde8bb86eab4d85ff9d2fca39735d';
+String _$challengeProgressHash() => r'cc37ef0b579fb693d0094137db774c058d117ecf';
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-/// repository and invalidates allChallengesProvider (which this provider
-/// derives from via challengeByIdProvider), so a write is only ever
-/// reflected once the repository actually reports it back.
+/// repository and invalidates the shared challenge feed (which this
+/// provider derives from via challengeByIdProvider), so a write is only
+/// ever reflected once the repository actually reports it back.
 
 final class ChallengeProgressFamily extends $Family
     with
@@ -564,9 +625,9 @@ final class ChallengeProgressFamily extends $Family
 
   /// Per-person progress for one challenge, read straight through from
   /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-  /// repository and invalidates allChallengesProvider (which this provider
-  /// derives from via challengeByIdProvider), so a write is only ever
-  /// reflected once the repository actually reports it back.
+  /// repository and invalidates the shared challenge feed (which this
+  /// provider derives from via challengeByIdProvider), so a write is only
+  /// ever reflected once the repository actually reports it back.
 
   ChallengeProgressProvider call(String challengeId) =>
       ChallengeProgressProvider._(argument: challengeId, from: this);
@@ -577,9 +638,9 @@ final class ChallengeProgressFamily extends $Family
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
-/// repository and invalidates allChallengesProvider (which this provider
-/// derives from via challengeByIdProvider), so a write is only ever
-/// reflected once the repository actually reports it back.
+/// repository and invalidates the shared challenge feed (which this
+/// provider derives from via challengeByIdProvider), so a write is only
+/// ever reflected once the repository actually reports it back.
 
 abstract class _$ChallengeProgress
     extends $AsyncNotifier<Map<String, PersonChallengeProgress>> {

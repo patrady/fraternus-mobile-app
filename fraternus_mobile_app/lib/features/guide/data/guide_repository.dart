@@ -11,7 +11,7 @@ import '../models/field_guide_week_quote.dart';
 /// downstream (providers, screens) needs to change.
 abstract class GuideRepository {
   /// The devotional-selection algorithm from docs/app_concept.md: finds the
-  /// `Chapter Field Guide Details` row covering [date] for [chapterId],
+  /// `Chapter Field Guide Details` row covering [date] for [chapterKey],
   /// computes `weekNumber`/`dayNumber` as an offset from that row's
   /// `fieldGuideStartDate`, and returns the `FieldGuideWeek` containing that
   /// week (with each devotional's `members` filtered to [memberIds]) — null
@@ -20,7 +20,7 @@ abstract class GuideRepository {
   /// way).
   Future<FieldGuideWeek?> fetchWeekForDate({
     required DateTime date,
-    required String chapterId,
+    required String chapterKey,
     required List<String> memberIds,
   });
 
@@ -28,7 +28,7 @@ abstract class GuideRepository {
   /// [asOf] — deliberately excludes [asOf] itself, so the UI can add +1
   /// live the moment that day's row is marked complete/undone, without a
   /// repository round trip on every toggle.
-  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf});
+  Future<int> fetchStreak({required String memberId, required String chapterKey, required DateTime asOf});
 
   /// Creates or updates [memberId]'s row for [dailyDevotionalId]. Each of
   /// [sword]/[spade]/[completed] is applied only when non-null — passing
@@ -56,13 +56,13 @@ abstract class GuideRepository {
 /// the current week's Monday (computed once, at construction) so the real
 /// algorithm in [fetchWeekForDate] resolves to that authored week
 /// regardless of which day the app happens to launch on. Ignores the real
-/// [chapterId]/[memberIds] passed in — this fake only ever knows about
-/// 'st-philips-franklin' and the fixed you/jack/thomas trio, same
-/// simplification the pre-Supabase version made.
+/// [chapterKey]/[memberIds] passed in — this fake only ever knows about
+/// 'st_philips_franklin_franklin_tn' and the fixed you/jack/thomas trio,
+/// same simplification the pre-Supabase version made.
 class StaticGuideRepository implements GuideRepository {
   StaticGuideRepository() : _completions = _seedCompletions(DateTime.now());
 
-  static const _chapterId = 'st-philips-franklin';
+  static const _chapterKey = 'st_philips_franklin_franklin_tn';
   static const _authoredWeekNumber = 12;
   static const _memberIds = ['you', 'jack', 'thomas'];
 
@@ -144,8 +144,8 @@ class StaticGuideRepository implements GuideRepository {
     // DateTime.weekday, same as FieldGuideWeek.devotionalForDate expects.
     final fieldGuideStartDate = _weekStart(asOf).subtract(Duration(days: _authoredWeekNumber * 7));
     return ChapterFieldGuideDetails(
-      id: 'cfgd-$_chapterId',
-      chapterId: _chapterId,
+      id: 'cfgd-$_chapterKey',
+      chapterKey: _chapterKey,
       schoolYearStartDate: fieldGuideStartDate.subtract(const Duration(days: 14)),
       schoolYearEndDate: fieldGuideStartDate.add(const Duration(days: 300)),
       fieldGuideStartDate: fieldGuideStartDate,
@@ -251,7 +251,7 @@ class StaticGuideRepository implements GuideRepository {
   @override
   Future<FieldGuideWeek?> fetchWeekForDate({
     required DateTime date,
-    required String chapterId,
+    required String chapterKey,
     required List<String> memberIds,
   }) async {
     final asOf = DateTime.now();
@@ -273,7 +273,7 @@ class StaticGuideRepository implements GuideRepository {
   }
 
   @override
-  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf}) async {
+  Future<int> fetchStreak({required String memberId, required String chapterKey, required DateTime asOf}) async {
     return switch (memberId) {
       'you' => 3,
       'jack' => 8,
@@ -328,7 +328,7 @@ class SupabaseGuideRepository implements GuideRepository {
   @override
   Future<FieldGuideWeek?> fetchWeekForDate({
     required DateTime date,
-    required String chapterId,
+    required String chapterKey,
     required List<String> memberIds,
   }) async {
     // RPC #1: resolves which devotional/week apply via the school-year/
@@ -336,7 +336,7 @@ class SupabaseGuideRepository implements GuideRepository {
     // (see supabase/migrations/..._rpc_functions.sql).
     final resolvedRows = await _client.rpc(
       'get_field_guide_devotional_for_date',
-      params: {'p_chapter_id': chapterId, 'p_date': _isoDate(date)},
+      params: {'p_chapter_key': chapterKey, 'p_date': _isoDate(date)},
     );
     if (resolvedRows is! List || resolvedRows.isEmpty) return null;
     final resolved = resolvedRows.first as Map<String, dynamic>;
@@ -364,10 +364,10 @@ class SupabaseGuideRepository implements GuideRepository {
   }
 
   @override
-  Future<int> fetchStreak({required String memberId, required String chapterId, required DateTime asOf}) async {
+  Future<int> fetchStreak({required String memberId, required String chapterKey, required DateTime asOf}) async {
     final result = await _client.rpc(
       'get_field_guide_streak',
-      params: {'p_member_id': memberId, 'p_chapter_id': chapterId, 'p_as_of': _isoDate(asOf)},
+      params: {'p_member_id': memberId, 'p_chapter_key': chapterKey, 'p_as_of': _isoDate(asOf)},
     );
     return (result as num).toInt();
   }

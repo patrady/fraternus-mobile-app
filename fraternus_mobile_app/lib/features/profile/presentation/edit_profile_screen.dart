@@ -14,7 +14,7 @@ import 'widgets/birthday_field.dart';
 /// A ConsumerStatefulWidget (not the split ConsumerWidget+ConsumerStatefulWidget
 /// shape used before) so the Save button can live in [ScreenShell]'s pinned
 /// `footer` slot — that button needs the same field state (controllers,
-/// `_chapterId`, `_birthday`) that builds the form body, and only this
+/// `_chapterKey`, `_birthday`) that builds the form body, and only this
 /// widget's State has both in scope at once.
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -27,7 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   TextEditingController? _firstNameController;
   TextEditingController? _lastNameController;
   TextEditingController? _emailController;
-  String? _chapterId;
+  String? _chapterKey;
   DateTime? _birthday;
 
   AppUser? _user;
@@ -46,7 +46,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _firstNameController = TextEditingController(text: user.firstName);
     _lastNameController = TextEditingController(text: user.lastName);
     _emailController = TextEditingController(text: user.email);
-    _chapterId = selfMember?.chapterId;
+    _chapterKey = selfMember?.chapterKey;
     _birthday = selfMember?.birthday;
   }
 
@@ -75,7 +75,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     await ref
         .read(currentUserProvider.notifier)
         .save(user.copyWith(firstName: _firstNameController!.text, lastName: _lastNameController!.text));
-    if (selfMember != null && _chapterId != null && _birthday != null) {
+    if (selfMember != null && _chapterKey != null && _birthday != null) {
       await ref
           .read(householdMembersProvider.notifier)
           .updateMember(
@@ -83,7 +83,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               firstName: _firstNameController!.text,
               lastName: _lastNameController!.text,
               birthday: _birthday,
-              chapterId: _chapterId,
+              chapterKey: _chapterKey,
             ),
           );
     }
@@ -168,10 +168,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const SizedBox(height: 16),
           const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Chapter')),
           SelectField(
-            value: _chapterId,
-            options: {for (final chapter in chapters) chapter.id: chapter.name},
+            value: _chapterKey,
+            options: {for (final chapter in chapters) chapter.key: chapter.name},
             placeholder: 'Select a chapter',
-            onChanged: (value) => setState(() => _chapterId = value),
+            onChanged: (value) => setState(() => _chapterKey = value),
           ),
         ],
         const SizedBox(height: 24),

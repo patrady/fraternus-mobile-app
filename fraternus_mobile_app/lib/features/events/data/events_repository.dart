@@ -47,7 +47,7 @@ abstract class EventsRepository {
 class StaticEventsRepository implements EventsRepository {
   StaticEventsRepository() : _rsvps = _seedRsvps();
 
-  static const _chapterId = 'st-philips-franklin';
+  static const _chapterKey = 'st_philips_franklin_franklin_tn';
   static const _submittedByUserId = 'user-john';
 
   /// Keyed by '$eventId:$memberId'.
@@ -104,7 +104,7 @@ class StaticEventsRepository implements EventsRepository {
     EventAttendeesChapter(
       id: 'attendees-chapter-$eventId',
       eventId: eventId,
-      chapterId: _chapterId,
+      chapterKey: _chapterKey,
       role: EventAttendeeChapterRole.chapter,
     ),
   ];
@@ -113,7 +113,7 @@ class StaticEventsRepository implements EventsRepository {
     EventAttendeesChapter(
       id: 'attendees-captains-$eventId',
       eventId: eventId,
-      chapterId: _chapterId,
+      chapterKey: _chapterKey,
       role: EventAttendeeChapterRole.captains,
     ),
   ];
@@ -170,8 +170,8 @@ class StaticEventsRepository implements EventsRepository {
         fratNightDetails: const EventFratNightDetails(
           id: 'frat-night-details',
           eventId: 'frat-night',
-          fratNightTemplateId: 'fortitude-week',
-          chapterId: _chapterId,
+          fratNightTemplateKey: 'fortitude-week',
+          chapterKey: _chapterKey,
         ),
         eligibleHouseholdMembers: _wholeHousehold,
         householdRsvps: const [],
@@ -192,7 +192,7 @@ class StaticEventsRepository implements EventsRepository {
         excursionDetails: const EventExcursionDetails(
           id: 'excursion-buffalo-river-details',
           eventId: 'excursion-buffalo-river',
-          hostChapterId: _chapterId,
+          hostChapterKey: _chapterKey,
           registrationUrl: 'https://example.com/register/buffalo-river',
         ),
         eligibleHouseholdMembers: _wholeHousehold,

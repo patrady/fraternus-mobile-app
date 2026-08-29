@@ -1,0 +1,3 @@
+| type   | title               | description                  | location                    | start_date             | end_date               | chapter_key/attendees          |
+| ------ | ------------------- | ---------------------------- | --------------------------- | ---------------------- | ---------------------- | ------------------------------ |
+| custom | Commitment Ceremony | Fraternus induction ceremony | St. Philips Catholic Church | 2026-09-22 18:30:00-06 | 2026-09-22 20:00:00-06 | st_philips_franklin_tn/chapter |

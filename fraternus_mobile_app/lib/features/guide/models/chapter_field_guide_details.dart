@@ -4,7 +4,7 @@
 class ChapterFieldGuideDetails {
   const ChapterFieldGuideDetails({
     required this.id,
-    required this.chapterId,
+    required this.chapterKey,
     required this.schoolYearStartDate,
     required this.schoolYearEndDate,
     required this.fieldGuideStartDate,
@@ -13,7 +13,7 @@ class ChapterFieldGuideDetails {
   });
 
   final String id;
-  final String chapterId;
+  final String chapterKey;
   final DateTime schoolYearStartDate;
   final DateTime schoolYearEndDate;
 
@@ -26,7 +26,7 @@ class ChapterFieldGuideDetails {
   factory ChapterFieldGuideDetails.fromJson(Map<String, dynamic> json) {
     return ChapterFieldGuideDetails(
       id: json['id'] as String,
-      chapterId: json['chapter_id'] as String,
+      chapterKey: json['chapter_key'] as String,
       schoolYearStartDate: DateTime.parse(json['school_year_start_date'] as String),
       schoolYearEndDate: DateTime.parse(json['school_year_end_date'] as String),
       fieldGuideStartDate: DateTime.parse(json['field_guide_start_date'] as String),

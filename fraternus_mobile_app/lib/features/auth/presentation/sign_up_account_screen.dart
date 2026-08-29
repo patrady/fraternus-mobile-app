@@ -26,14 +26,14 @@ class _ChildDraft {
     required this.lastName,
     required this.birthday,
     this.email,
-    this.chapterId,
+    this.chapterKey,
   });
 
   final String firstName;
   final String lastName;
   final DateTime birthday;
   final String? email;
-  final String? chapterId;
+  final String? chapterKey;
 
   String get fullName => '$firstName $lastName';
 }
@@ -214,11 +214,11 @@ class _AttendanceStepConfig extends _WizardStepConfig {
   Widget buildStep(_SignUpAccountScreenState state) {
     return _AttendanceStep(
       attends: state._attends,
-      chapterId: state._chapterId,
+      chapterKey: state._chapterKey,
       birthday: state._birthday,
       errorMessage: state._errorMessage,
       onAttendsChanged: state._setAttends,
-      onChapterChanged: state._setChapterId,
+      onChapterChanged: state._setChapterKey,
       onBirthdayChanged: state._setBirthday,
     );
   }
@@ -237,7 +237,7 @@ class _KidsStepConfig extends _WizardStepConfig {
     return _KidsStep(
       kids: state._kids,
       addingChild: state._addingChild,
-      defaultChapterId: state._chapterId,
+      defaultChapterKey: state._chapterKey,
       errorMessage: state._errorMessage,
       onStartAdd: state._startAddingChild,
       onCancelAdd: state._cancelAddingChild,
@@ -274,7 +274,7 @@ class _FinishedStepConfig extends _WizardStepConfig {
       fullName: '${state._firstNameController.text.trim()} ${state._lastNameController.text.trim()}',
       email: state._emailController.text.trim(),
       attends: state._attends,
-      chapterId: state._chapterId,
+      chapterKey: state._chapterKey,
       kids: state._kids,
       errorMessage: state._errorMessage,
     );
@@ -310,7 +310,7 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
   String? _lastNameError;
 
   bool _attends = true;
-  String? _chapterId;
+  String? _chapterKey;
   DateTime? _birthday;
 
   final List<_ChildDraft> _kids = [];
@@ -459,7 +459,7 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
   }
 
   void _submitAttendance() {
-    if (_attends && (_chapterId == null || _birthday == null)) {
+    if (_attends && (_chapterKey == null || _birthday == null)) {
       setState(() => _errorMessage = 'Select a chapter and birthday');
       return;
     }
@@ -537,7 +537,7 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
 
       if (_attends) {
         await profileRepository.completeCaptainSignup(
-          chapterId: _chapterId!,
+          chapterKey: _chapterKey!,
           firstName: firstName,
           lastName: lastName,
           birthday: _birthday!,
@@ -547,7 +547,7 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
         await profileRepository.createChildMember(
           firstName: kid.firstName,
           lastName: kid.lastName,
-          chapterId: kid.chapterId ?? _chapterId ?? '',
+          chapterKey: kid.chapterKey ?? _chapterKey ?? '',
           birthday: kid.birthday,
           email: kid.email,
         );
@@ -567,7 +567,7 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
   }
 
   void _setAttends(bool value) => setState(() => _attends = value);
-  void _setChapterId(String? value) => setState(() => _chapterId = value);
+  void _setChapterKey(String? value) => setState(() => _chapterKey = value);
   void _setBirthday(DateTime? value) => setState(() => _birthday = value);
 
   void _startAddingChild() => setState(() => _addingChild = true);
@@ -835,7 +835,7 @@ class _NameStep extends StatelessWidget {
 class _AttendanceStep extends ConsumerWidget {
   const _AttendanceStep({
     required this.attends,
-    required this.chapterId,
+    required this.chapterKey,
     required this.birthday,
     required this.errorMessage,
     required this.onAttendsChanged,
@@ -844,7 +844,7 @@ class _AttendanceStep extends ConsumerWidget {
   });
 
   final bool attends;
-  final String? chapterId;
+  final String? chapterKey;
   final DateTime? birthday;
   final String? errorMessage;
   final ValueChanged<bool> onAttendsChanged;
@@ -891,8 +891,8 @@ class _AttendanceStep extends ConsumerWidget {
           const SizedBox(height: 16),
           const FieldLabel(label: 'Chapter'),
           SelectField(
-            value: chapterId,
-            options: {for (final chapter in chapters) chapter.id: chapter.displayName},
+            value: chapterKey,
+            options: {for (final chapter in chapters) chapter.key: chapter.displayName},
             placeholder: 'Select a chapter',
             onChanged: onChapterChanged,
           ),
@@ -967,7 +967,7 @@ class _KidsStep extends ConsumerWidget {
   const _KidsStep({
     required this.kids,
     required this.addingChild,
-    required this.defaultChapterId,
+    required this.defaultChapterKey,
     required this.errorMessage,
     required this.onStartAdd,
     required this.onCancelAdd,
@@ -977,7 +977,7 @@ class _KidsStep extends ConsumerWidget {
 
   final List<_ChildDraft> kids;
   final bool addingChild;
-  final String? defaultChapterId;
+  final String? defaultChapterKey;
   final String? errorMessage;
   final VoidCallback onStartAdd;
   final VoidCallback onCancelAdd;
@@ -1011,7 +1011,7 @@ class _KidsStep extends ConsumerWidget {
         if (addingChild)
           _InlineChildForm(
             chapters: chapters,
-            defaultChapterId: defaultChapterId,
+            defaultChapterKey: defaultChapterKey,
             onCancel: onCancelAdd,
             onAdd: onAddChild,
           )
@@ -1064,13 +1064,13 @@ class _AddChildButton extends StatelessWidget {
 class _InlineChildForm extends StatefulWidget {
   const _InlineChildForm({
     required this.chapters,
-    required this.defaultChapterId,
+    required this.defaultChapterKey,
     required this.onCancel,
     required this.onAdd,
   });
 
   final List<Chapter> chapters;
-  final String? defaultChapterId;
+  final String? defaultChapterKey;
   final VoidCallback onCancel;
   final ValueChanged<_ChildDraft> onAdd;
 
@@ -1083,7 +1083,7 @@ class _InlineChildFormState extends State<_InlineChildForm> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   DateTime? _birthday;
-  late String? _chapterId = widget.defaultChapterId;
+  late String? _chapterKey = widget.defaultChapterKey;
 
   @override
   void dispose() {
@@ -1138,10 +1138,10 @@ class _InlineChildFormState extends State<_InlineChildForm> {
           const SizedBox(height: 16),
           const FieldLabel(label: 'Chapter'),
           SelectField(
-            value: _chapterId,
-            options: {for (final chapter in widget.chapters) chapter.id: chapter.displayName},
+            value: _chapterKey,
+            options: {for (final chapter in widget.chapters) chapter.key: chapter.displayName},
             placeholder: 'Select a chapter',
-            onChanged: (value) => setState(() => _chapterId = value),
+            onChanged: (value) => setState(() => _chapterKey = value),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1166,7 +1166,7 @@ class _InlineChildFormState extends State<_InlineChildForm> {
                       lastName: _lastNameController.text.trim(),
                       birthday: _birthday!,
                       email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-                      chapterId: _chapterId,
+                      chapterKey: _chapterKey,
                     ),
                   ),
                 ),
@@ -1184,7 +1184,7 @@ class _FinishedStep extends ConsumerWidget {
     required this.fullName,
     required this.email,
     required this.attends,
-    required this.chapterId,
+    required this.chapterKey,
     required this.kids,
     required this.errorMessage,
   });
@@ -1192,7 +1192,7 @@ class _FinishedStep extends ConsumerWidget {
   final String fullName;
   final String email;
   final bool attends;
-  final String? chapterId;
+  final String? chapterKey;
   final List<_ChildDraft> kids;
   final String? errorMessage;
 
@@ -1201,7 +1201,7 @@ class _FinishedStep extends ConsumerWidget {
     final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
     String? chapterName;
     for (final chapter in chapters) {
-      if (chapter.id == chapterId) {
+      if (chapter.key == chapterKey) {
         chapterName = chapter.displayName;
         break;
       }

@@ -23,7 +23,7 @@ abstract class ProfileRepository {
   Future<String> createChildMember({
     required String firstName,
     required String lastName,
-    required String chapterId,
+    required String chapterKey,
     required DateTime birthday,
     String? email,
   });
@@ -33,7 +33,7 @@ abstract class ProfileRepository {
   /// also attends meetings — nothing about it is Captain-signup-specific
   /// beyond naming. Returns the new Member's id.
   Future<String> completeCaptainSignup({
-    required String chapterId,
+    required String chapterKey,
     required String firstName,
     required String lastName,
     required DateTime birthday,
@@ -102,7 +102,7 @@ class StaticProfileRepository implements ProfileRepository {
         firstName: 'John',
         lastName: 'Smith',
         role: MemberRole.captain,
-        chapterId: 'st-philips-franklin',
+        chapterKey: 'st_philips_franklin_franklin_tn',
         birthday: DateTime(now.year - 42, 3, 14),
         email: _selfEmail,
         createdAt: joinedAt,
@@ -113,7 +113,7 @@ class StaticProfileRepository implements ProfileRepository {
         firstName: 'Jack',
         lastName: 'Smith',
         role: MemberRole.brother,
-        chapterId: 'st-philips-franklin',
+        chapterKey: 'st_philips_franklin_franklin_tn',
         birthday: DateTime(now.year - 12, 5, 12),
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
@@ -123,7 +123,7 @@ class StaticProfileRepository implements ProfileRepository {
         firstName: 'Thomas',
         lastName: 'Smith',
         role: MemberRole.brother,
-        chapterId: 'st-philips-franklin',
+        chapterKey: 'st_philips_franklin_franklin_tn',
         birthday: DateTime(now.year - 9, 9, 3),
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
@@ -207,7 +207,7 @@ class StaticProfileRepository implements ProfileRepository {
   Future<String> createChildMember({
     required String firstName,
     required String lastName,
-    required String chapterId,
+    required String chapterKey,
     required DateTime birthday,
     String? email,
   }) async {
@@ -219,7 +219,7 @@ class StaticProfileRepository implements ProfileRepository {
         firstName: firstName,
         lastName: lastName,
         role: MemberRole.brother,
-        chapterId: chapterId,
+        chapterKey: chapterKey,
         birthday: birthday,
         email: email,
         createdAt: now,
@@ -248,7 +248,7 @@ class StaticProfileRepository implements ProfileRepository {
 
   @override
   Future<String> completeCaptainSignup({
-    required String chapterId,
+    required String chapterKey,
     required String firstName,
     required String lastName,
     required DateTime birthday,
@@ -261,7 +261,7 @@ class StaticProfileRepository implements ProfileRepository {
         firstName: firstName,
         lastName: lastName,
         role: MemberRole.captain,
-        chapterId: chapterId,
+        chapterKey: chapterKey,
         birthday: birthday,
         email: _user.email,
         createdAt: now,
@@ -381,7 +381,7 @@ class SupabaseProfileRepository implements ProfileRepository {
           'last_name': member.lastName,
           'birthday': _isoDate(member.birthday),
           'email': member.email,
-          'chapter_id': member.chapterId,
+          'chapter_key': member.chapterKey,
         })
         .eq('id', member.id);
   }
@@ -390,7 +390,7 @@ class SupabaseProfileRepository implements ProfileRepository {
   Future<String> createChildMember({
     required String firstName,
     required String lastName,
-    required String chapterId,
+    required String chapterKey,
     required DateTime birthday,
     String? email,
   }) async {
@@ -399,7 +399,7 @@ class SupabaseProfileRepository implements ProfileRepository {
       params: {
         'p_first_name': firstName,
         'p_last_name': lastName,
-        'p_chapter_id': chapterId,
+        'p_chapter_key': chapterKey,
         'p_birthday': _isoDate(birthday),
         'p_email': email,
       },
@@ -409,7 +409,7 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<String> completeCaptainSignup({
-    required String chapterId,
+    required String chapterKey,
     required String firstName,
     required String lastName,
     required DateTime birthday,
@@ -417,7 +417,7 @@ class SupabaseProfileRepository implements ProfileRepository {
     final result = await _client.rpc(
       'complete_captain_signup',
       params: {
-        'p_chapter_id': chapterId,
+        'p_chapter_key': chapterKey,
         'p_first_name': firstName,
         'p_last_name': lastName,
         'p_birthday': _isoDate(birthday),

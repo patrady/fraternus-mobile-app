@@ -5,6 +5,7 @@
 class Chapter {
   const Chapter({
     required this.id,
+    required this.key,
     required this.name,
     required this.city,
     required this.state,
@@ -18,6 +19,11 @@ class Chapter {
   });
 
   final String id;
+
+  /// Stable natural key, distinct from [id] — what every referencing table
+  /// (Member, Chapter Field Guide Details, the Event chapter/frat-night
+  /// tables) actually references.
+  final String key;
   final String name;
   final String city;
   final String state;
@@ -43,6 +49,7 @@ class Chapter {
   factory Chapter.fromJson(Map<String, dynamic> json) {
     return Chapter(
       id: json['id'] as String,
+      key: json['key'] as String,
       name: json['name'] as String,
       city: json['city'] as String,
       state: json['state'] as String,
@@ -63,6 +70,7 @@ class Chapter {
 const seedChapters = [
   Chapter(
     id: 'st-philips-franklin',
+    key: 'st_philips_franklin_franklin_tn',
     name: 'St. Philips Franklin',
     city: 'Franklin',
     state: 'TN',
@@ -76,6 +84,7 @@ const seedChapters = [
   ),
   Chapter(
     id: 'sacred-heart',
+    key: 'sacred_heart_nashville_tn',
     name: 'Sacred Heart',
     city: 'Nashville',
     state: 'TN',
@@ -89,6 +98,7 @@ const seedChapters = [
   ),
   Chapter(
     id: 'holy-trinity',
+    key: 'holy_trinity_memphis_tn',
     name: 'Holy Trinity',
     city: 'Memphis',
     state: 'TN',

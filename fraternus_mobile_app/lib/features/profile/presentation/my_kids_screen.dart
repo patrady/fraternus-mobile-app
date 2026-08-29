@@ -42,9 +42,9 @@ class _MyKidsList extends StatelessWidget {
   final List<Member> children;
   final List<Chapter> chapters;
 
-  String _chapterName(String chapterId) {
+  String _chapterName(String chapterKey) {
     for (final chapter in chapters) {
-      if (chapter.id == chapterId) return chapter.name;
+      if (chapter.key == chapterKey) return chapter.name;
     }
     return '';
   }
@@ -58,7 +58,7 @@ class _MyKidsList extends StatelessWidget {
           ListRow(
             leading: Avatar(initials: child.initials, size: AvatarSize.small),
             label: child.fullName,
-            sublabel: _chapterName(child.chapterId),
+            sublabel: _chapterName(child.chapterKey),
             trailing: Button(
               label: 'Edit',
               variant: ButtonVariant.ghost,

@@ -60,7 +60,7 @@ class EditChildScreen extends ConsumerWidget {
                     ChildForm(
                       initial: member,
                       chapters: chapters,
-                      onSave: ({required firstName, required lastName, required birthday, required email, required chapterId}) async {
+                      onSave: ({required firstName, required lastName, required birthday, required email, required chapterKey}) async {
                         await ref
                             .read(householdMembersProvider.notifier)
                             .updateMember(
@@ -70,7 +70,7 @@ class EditChildScreen extends ConsumerWidget {
                                 birthday: birthday,
                                 email: email,
                                 clearEmail: email == null,
-                                chapterId: chapterId,
+                                chapterKey: chapterKey,
                               ),
                             );
                         if (context.mounted) context.pop();
