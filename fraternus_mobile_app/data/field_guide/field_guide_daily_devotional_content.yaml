@@ -4,7 +4,7 @@
   vice: "Pride"
   extreme: "Self-Loathing"
   quotes:
-    - quote: "It is the humble man whom God protects and liberates; it is the humble whom He loves and consoles. To the humble He turns and upon them besteows great grace, that after their humiliation He may raise them up to glory."
+    - quote: "It is the humble man whom God protects and liberates; it is the humble whom He loves and consoles. To the humble He turns and upon them bestows great grace, that after their humiliation He may raise them up to glory."
       author: "Thomas à Kempis"
     - quote: "Many people try to escape temptations, only to fall more deeply. We cannot conquer simply by fleeing, but by patience and true humility, we become stronger than all our enemies."
       author: "Thomas à Kempis"
@@ -12,10 +12,10 @@
   choleric_application: "Struggles most with humility. Their natural drive to lead and dominate makes submission feel like defeat."
   choleric_vices: "Arrogance, contempt for weakness, need to be right."
   sanguine_application: "Craves attention and approval, making hidden service deeply uncomfortable."
-  sanguine_vices: "Vanity, name-dropping, exaggering accomplishments"
+  sanguine_vices: "Vanity, name-dropping, exaggerating accomplishments"
   melancholic_application: "Can mistake self-criticism for humility. True humility requires accepting imperfection without despair."
   melancholic_vices: "Intellectual pride, perfectionism disguised as high standards"
-  phlegmatic_application: "Appears humble but may simply be avoiding conflict. Genuine humility requires active surrender, not passive withdrawl."
+  phlegmatic_application: "Appears humble but may simply be avoiding conflict. Genuine humility requires active surrender, not passive withdrawal."
   phlegmatic_vices: "False modesty, using humility as an excuse for inaction"
   daily_devotionals:
     - day_number: 1
@@ -56,7 +56,7 @@
       closing_prayer_author: "St. Augustine"
     - day_number: 5
       identity_reading: "By God's grace, I am a man who is humble, avoiding both pride and self loathing."
-      wisdom_quote: "Thou has not anything in which thou canst glory, bu tmany things for which thou oughtst to humble thyself, for thou art much weaker than thou art able to comprehend."
+      wisdom_quote: "Thou has not anything in which thou canst glory, but many things for which thou oughtst to humble thyself, for thou art much weaker than thou art able to comprehend."
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The pull toward pride, pressure, or perfectionism; I will receive today with humility instead."
       sword_option_2: "The pull toward ease, distraction, or pleasing others; I will choose to please God and not man or self."
@@ -65,7 +65,7 @@
       closing_prayer_author: "St. Augustine"
     - day_number: 6
       identity_reading: "By God's grace, I am a man who is humble, avoiding both pride and self loathing."
-      wisdom_quote: "Therfore thou must not ascribe anything of good to thyself, nor attribute virtue to any man, but give all to God, without whom man is nothing."
+      wisdom_quote: "Therefore thou must not ascribe anything of good to thyself, nor attribute virtue to any man, but give all to God, without whom man is nothing."
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The temptation to control outcomes or prove my strength; I will give credit to God for the work He does in me."
       sword_option_2: "The temptation to hide, withdraw, or avoid discomfort; I will love through sacrifice instead."

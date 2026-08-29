@@ -209,6 +209,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Note: this row is only created once a rep is actually completed — Created Date serves as the completed date, so there is no separate Completed Date field
 - Field Guide Week
     - Id
+    - Year Number (which program year this week's content belongs to; organizational metadata only — the devotional-lookup algorithm keys off the globally unique Week Number, not this field)
     - Week Number
     - Virtue (i.e. Patience)
     - Vice (i.e. Anger)
@@ -244,6 +245,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Sword Option 2
     - Spade
     - Closing Prayer
+    - Closing Prayer Author
     - Created Date
     - Last Modified Date
 - Field Guide Daily Devotional Member

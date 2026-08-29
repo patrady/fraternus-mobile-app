@@ -220,9 +220,19 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
         ),
         ContentCard(
           eyebrow: 'Evening Seal',
-          child: Text(
-            devotional.closingPrayer,
-            style: FraternusTypography.body(color: FraternusColors.ink).copyWith(fontStyle: FontStyle.italic),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                devotional.closingPrayer,
+                style: FraternusTypography.body(color: FraternusColors.ink).copyWith(fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '— ${devotional.closingPrayerAuthor}',
+                style: FraternusTypography.body(color: FraternusColors.accentPrimary).copyWith(fontSize: 13),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 4),

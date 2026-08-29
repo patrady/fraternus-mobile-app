@@ -12,6 +12,7 @@ import 'field_guide_week_quote.dart';
 class FieldGuideWeek {
   const FieldGuideWeek({
     required this.id,
+    required this.yearNumber,
     required this.weekNumber,
     required this.virtue,
     required this.vice,
@@ -32,6 +33,11 @@ class FieldGuideWeek {
   });
 
   final String id;
+
+  /// Which program year this week's content belongs to — organizational
+  /// metadata only; [devotionalForDate]/the repository's lookup algorithm
+  /// key off [weekNumber] alone, which stays globally unique.
+  final int yearNumber;
   final int weekNumber;
   final String virtue;
   final String vice;
@@ -85,6 +91,7 @@ class FieldGuideWeek {
     final devotionalsJson = json['field_guide_daily_devotionals'] as List<dynamic>? ?? const [];
     return FieldGuideWeek(
       id: json['id'] as String,
+      yearNumber: json['year_number'] as int,
       weekNumber: json['week_number'] as int,
       virtue: json['virtue'] as String,
       vice: json['vice'] as String,

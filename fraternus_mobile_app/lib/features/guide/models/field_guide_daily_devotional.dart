@@ -16,6 +16,7 @@ class FieldGuideDailyDevotional {
     required this.swordOption2,
     required this.spadePrompt,
     required this.closingPrayer,
+    required this.closingPrayerAuthor,
     required this.members,
     required this.createdAt,
     required this.lastModifiedAt,
@@ -36,6 +37,7 @@ class FieldGuideDailyDevotional {
   final String swordOption2;
   final String spadePrompt;
   final String closingPrayer;
+  final String closingPrayerAuthor;
   final List<FieldGuideDailyDevotionalMember> members;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
@@ -60,6 +62,7 @@ class FieldGuideDailyDevotional {
       swordOption2: json['sword_option_2'] as String,
       spadePrompt: json['spade_prompt'] as String,
       closingPrayer: json['closing_prayer'] as String,
+      closingPrayerAuthor: json['closing_prayer_author'] as String,
       members: [
         for (final memberJson in membersJson)
           FieldGuideDailyDevotionalMember.fromJson(memberJson as Map<String, dynamic>),

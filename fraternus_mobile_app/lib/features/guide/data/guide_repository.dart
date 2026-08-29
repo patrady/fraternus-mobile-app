@@ -63,6 +63,7 @@ class StaticGuideRepository implements GuideRepository {
   StaticGuideRepository() : _completions = _seedCompletions(DateTime.now());
 
   static const _chapterKey = 'st_philips_franklin_franklin_tn';
+  static const _authoredYearNumber = 1;
   static const _authoredWeekNumber = 12;
   static const _memberIds = ['you', 'jack', 'thomas'];
 
@@ -76,6 +77,7 @@ class StaticGuideRepository implements GuideRepository {
   static const _closingPrayer =
       'God, always the same, let me know myself, let me know You. Let me know You, O Lord, '
       'who know me; let me know You, as I am known. Amen.';
+  static const _closingPrayerAuthor = 'St. Augustine';
 
   /// Keyed by '$dailyDevotionalId:$memberId'. Seeded once at construction
   /// with a believable demo state, then mutated by [upsertDevotionalMember]
@@ -172,6 +174,7 @@ class StaticGuideRepository implements GuideRepository {
         swordOption2: _swordOption2,
         spadePrompt: _spadePrompt,
         closingPrayer: _closingPrayer,
+        closingPrayerAuthor: _closingPrayerAuthor,
         createdAt: weekStart,
         lastModifiedAt: weekStart,
         members: [for (final memberId in _memberIds) ?_completions['$dailyDevotionalId:$memberId']],
@@ -180,6 +183,7 @@ class StaticGuideRepository implements GuideRepository {
 
     return FieldGuideWeek(
       id: 'humility-week',
+      yearNumber: _authoredYearNumber,
       weekNumber: _authoredWeekNumber,
       virtue: 'Humility',
       vice: 'Pride',

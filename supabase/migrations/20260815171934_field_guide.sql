@@ -5,6 +5,11 @@
 
 create table public.field_guide_weeks (
   id uuid primary key default gen_random_uuid(),
+  -- Which program year this week's content belongs to. Organizational
+  -- metadata only — the devotional-lookup algorithm (see
+  -- get_field_guide_devotional_for_date below) keys off week_number alone,
+  -- which stays globally unique across the whole curriculum.
+  year_number integer not null,
   week_number integer not null unique,
   virtue text not null,
   vice text not null,
@@ -72,6 +77,7 @@ create table public.field_guide_daily_devotionals (
   -- field_guide_daily_devotional_members.spade, the member's own answer.
   spade_prompt text not null,
   closing_prayer text not null,
+  closing_prayer_author text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (field_guide_week_id, day_number)
