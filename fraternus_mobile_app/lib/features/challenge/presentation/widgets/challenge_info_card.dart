@@ -24,7 +24,7 @@ class _ChallengeInfoCardState extends State<ChallengeInfoCard> {
   @override
   Widget build(BuildContext context) {
     final challenge = widget.challenge;
-    final isNew = DateTime.now().isBefore(challenge.fratNightTemplate.startOfWeekDate.add(const Duration(hours: 48)));
+    final isNew = DateTime.now().isBefore(challenge.fratNightDate.add(const Duration(hours: 48)));
 
     return Box(
       child: Column(
@@ -44,7 +44,7 @@ class _ChallengeInfoCardState extends State<ChallengeInfoCard> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Week of ${formatOrdinalDate(challenge.fratNightTemplate.startOfWeekDate)}',
+            'Week of ${formatOrdinalDate(challenge.fratNightDate)}',
             style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
           ),
           const SizedBox(height: 10),

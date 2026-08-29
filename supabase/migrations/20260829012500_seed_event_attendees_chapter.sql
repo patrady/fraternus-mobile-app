@@ -1,0 +1,81 @@
+-- Seed event_attendees_chapter from each event file's `chapter_key/attendees`
+-- column (comma-separated chapter_key/role pairs). Correlates to the
+-- now-committed events from the prior 4 seed migrations by title.
+
+insert into public.event_attendees_chapter (event_id, chapter_key, role)
+select e.id, v.chapter_key, v.role::event_attendee_chapter_role
+from public.events e
+join (values
+  -- Custom
+  ('Commitment Ceremony', 'st_philip_franklin_tn', 'chapter'),
+  -- Excursions (same 6-chapter list for all 4)
+  ('Excursion #1: Battle', 'st_philip_franklin_tn', 'chapter'),
+  ('Excursion #1: Battle', 'sacred_heart_lawrenceburg_tn', 'chapter'),
+  ('Excursion #1: Battle', 'st_rose_of_lima_murfreesboro_tn', 'chapter'),
+  ('Excursion #1: Battle', 'overbrook_catholic_school_nashville_tn', 'chapter'),
+  ('Excursion #1: Battle', 'st_edwards_nashville_tn', 'chapter'),
+  ('Excursion #1: Battle', 'our_lady_of_the_lake_hendersonville_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'st_philip_franklin_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'sacred_heart_lawrenceburg_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'st_rose_of_lima_murfreesboro_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'overbrook_catholic_school_nashville_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'st_edwards_nashville_tn', 'chapter'),
+  ('Excursion #2: Beauty', 'our_lady_of_the_lake_hendersonville_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'st_philip_franklin_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'sacred_heart_lawrenceburg_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'st_rose_of_lima_murfreesboro_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'overbrook_catholic_school_nashville_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'st_edwards_nashville_tn', 'chapter'),
+  ('Pre-Lenten Retreat', 'our_lady_of_the_lake_hendersonville_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'st_philip_franklin_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'sacred_heart_lawrenceburg_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'st_rose_of_lima_murfreesboro_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'overbrook_catholic_school_nashville_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'st_edwards_nashville_tn', 'chapter'),
+  ('Excursion #3: Adventure', 'our_lady_of_the_lake_hendersonville_tn', 'chapter'),
+  -- Ranch (all 33 chapters)
+  ('Ranch 2027', 'st_paul_birmingham_al', 'chapter'),
+  ('Ranch 2027', 'holy_spirit_huntsville_al', 'chapter'),
+  ('Ranch 2027', 'st_isidore_yuba_city_ca', 'chapter'),
+  ('Ranch 2027', 'st_patrick_jacksonville_fl', 'chapter'),
+  ('Ranch 2027', 'christ_the_king_tampa_fl', 'chapter'),
+  ('Ranch 2027', 'mary_our_queen_peachtree_corners_ga', 'chapter'),
+  ('Ranch 2027', 'st_louis_de_montfort_fishers_in', 'chapter'),
+  ('Ranch 2027', 'st_elizabeth_ann_seton_fort_wayne_in', 'chapter'),
+  ('Ranch 2027', 'st_james_elizabethtown_ky', 'chapter'),
+  ('Ranch 2027', 'sacred_heart_of_jesus_baton_rouge_la', 'chapter'),
+  ('Ranch 2027', 'st_margaret_of_scotland_lake_charles_la', 'chapter'),
+  ('Ranch 2027', 'st_bridget_schriever_la', 'chapter'),
+  ('Ranch 2027', 'corpus_christi_e_sandwich_ma', 'chapter'),
+  ('Ranch 2027', 'st_anns_charlotte_nc', 'chapter'),
+  ('Ranch 2027', 'st_aloysius_hickory_nc', 'chapter'),
+  ('Ranch 2027', 'st_mark_huntersville_nc', 'chapter'),
+  ('Ranch 2027', 'st_john_the_baptist_tryon_nc', 'chapter'),
+  ('Ranch 2027', 'st_catherine_of_siena_wake_forest_nc', 'chapter'),
+  ('Ranch 2027', 'our_lady_of_pompeii_lancaster_ny', 'chapter'),
+  ('Ranch 2027', 'st_mary_help_of_christians_aiken_sc', 'chapter'),
+  ('Ranch 2027', 'saint_marys_greenville_sc', 'chapter'),
+  ('Ranch 2027', 'st_andrew_myrtle_beach_sc', 'chapter'),
+  ('Ranch 2027', 'prince_of_peace_taylors_sc', 'chapter'),
+  ('Ranch 2027', 'st_philip_franklin_tn', 'chapter'),
+  ('Ranch 2027', 'holy_ghost_knoxville_tn', 'chapter'),
+  ('Ranch 2027', 'sacred_heart_lawrenceburg_tn', 'chapter'),
+  ('Ranch 2027', 'st_rose_of_lima_murfreesboro_tn', 'chapter'),
+  ('Ranch 2027', 'overbrook_catholic_school_nashville_tn', 'chapter'),
+  ('Ranch 2027', 'st_edwards_nashville_tn', 'chapter'),
+  ('Ranch 2027', 'nativity_thompsons_station_tn', 'chapter'),
+  ('Ranch 2027', 'our_lady_of_the_lake_hendersonville_tn', 'chapter'),
+  ('Ranch 2027', 'our_lady_star_of_the_sea_bremerton_wa', 'chapter'),
+  ('Ranch 2027', 'holy_redeemer_vancouver_wa', 'chapter'),
+  -- Frat Nights
+  ('Rush Night #1', 'st_philip_franklin_tn', 'chapter'),
+  ('Rush Night #2', 'st_philip_franklin_tn', 'chapter'),
+  ('Rush Night #3', 'st_philip_franklin_tn', 'chapter'),
+  ('Rush Night #4', 'st_philip_franklin_tn', 'chapter'),
+  ('Humility vs Pride', 'st_philip_franklin_tn', 'chapter'),
+  ('Generosity vs Greed', 'st_philip_franklin_tn', 'chapter'),
+  ('Kindness vs Envy', 'st_philip_franklin_tn', 'chapter'),
+  ('Temperance vs Gluttony', 'st_philip_franklin_tn', 'chapter'),
+  ('Chastity vs Lust', 'st_philip_franklin_tn', 'chapter')
+) as v(title, chapter_key, role)
+on v.title = e.title;

@@ -3,6 +3,11 @@
 /// feature-local) since both Events (`Event Frat Night Details`) and
 /// Challenges (`Challenge.fratNightTemplateKey`, 1:1) reference it — by
 /// [key], not [id] (see the frat_night_template_fk_use_key migration).
+///
+/// Has no date of its own — a template's effective date is whichever
+/// Event actually references it (`event_frat_night_details` ->
+/// `events.start_date`), not a separately hardcoded field. See
+/// `WeeklyChallenge.fratNightDate`.
 class FratNightTemplate {
   const FratNightTemplate({
     required this.id,
@@ -10,7 +15,6 @@ class FratNightTemplate {
     required this.title,
     required this.description,
     required this.reading,
-    required this.startOfWeekDate,
     required this.createdAt,
     required this.lastModifiedAt,
     this.videoClipUrl,
@@ -26,10 +30,6 @@ class FratNightTemplate {
 
   /// Markdown-enabled per the schema.
   final String reading;
-
-  /// e.g. 2026-01-01. Unique per the schema — drives both which week's
-  /// Challenge is "current" and which week's Frat Night reading is shown.
-  final DateTime startOfWeekDate;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
 
@@ -43,7 +43,6 @@ class FratNightTemplate {
       title: json['title'] as String,
       description: json['description'] as String,
       reading: json['reading'] as String,
-      startOfWeekDate: DateTime.parse(json['start_of_week_date'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),
       videoClipUrl: json['video_clip_url'] as String?,

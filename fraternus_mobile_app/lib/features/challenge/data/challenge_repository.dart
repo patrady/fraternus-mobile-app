@@ -10,7 +10,7 @@ import '../models/weekly_challenge.dart';
 /// the cutoff in supabase/migrations' `get_current_challenge`.
 const currentChallengeMaxAge = Duration(days: 21);
 
-/// [challenges] is every challenge the chapter has ever had, by template
+/// [challenges] is every challenge the chapter has ever had, by Frat Night
 /// date descending. [currentChallengeId] is which one (if any) is current —
 /// see [ChallengeRepository.fetchChallenges].
 class ChallengeFeed {
@@ -24,9 +24,9 @@ class ChallengeFeed {
 /// XRepository — swap the implementation, nothing downstream needs to
 /// change.
 abstract class ChallengeRepository {
-  /// Every challenge the chapter has ever had, by template date descending,
-  /// plus [ChallengeFeed.currentChallengeId] identifying which one (if any)
-  /// is current per app_concept.md: "the most recent past (non-cancelled)
+  /// Every challenge the chapter has ever had, by Frat Night date
+  /// descending, plus [ChallengeFeed.currentChallengeId] identifying which
+  /// one (if any) is current per app_concept.md: "the most recent past (non-cancelled)
   /// Frat Night", but only within [currentChallengeMaxAge] of [asOf] — a
   /// chapter that hasn't had a Frat Night in a while has no current
   /// challenge, not a stale one. `null` means there isn't a current
@@ -94,7 +94,7 @@ class StaticChallengeRepository implements ChallengeRepository {
     // caught by "Cold Shower Challenge" no longer being findable in tests.
     required String title,
     required String description,
-    required DateTime startOfWeekDate,
+    required DateTime fratNightDate,
     required int repsTotal,
   }) {
     _challenges[id] = _SeedChallenge(
@@ -108,10 +108,13 @@ class StaticChallengeRepository implements ChallengeRepository {
         title: templateTitle,
         description: description,
         reading: description,
-        startOfWeekDate: startOfWeekDate,
-        createdAt: startOfWeekDate,
-        lastModifiedAt: startOfWeekDate,
+        createdAt: fratNightDate,
+        lastModifiedAt: fratNightDate,
       ),
+      // Stand-in for the real repository's Event-driven lookup — this fake
+      // has no Event model of its own, so the Frat Night's date is just
+      // attached directly to the seed challenge.
+      fratNightDate: fratNightDate,
       title: title,
       description: description,
       repsTotal: repsTotal,
@@ -153,7 +156,7 @@ class StaticChallengeRepository implements ChallengeRepository {
           '30–60 seconds fully cold. This trains you to stay calm and decisive under '
           'discomfort — a small, repeatable act of will that carries over into '
           'everything else you do this week.',
-      startOfWeekDate: coldShowerWeekStart,
+      fratNightDate: coldShowerWeekStart,
       repsTotal: 3,
     );
     // "You" hasn't accepted yet — no Challenge Member row.
@@ -196,7 +199,7 @@ class StaticChallengeRepository implements ChallengeRepository {
           'Spend the first 10 minutes of your morning in total silence — no phone, '
           'no music, no conversation. Just be present before the day pulls you in '
           'a dozen directions.',
-      startOfWeekDate: morningSilenceWeekStart,
+      fratNightDate: morningSilenceWeekStart,
       repsTotal: 3,
     );
     _seedProgress(
@@ -222,7 +225,7 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Go five full days without complaining — out loud or in your head. Notice '
           'how often the urge shows up, and choose gratitude instead.',
-      startOfWeekDate: noComplainingWeekStart,
+      fratNightDate: noComplainingWeekStart,
       repsTotal: 5,
     );
     _seedProgress(
@@ -250,7 +253,7 @@ class StaticChallengeRepository implements ChallengeRepository {
       description:
           'Close each day with a short examen: where did you see God today, where '
           'did you fall short, and what will you carry into tomorrow.',
-      startOfWeekDate: examenWeekStart,
+      fratNightDate: examenWeekStart,
       repsTotal: 7,
     );
     _seedProgress(
@@ -277,15 +280,15 @@ class StaticChallengeRepository implements ChallengeRepository {
     required Map<String, String> memberLabels,
   }) async {
     final challenges = _challenges.values.toList()
-      ..sort((a, b) => b.template.startOfWeekDate.compareTo(a.template.startOfWeekDate));
+      ..sort((a, b) => b.fratNightDate.compareTo(a.fratNightDate));
 
     // Stand-in for the real repository's Event-driven RPC — this fake has
-    // no Event model of its own, so the template's startOfWeekDate (the
-    // Frat Night's own date) is used directly as the Frat Night date.
+    // no Event model of its own, so each seed challenge's fratNightDate is
+    // used directly as the Frat Night date.
     String? currentChallengeId;
     for (final challenge in challenges) {
-      if (!challenge.template.startOfWeekDate.isAfter(asOf)) {
-        if (asOf.difference(challenge.template.startOfWeekDate) <= currentChallengeMaxAge) {
+      if (!challenge.fratNightDate.isAfter(asOf)) {
+        if (asOf.difference(challenge.fratNightDate) <= currentChallengeMaxAge) {
           currentChallengeId = challenge.id;
         }
         break;
@@ -300,6 +303,7 @@ class StaticChallengeRepository implements ChallengeRepository {
             id: challenge.id,
             fratNightTemplateKey: challenge.template.key,
             fratNightTemplate: challenge.template,
+            fratNightDate: challenge.fratNightDate,
             title: challenge.title,
             description: challenge.description,
             repsTotal: challenge.repsTotal,
@@ -373,6 +377,7 @@ class _SeedChallenge {
   const _SeedChallenge({
     required this.id,
     required this.template,
+    required this.fratNightDate,
     required this.title,
     required this.description,
     required this.repsTotal,
@@ -380,6 +385,7 @@ class _SeedChallenge {
 
   final String id;
   final FratNightTemplate template;
+  final DateTime fratNightDate;
   final String title;
   final String description;
   final int repsTotal;
@@ -412,13 +418,25 @@ class SupabaseChallengeRepository implements ChallengeRepository {
         )
         as String?;
 
+    // No direct FK between Challenge and Event — both just reference the
+    // same Frat Night Template Key — so the linked Event's date is fetched
+    // separately and merged in, rather than embedded in the `challenges`
+    // query below.
+    final eventRows = await _client.from('event_frat_night_details').select('frat_night_template_key, events(start_date)');
+    final fratNightDates = {
+      for (final row in eventRows)
+        row['frat_night_template_key'] as String: DateTime.parse((row['events'] as Map<String, dynamic>)['start_date'] as String),
+    };
+
     final rows = await _client
         .from('challenges')
         .select('*, frat_night_templates(*), challenge_members(*, challenge_member_reps(*))');
 
     final challenges = [
-      for (final row in rows) WeeklyChallenge.fromJson(row, memberLabels: memberLabels),
-    ]..sort((a, b) => b.fratNightTemplate.startOfWeekDate.compareTo(a.fratNightTemplate.startOfWeekDate));
+      for (final row in rows)
+        if (fratNightDates[row['frat_night_template_key']] case final fratNightDate?)
+          WeeklyChallenge.fromJson(row, memberLabels: memberLabels, fratNightDate: fratNightDate),
+    ]..sort((a, b) => b.fratNightDate.compareTo(a.fratNightDate));
 
     return ChallengeFeed(challenges: challenges, currentChallengeId: currentChallengeId);
   }

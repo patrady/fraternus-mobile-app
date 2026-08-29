@@ -3,9 +3,9 @@ import 'person_challenge_progress.dart';
 
 /// Adapted from docs/app_concept.md's `Challenge` table. 1:1 with a
 /// [FratNightTemplate] — the "current" challenge is the one whose template
-/// is the most recent past (non-cancelled) Frat Night's template, and that
-/// template's `startOfWeekDate` is what drives the challenge's effective
-/// start (not a separate field here).
+/// is the most recent past (non-cancelled) Frat Night's template, resolved
+/// server-side (see `get_current_challenge`). [fratNightDate] is that Frat
+/// Night Event's `start_date`, not a field on the template itself.
 ///
 /// Unlike `Event`, there's no per-challenge eligibility list here — every
 /// Member is eligible for every Challenge per the schema, so "which
@@ -17,6 +17,7 @@ class WeeklyChallenge {
     required this.id,
     required this.fratNightTemplateKey,
     required this.fratNightTemplate,
+    required this.fratNightDate,
     required this.title,
     required this.description,
     required this.repsTotal,
@@ -25,11 +26,14 @@ class WeeklyChallenge {
 
   final String id;
   final String fratNightTemplateKey;
-
-  /// Nested read-model join, same pattern as `FieldGuideWeek.quotes` — gives
-  /// direct access to `fratNightTemplate.startOfWeekDate` for the "Week of
-  /// ..." label and the 48h "NEW" window without a second lookup.
   final FratNightTemplate fratNightTemplate;
+
+  /// The linked Frat Night Event's `start_date` — not embedded in the
+  /// `challenges` row (no direct FK between Challenge and Event; both just
+  /// reference the same Frat Night Template Key), so this is resolved by
+  /// the repository and passed in rather than parsed here. Drives the
+  /// "Week of ..." label and the 48h "NEW" window.
+  final DateTime fratNightDate;
   final String title;
   final String description;
   final int repsTotal;
@@ -44,13 +48,19 @@ class WeeklyChallenge {
   /// `challenge_members` rows to the caller's own household, so nothing
   /// further is filtered here. [memberLabels] resolves each progress row's
   /// display name (not a schema field — see PersonChallengeProgress) from
-  /// the household member list fetched separately.
-  factory WeeklyChallenge.fromJson(Map<String, dynamic> json, {required Map<String, String> memberLabels}) {
+  /// the household member list fetched separately. [fratNightDate] is
+  /// resolved separately too — see its doc comment above.
+  factory WeeklyChallenge.fromJson(
+    Map<String, dynamic> json, {
+    required Map<String, String> memberLabels,
+    required DateTime fratNightDate,
+  }) {
     final progressJson = json['challenge_members'] as List<dynamic>? ?? const [];
     return WeeklyChallenge(
       id: json['id'] as String,
       fratNightTemplateKey: json['frat_night_template_key'] as String,
       fratNightTemplate: FratNightTemplate.fromJson(json['frat_night_templates'] as Map<String, dynamic>),
+      fratNightDate: fratNightDate,
       title: json['title'] as String,
       description: json['description'] as String,
       repsTotal: json['reps'] as int,

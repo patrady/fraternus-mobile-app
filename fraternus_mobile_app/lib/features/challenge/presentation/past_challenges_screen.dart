@@ -110,7 +110,7 @@ class _PastChallengeCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Week of ${formatOrdinalDate(challenge.fratNightTemplate.startOfWeekDate)}',
+                          'Week of ${formatOrdinalDate(challenge.fratNightDate)}',
                           style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
                         ),
                       ],

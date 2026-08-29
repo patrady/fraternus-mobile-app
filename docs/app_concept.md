@@ -95,7 +95,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - Do not support recurring events
 - There isn't anything preventing a chapter from having the same frat night scheduled for different dates. This allows cancelled frat nights to stay on the calendar and get picked up at a different date.
 - The Commander role has no special privileges here
-- It is ok that the data model has the Chapter Id on both the "Event Frat Night Details" and "Event Attendees Chapter" tables. Some logic should be written to ensure that these do not deviate.
+- It is ok that the data model has the Chapter Key on both the "Event Frat Night Details" and "Event Attendees Chapter" tables. Some logic should be written to ensure that these do not deviate.
 
 ## Logic
 
@@ -178,14 +178,13 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Title (ex. "the fortitudious man defends his brothers")
     - Description
     - Reading (markdown enabled)
-    - start of week calendar date (Ie 2026-01-01)
     - Video Clip URL (optional)
     - Key
     - Created Date
     - Last Modified Date
     - Constraints:
-        - Unique constraint on start of week calendar date
         - Unique constraint on Key
+    - Note: a template has no date of its own — its effective date is whichever Event references it via Event Frat Night Details' Frat Night Template Key (see that table's uniqueness constraint below)
 - Challenge
     - Id
     - Frat Night Template Key 
@@ -277,6 +276,8 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Event Id
     - Frat Night Template Key (referenced by Key, not Id)
     - Chapter Key (referenced by Key, not Id)
+    - Constraints:
+        - Unique constraint on Frat Night Template Key — at most one Event per Frat Night Template
 - Event Excursion Details
     - Id
     - Event Id
