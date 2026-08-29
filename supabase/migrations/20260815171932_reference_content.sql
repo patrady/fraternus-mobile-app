@@ -1,10 +1,15 @@
 -- Shared reference/seed content: Chapters, Field Guide school-year
--- configuration, and Frat Night virtue/template catalog. Not user-specific
--- — read-only for authenticated users, writable only via service_role
--- (seed.sql / direct SQL) since there's no admin UI yet per app_concept.md.
+-- configuration, and Frat Night template catalog. Not user-specific — read
+-- for authenticated (and, for chapters, anon — needed by the signup
+-- screens' chapter picker before a session exists) users, writable only via
+-- service_role (seed.sql / direct SQL) since there's no admin UI yet per
+-- app_concept.md.
 
 create table public.chapters (
   id uuid primary key default gen_random_uuid(),
+  -- Stable natural key (distinct from id) — the FK target for every table
+  -- that references a chapter, in place of a raw id/host_id.
+  key text not null unique,
   name text not null,
   city text not null,
   state text not null,
@@ -21,12 +26,12 @@ alter table public.chapters enable row level security;
 
 create policy "read chapters"
   on public.chapters for select
-  to authenticated
+  to anon, authenticated
   using (true);
 
 create table public.chapter_field_guide_details (
   id uuid primary key default gen_random_uuid(),
-  chapter_id uuid not null references public.chapters (id) on delete cascade,
+  chapter_key text not null references public.chapters (key) on delete cascade,
   school_year_start_date date not null,
   school_year_end_date date not null,
   field_guide_start_date date not null,
@@ -46,32 +51,27 @@ create trigger set_chapter_field_guide_details_updated_at
   for each row
   execute function public.set_updated_at();
 
-create index idx_chapter_field_guide_details_chapter_id
-  on public.chapter_field_guide_details (chapter_id);
-
-create table public.frat_night_virtues (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique
-);
-
-alter table public.frat_night_virtues enable row level security;
-
-create policy "read frat night virtues"
-  on public.frat_night_virtues for select
-  to authenticated
-  using (true);
+create index idx_chapter_field_guide_details_chapter_key
+  on public.chapter_field_guide_details (chapter_key);
 
 create table public.frat_night_templates (
   id uuid primary key default gen_random_uuid(),
+  -- Stable natural key (distinct from id) — the FK target for challenges and
+  -- event_frat_night_details, in place of a raw id.
+  key text not null unique,
   title text not null,
   description text not null,
   reading text not null, -- markdown
-  liturgical_day text not null,
-  start_of_week_date date not null unique,
-  frat_night_virtue_id uuid not null references public.frat_night_virtues (id) on delete restrict,
+  -- Optional video clip to accompany the reading.
+  video_clip_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- No date column here: a template has no date of its own — its effective
+-- date is whichever Event references it via
+-- event_frat_night_details.frat_night_template_key (see the events
+-- migration's unique constraint on that column).
 
 alter table public.frat_night_templates enable row level security;
 
@@ -88,10 +88,6 @@ create trigger set_frat_night_templates_updated_at
 -- Base table-level grants — RLS above governs row visibility, but Postgres
 -- requires this separate grant before RLS is even evaluated (see the
 -- comment in the public_users migration for how this was verified).
-grant select on public.chapters to authenticated;
+grant select on public.chapters to anon, authenticated;
 grant select on public.chapter_field_guide_details to authenticated;
-grant select on public.frat_night_virtues to authenticated;
 grant select on public.frat_night_templates to authenticated;
-
-create index idx_frat_night_templates_virtue_id
-  on public.frat_night_templates (frat_night_virtue_id);

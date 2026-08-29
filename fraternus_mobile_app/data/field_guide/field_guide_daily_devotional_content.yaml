@@ -24,7 +24,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The pull toward control, self-reliance, or proving myself; I will let God lead instead."
       sword_option_2: "The pull toward comfort, approval, or staying invisible; I will serve without recognition instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 2
@@ -33,7 +33,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The temptation to manage everything myself; I will trust God and act with humility instead."
       sword_option_2: "The temptation to avoid sacrifice or difficulty; I will choose courage and duty instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 3
@@ -42,7 +42,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The desire to succeed, impress, or stay in control; I will live as a son instead."
       sword_option_2: "The desire to remain comfortable, unnoticed, or affirmed; I will step forward in service instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 4
@@ -51,7 +51,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The urge to rely on my own strength; I will depend on grace instead."
       sword_option_2: "The urge to coast, delay or stay passive; I will embrace discipline instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 5
@@ -60,7 +60,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The pull toward pride, pressure, or perfectionism; I will receive today with humility instead."
       sword_option_2: "The pull toward ease, distraction, or pleasing others; I will choose to please God and not man or self."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 6
@@ -69,7 +69,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The temptation to control outcomes or prove my strength; I will give credit to God for the work He does in me."
       sword_option_2: "The temptation to hide, withdraw, or avoid discomfort; I will love through sacrifice instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
     - day_number: 7
@@ -78,7 +78,7 @@
       wisdom_author: "Thomas à Kempis"
       sword_option_1: "The battle against pride and self-reliance; I will acknowledge how much I need others."
       sword_option_2: "The battle against comfort and passivity; I will answer the call to serve instead."
-      spade: "Where did I notice pride or humility at work in me today?"
+      spade_prompt: "Where did I notice pride or humility at work in me today?"
       closing_prayer: "God, always the same, let me know myself, let me know You. Let me know You, O Lord, who know me; let me know You, as I am known. Amen."
       closing_prayer_author: "St. Augustine"
   

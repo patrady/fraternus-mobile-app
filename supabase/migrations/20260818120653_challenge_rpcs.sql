@@ -1,9 +1,13 @@
 -- Resolves the current challenge: app_concept.md — "A challenge that is
 -- tied to the most recent past (non-cancelled) Frat Night remains in
 -- effect until the next Frat Night takes place." Chapter-scoped via the
--- specific Frat Night Event instance (event_frat_night_details.chapter_id),
+-- specific Frat Night Event instance (event_frat_night_details.chapter_key),
 -- not the Frat Night Template itself, which isn't chapter-specific.
-create or replace function public.get_current_challenge(p_chapter_id uuid, p_as_of timestamptz default now())
+--
+-- Capped at 21 days past the Frat Night: a chapter that hasn't met in a
+-- while should show no current challenge rather than an arbitrarily stale
+-- one.
+create or replace function public.get_current_challenge(p_chapter_key text, p_as_of timestamptz default now())
 returns uuid
 language sql
 stable
@@ -11,16 +15,17 @@ as $$
   select c.id
   from public.events e
   join public.event_frat_night_details efnd on efnd.event_id = e.id
-  join public.challenges c on c.frat_night_template_id = efnd.frat_night_template_id
+  join public.challenges c on c.frat_night_template_key = efnd.frat_night_template_key
   where e.type = 'frat_night'
     and e.cancellation_date is null
-    and efnd.chapter_id = p_chapter_id
+    and efnd.chapter_key = p_chapter_key
     and e.start_date <= p_as_of
+    and e.start_date >= p_as_of - interval '21 days'
   order by e.start_date desc
   limit 1;
 $$;
 
-grant execute on function public.get_current_challenge(uuid, timestamptz) to authenticated;
+grant execute on function public.get_current_challenge(text, timestamptz) to authenticated;
 
 -- Insert/delete toggle (a rep row only exists once completed — no rep
 -- number means incomplete) + recomputes challenge_members.completed_date.

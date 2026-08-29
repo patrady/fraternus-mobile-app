@@ -3,7 +3,7 @@
 
 create table public.challenges (
   id uuid primary key default gen_random_uuid(),
-  frat_night_template_id uuid not null references public.frat_night_templates (id) on delete restrict,
+  frat_night_template_key text not null references public.frat_night_templates (key) on delete restrict,
   title text not null,
   description text not null,
   reps integer not null check (reps > 0)

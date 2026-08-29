@@ -1,0 +1,40 @@
+-- Seed the initial set of chapters.
+
+insert into public.chapters (
+  key, name, city, state, zip_code, timezone, church,
+  frat_night_day_of_week, frat_night_start_time, frat_night_end_time, frat_night_location
+)
+values
+  ('st_paul_birmingham_al', 'St. Paul', 'Birmingham', 'AL', '35203', 'America/Chicago', 'St. Paul Catholic Church', 'tuesday', '18:30', '20:30', 'St. Paul Catholic Church'),
+  ('holy_spirit_huntsville_al', 'Holy Spirit', 'Huntsville', 'AL', '35802', 'America/Chicago', 'Holy Spirit Catholic Church', 'tuesday', '18:30', '20:30', 'Holy Spirit Catholic Church'),
+  ('st_isidore_yuba_city_ca', 'St. Isidore', 'Yuba City', 'CA', '95991', 'America/Los_Angeles', 'St. Isidore Catholic Church', 'tuesday', '18:30', '20:30', 'St. Isidore Catholic Church'),
+  ('st_patrick_jacksonville_fl', 'St. Patrick', 'Jacksonville', 'FL', '32218', 'America/New_York', 'St. Patrick Catholic Church', 'tuesday', '18:30', '20:30', 'St. Patrick Catholic Church'),
+  ('christ_the_king_tampa_fl', 'Christ the King', 'Tampa', 'FL', '33609', 'America/New_York', 'Christ the King Catholic Church', 'tuesday', '18:30', '20:30', 'Christ the King Catholic Church'),
+  ('mary_our_queen_peachtree_corners_ga', 'Mary Our Queen', 'Peachtree Corners', 'GA', '30092', 'America/New_York', 'Mary Our Queen Catholic Church', 'tuesday', '18:30', '20:30', 'Mary Our Queen Catholic Church'),
+  ('st_louis_de_montfort_fishers_in', 'St. Louis de Montfort', 'Fishers', 'IN', '46038', 'America/Indiana/Indianapolis', 'St. Louis de Montfort Catholic Church', 'tuesday', '18:30', '20:30', 'St. Louis de Montfort Catholic Church'),
+  ('st_elizabeth_ann_seton_fort_wayne_in', 'St. Elizabeth Ann Seton', 'Fort Wayne', 'IN', '46804', 'America/Indiana/Indianapolis', 'St. Elizabeth Ann Seton Catholic Church', 'tuesday', '18:30', '20:30', 'St. Elizabeth Ann Seton Catholic Church'),
+  ('st_james_elizabethtown_ky', 'St. James', 'Elizabethtown', 'KY', '42701', 'America/Chicago', 'St. James Catholic Church', 'tuesday', '18:30', '20:30', 'St. James Catholic Church'),
+  ('sacred_heart_of_jesus_baton_rouge_la', 'Sacred Heart of Jesus', 'Baton Rouge', 'LA', '70802', 'America/Chicago', 'Sacred Heart of Jesus Catholic Church', 'tuesday', '18:30', '20:30', 'Sacred Heart of Jesus Catholic Church'),
+  ('st_margaret_of_scotland_lake_charles_la', 'St. Margaret of Scotland', 'Lake Charles', 'LA', '70601', 'America/Chicago', 'St. Margaret of Scotland Catholic Church', 'tuesday', '18:30', '20:30', 'St. Margaret of Scotland Catholic Church'),
+  ('st_bridget_schriever_la', 'St. Bridget', 'Schriever', 'LA', '70395', 'America/Chicago', 'St. Bridget Catholic Church', 'tuesday', '18:30', '20:30', 'St. Bridget Catholic Church'),
+  ('corpus_christi_e_sandwich_ma', 'Corpus Christi', 'E. Sandwich', 'MA', '02537', 'America/New_York', 'Corpus Christi Catholic Church', 'tuesday', '18:30', '20:30', 'Corpus Christi Catholic Church'),
+  ('st_anns_charlotte_nc', 'St. Ann''s', 'Charlotte', 'NC', '28209', 'America/New_York', 'St. Ann''s Catholic Church', 'tuesday', '18:30', '20:30', 'St. Ann''s Catholic Church'),
+  ('st_aloysius_hickory_nc', 'St. Aloysius', 'Hickory', 'NC', '28601', 'America/New_York', 'St. Aloysius Catholic Church', 'tuesday', '18:30', '20:30', 'St. Aloysius Catholic Church'),
+  ('st_mark_huntersville_nc', 'St. Mark', 'Huntersville', 'NC', '28078', 'America/New_York', 'St. Mark Catholic Church', 'tuesday', '18:30', '20:30', 'St. Mark Catholic Church'),
+  ('st_john_the_baptist_tryon_nc', 'St. John the Baptist', 'Tryon', 'NC', '28782', 'America/New_York', 'St. John the Baptist Catholic Church', 'tuesday', '18:30', '20:30', 'St. John the Baptist Catholic Church'),
+  ('st_catherine_of_siena_wake_forest_nc', 'St. Catherine of Siena', 'Wake Forest', 'NC', '27587', 'America/New_York', 'St. Catherine of Siena Catholic Church', 'tuesday', '18:30', '20:30', 'St. Catherine of Siena Catholic Church'),
+  ('our_lady_of_pompeii_lancaster_ny', 'Our Lady of Pompeii', 'Lancaster', 'NY', '14086', 'America/New_York', 'Our Lady of Pompeii Catholic Church', 'tuesday', '18:30', '20:30', 'Our Lady of Pompeii Catholic Church'),
+  ('st_mary_help_of_christians_aiken_sc', 'St. Mary Help of Christians', 'Aiken', 'SC', '29801', 'America/New_York', 'St. Mary Help of Christians Catholic Church', 'tuesday', '18:30', '20:30', 'St. Mary Help of Christians Catholic Church'),
+  ('saint_marys_greenville_sc', 'Saint Mary''s', 'Greenville', 'SC', '29601', 'America/New_York', 'Saint Mary''s Catholic Church', 'tuesday', '18:30', '20:30', 'Saint Mary''s Catholic Church'),
+  ('st_andrew_myrtle_beach_sc', 'St. Andrew', 'Myrtle Beach', 'SC', '29577', 'America/New_York', 'St. Andrew Catholic Church', 'tuesday', '18:30', '20:30', 'St. Andrew Catholic Church'),
+  ('prince_of_peace_taylors_sc', 'Prince of Peace', 'Taylors', 'SC', '29687', 'America/New_York', 'Prince of Peace Catholic Church', 'tuesday', '18:30', '20:30', 'Prince of Peace Catholic Church'),
+  ('st_philip_franklin_tn', 'St. Philip', 'Franklin', 'TN', '37064', 'America/Chicago', 'St. Philip Catholic Church', 'tuesday', '18:30', '20:30', 'St. Philip Catholic Church'),
+  ('holy_ghost_knoxville_tn', 'Holy Ghost', 'Knoxville', 'TN', '37917', 'America/New_York', 'Holy Ghost Catholic Church', 'tuesday', '18:30', '20:30', 'Holy Ghost Catholic Church'),
+  ('sacred_heart_lawrenceburg_tn', 'Sacred Heart', 'Lawrenceburg', 'TN', '38464', 'America/Chicago', 'Sacred Heart Catholic Church', 'tuesday', '18:30', '20:30', 'Sacred Heart Catholic Church'),
+  ('st_rose_of_lima_murfreesboro_tn', 'St. Rose of Lima', 'Murfreesboro', 'TN', '37130', 'America/Chicago', 'St. Rose of Lima Catholic Church', 'tuesday', '18:30', '20:30', 'St. Rose of Lima Catholic Church'),
+  ('overbrook_catholic_school_nashville_tn', 'Overbrook Catholic School', 'Nashville', 'TN', '37205', 'America/Chicago', 'Overbrook Catholic School Catholic Church', 'tuesday', '18:30', '20:30', 'Overbrook Catholic School Catholic Church'),
+  ('st_edwards_nashville_tn', 'St. Edward''s', 'Nashville', 'TN', '37211', 'America/Chicago', 'St. Edward''s Catholic Church', 'tuesday', '18:30', '20:30', 'St. Edward''s Catholic Church'),
+  ('nativity_thompsons_station_tn', 'Nativity', 'Thompsons Station', 'TN', '37179', 'America/Chicago', 'Nativity Catholic Church', 'tuesday', '18:30', '20:30', 'Nativity Catholic Church'),
+  ('our_lady_of_the_lake_hendersonville_tn', 'Our Lady of the Lake', 'Hendersonville', 'TN', '37075', 'America/Chicago', 'Our Lady of the Lake Catholic Church', 'tuesday', '18:30', '20:30', 'Our Lady of the Lake Catholic Church'),
+  ('our_lady_star_of_the_sea_bremerton_wa', 'Our Lady Star of the Sea', 'Bremerton', 'WA', '98337', 'America/Los_Angeles', 'Our Lady Star of the Sea Catholic Church', 'tuesday', '18:30', '20:30', 'Our Lady Star of the Sea Catholic Church'),
+  ('holy_redeemer_vancouver_wa', 'Holy Redeemer', 'Vancouver', 'WA', '98684', 'America/Los_Angeles', 'Holy Redeemer Catholic Church', 'tuesday', '18:30', '20:30', 'Holy Redeemer Catholic Church');

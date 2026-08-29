@@ -6,7 +6,7 @@
 
 create table public.members (
   id uuid primary key default gen_random_uuid(),
-  chapter_id uuid not null references public.chapters (id) on delete restrict,
+  chapter_key text not null references public.chapters (key) on delete restrict,
   role member_role not null,
   first_name text not null,
   last_name text not null,
@@ -21,7 +21,7 @@ create trigger set_members_updated_at
   for each row
   execute function public.set_updated_at();
 
-create index idx_members_chapter_id on public.members (chapter_id);
+create index idx_members_chapter_key on public.members (chapter_key);
 
 create table public.user_member_associations (
   id uuid primary key default gen_random_uuid(),

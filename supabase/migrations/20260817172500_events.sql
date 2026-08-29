@@ -37,8 +37,12 @@ create policy "read events"
 create table public.event_frat_night_details (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null unique references public.events (id) on delete cascade,
-  frat_night_template_id uuid not null references public.frat_night_templates (id) on delete restrict,
-  chapter_id uuid not null references public.chapters (id) on delete restrict
+  -- unique: at most one Event per Frat Night Template — this is what
+  -- previously guaranteed "one event per calendar week" via
+  -- frat_night_templates.start_of_week_date (removed; a template has no
+  -- date of its own, only whichever Event references it here).
+  frat_night_template_key text not null unique references public.frat_night_templates (key) on delete restrict,
+  chapter_key text not null references public.chapters (key) on delete restrict
 );
 
 alter table public.event_frat_night_details enable row level security;
@@ -51,7 +55,7 @@ create policy "read event frat night details"
 create table public.event_excursion_details (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null unique references public.events (id) on delete cascade,
-  host_chapter_id uuid not null references public.chapters (id) on delete restrict,
+  host_chapter_key text not null references public.chapters (key) on delete restrict,
   registration_url text
 );
 
@@ -78,7 +82,7 @@ create policy "read event ranch details"
 create table public.event_attendees_chapter (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events (id) on delete cascade,
-  chapter_id uuid not null references public.chapters (id) on delete restrict,
+  chapter_key text not null references public.chapters (key) on delete restrict,
   role event_attendee_chapter_role not null
 );
 

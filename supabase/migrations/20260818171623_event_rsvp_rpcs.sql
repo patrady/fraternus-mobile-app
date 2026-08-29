@@ -29,7 +29,7 @@ as $$
   select m.id
   from public.members m
   join public.event_attendees_chapter eac
-    on eac.event_id = p_event_id and eac.chapter_id = m.chapter_id
+    on eac.event_id = p_event_id and eac.chapter_key = m.chapter_key
   where m.id = any(p_member_ids)
     and public.has_member_association(m.id)
     and (

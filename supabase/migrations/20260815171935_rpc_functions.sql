@@ -9,7 +9,7 @@
 -- truth — shared by the Guide screen and (later) the Today dashboard, so
 -- the algorithm is never duplicated client-side.
 create or replace function public.get_field_guide_devotional_for_date(
-  p_chapter_id uuid,
+  p_chapter_key text,
   p_date date
 ) returns table (daily_devotional_id uuid, field_guide_week_id uuid)
 language sql
@@ -18,7 +18,7 @@ as $$
   with details as (
     select *
     from public.chapter_field_guide_details
-    where chapter_id = p_chapter_id
+    where chapter_key = p_chapter_key
       and p_date between school_year_start_date and school_year_end_date
     order by field_guide_start_date desc
     limit 1
@@ -40,7 +40,7 @@ as $$
   limit 1;
 $$;
 
-grant execute on function public.get_field_guide_devotional_for_date(uuid, date) to authenticated;
+grant execute on function public.get_field_guide_devotional_for_date(text, date) to authenticated;
 
 -- 2. Consecutive completed days for p_member_id ending the day *before*
 -- p_as_of (deliberately excludes p_as_of itself — see
@@ -50,7 +50,7 @@ grant execute on function public.get_field_guide_devotional_for_date(uuid, date)
 -- extend past the current chapter_field_guide_details.field_guide_start_date.
 create or replace function public.get_field_guide_streak(
   p_member_id uuid,
-  p_chapter_id uuid,
+  p_chapter_key text,
   p_as_of date
 ) returns integer
 language sql
@@ -59,7 +59,7 @@ as $$
   with details as (
     select *
     from public.chapter_field_guide_details
-    where chapter_id = p_chapter_id
+    where chapter_key = p_chapter_key
       and p_as_of between school_year_start_date and school_year_end_date
     order by field_guide_start_date desc
     limit 1
@@ -98,7 +98,7 @@ as $$
   );
 $$;
 
-grant execute on function public.get_field_guide_streak(uuid, uuid, date) to authenticated;
+grant execute on function public.get_field_guide_streak(uuid, text, date) to authenticated;
 
 -- 9. Atomically creates a Brother Member + Guardian association (+ Pending
 -- consent if under 13), for the currently-authenticated Guardian. Replaces
@@ -107,7 +107,7 @@ grant execute on function public.get_field_guide_streak(uuid, uuid, date) to aut
 create or replace function public.create_child_member(
   p_first_name text,
   p_last_name text,
-  p_chapter_id uuid,
+  p_chapter_key text,
   p_birthday date,
   p_email text default null
 ) returns uuid
@@ -119,8 +119,8 @@ declare
   v_member_id uuid;
   v_requires_consent boolean;
 begin
-  insert into public.members (chapter_id, role, first_name, last_name, birthday, email)
-  values (p_chapter_id, 'brother', p_first_name, p_last_name, p_birthday, p_email)
+  insert into public.members (chapter_key, role, first_name, last_name, birthday, email)
+  values (p_chapter_key, 'brother', p_first_name, p_last_name, p_birthday, p_email)
   returning id into v_member_id;
 
   v_requires_consent := extract(year from age(current_date, p_birthday)) < 13;
@@ -137,8 +137,8 @@ begin
 end;
 $$;
 
-revoke all on function public.create_child_member(text, text, uuid, date, text) from public;
-grant execute on function public.create_child_member(text, text, uuid, date, text) to authenticated;
+revoke all on function public.create_child_member(text, text, text, date, text) from public;
+grant execute on function public.create_child_member(text, text, text, date, text) to authenticated;
 
 -- 10. Atomically creates a Captain Member + Self association for the
 -- currently-authenticated user. Used by both signup branches that create a
@@ -146,7 +146,7 @@ grant execute on function public.create_child_member(text, text, uuid, date, tex
 -- a Guardian who also attends meetings (see app_concept.md's Profile
 -- section; nothing about this RPC is Captain-signup-specific beyond name).
 create or replace function public.complete_captain_signup(
-  p_chapter_id uuid,
+  p_chapter_key text,
   p_first_name text,
   p_last_name text,
   p_birthday date
@@ -158,8 +158,8 @@ as $$
 declare
   v_member_id uuid;
 begin
-  insert into public.members (chapter_id, role, first_name, last_name, birthday, email)
-  select p_chapter_id, 'captain', p_first_name, p_last_name, p_birthday, u.email
+  insert into public.members (chapter_key, role, first_name, last_name, birthday, email)
+  select p_chapter_key, 'captain', p_first_name, p_last_name, p_birthday, u.email
   from public.users u
   where u.id = auth.uid()
   returning id into v_member_id;
@@ -171,5 +171,5 @@ begin
 end;
 $$;
 
-revoke all on function public.complete_captain_signup(uuid, text, text, date) from public;
-grant execute on function public.complete_captain_signup(uuid, text, text, date) to authenticated;
+revoke all on function public.complete_captain_signup(text, text, text, date) from public;
+grant execute on function public.complete_captain_signup(text, text, text, date) to authenticated;
