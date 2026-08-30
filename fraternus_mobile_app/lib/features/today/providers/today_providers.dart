@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../design_system/design_system.dart' show PersonTabStatus;
+import '../../../shared/formatting/date_time_utils.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
 import '../../challenge/models/person_challenge_progress.dart';
 import '../../challenge/models/weekly_challenge.dart';
@@ -22,8 +23,6 @@ part 'today_providers.g.dart';
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
-bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-
 HouseholdPerson _buildPerson({
   required Member member,
   required FieldGuideWeek? week,
@@ -35,7 +34,8 @@ HouseholdPerson _buildPerson({
 }) {
   final devotional = week?.devotionalForDate(today);
   final isFieldGuideComplete = guideProgress[member.id]?.isCompleted ?? false;
-  final isChallengeComplete = challengeProgress[member.id]?.isCompleted ?? false;
+  final isChallengeComplete =
+      challengeProgress[member.id]?.isCompleted ?? false;
 
   final tasks = [
     if (devotional != null)
@@ -45,27 +45,40 @@ HouseholdPerson _buildPerson({
         kind: TodayTaskKind.fieldGuideReading,
       ),
     if (currentChallenge != null)
-      const TodayTask(id: 'weekly-challenge', label: 'Weekly Challenge', kind: TodayTaskKind.weeklyChallenge),
+      const TodayTask(
+        id: 'weekly-challenge',
+        label: 'Weekly Challenge',
+        kind: TodayTaskKind.weeklyChallenge,
+      ),
     // Only events this member is actually eligible for — a Brother
     // shouldn't see a Captains-only meeting on their own Today list.
     for (final event in todaysEvents)
-      if (event.eligibleHouseholdMembers.any((eligible) => eligible.memberId == member.id))
+      if (event.eligibleHouseholdMembers.any(
+        (eligible) => eligible.memberId == member.id,
+      ))
         TodayTask(id: event.id, label: event.title, kind: TodayTaskKind.event),
   ];
 
   // Status reflects the two actionable tasks only — events are purely
   // informational and have no completion state of their own (matches
   // _TodayTaskCard's own leading-icon logic in today_screen.dart).
-  final completableCount = (devotional != null ? 1 : 0) + (currentChallenge != null ? 1 : 0);
+  final completableCount =
+      (devotional != null ? 1 : 0) + (currentChallenge != null ? 1 : 0);
   final completedCount =
-      (devotional != null && isFieldGuideComplete ? 1 : 0) + (currentChallenge != null && isChallengeComplete ? 1 : 0);
+      (devotional != null && isFieldGuideComplete ? 1 : 0) +
+      (currentChallenge != null && isChallengeComplete ? 1 : 0);
   final status = completedCount == 0
       ? PersonTabStatus.none
       : completedCount == completableCount
       ? PersonTabStatus.done
       : PersonTabStatus.inProgress;
 
-  return HouseholdPerson(memberId: member.id, label: member.firstName, status: status, todayTasks: tasks);
+  return HouseholdPerson(
+    memberId: member.id,
+    label: member.firstName,
+    status: status,
+    todayTasks: tasks,
+  );
 }
 
 /// Composed client-side from Guide/Challenge/Events/Profile's own providers
@@ -82,7 +95,9 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
   final members = await ref.watch(householdMembersProvider.future);
   final week = await ref.watch(guideWeekForDateProvider(today).future);
   final currentChallenge = await ref.watch(currentChallengeProvider.future);
-  final guideProgress = await ref.watch(guideDevotionalProgressProvider(today).future);
+  final guideProgress = await ref.watch(
+    guideDevotionalProgressProvider(today).future,
+  );
   final challengeProgress = currentChallenge == null
       ? const <String, PersonChallengeProgress>{}
       : await ref.watch(challengeProgressProvider(currentChallenge.id).future);
@@ -90,14 +105,16 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
 
   final todaysEvents = [
     for (final event in events)
-      if (_isSameDay(event.startAt, today)) event,
+      if (isSameDay(event.startAt.toLocal(), today)) event,
   ];
   // "Events later this week" — a simple rolling 7-day window past today,
   // since nothing else in this app defines a calendar-week boundary to
   // anchor to (Field Guide weeks are a different, unrelated concept).
   final laterEvents = [
     for (final event in events)
-      if (!_isSameDay(event.startAt, today) && event.startAt.isBefore(today.add(const Duration(days: 7)))) event,
+      if (!isSameDay(event.startAt.toLocal(), today) &&
+          event.startAt.isBefore(today.add(const Duration(days: 7))))
+        event,
   ];
 
   // The "This Week's Focus" card is about today's reading specifically —
@@ -123,7 +140,11 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
     ],
     upcomingEvents: [
       for (final event in laterEvents)
-        EventSummary(id: event.id, title: event.title, dateLabel: formatEventDayLabel(event.startAt)),
+        EventSummary(
+          id: event.id,
+          title: event.title,
+          dateLabel: formatEventDayLabel(event.startAt.toLocal()),
+        ),
     ],
   );
 }

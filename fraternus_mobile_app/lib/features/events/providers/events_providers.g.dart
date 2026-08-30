@@ -112,6 +112,73 @@ final class VisibleEventsProvider
 
 String _$visibleEventsHash() => r'01705ccd50650c82a33e0ef68b44ce8c4fd8e37e';
 
+/// Which [EventType]s the Events list is filtered to — empty means "show
+/// everything," matching how the filter button reads with nothing toggled
+/// on. Purely local UI state, not persisted.
+
+@ProviderFor(EventTypeFilter)
+const eventTypeFilterProvider = EventTypeFilterProvider._();
+
+/// Which [EventType]s the Events list is filtered to — empty means "show
+/// everything," matching how the filter button reads with nothing toggled
+/// on. Purely local UI state, not persisted.
+final class EventTypeFilterProvider
+    extends $NotifierProvider<EventTypeFilter, Set<EventType>> {
+  /// Which [EventType]s the Events list is filtered to — empty means "show
+  /// everything," matching how the filter button reads with nothing toggled
+  /// on. Purely local UI state, not persisted.
+  const EventTypeFilterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'eventTypeFilterProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventTypeFilterHash();
+
+  @$internal
+  @override
+  EventTypeFilter create() => EventTypeFilter();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<EventType> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<EventType>>(value),
+    );
+  }
+}
+
+String _$eventTypeFilterHash() => r'8e787cfa5d79b31f750fa96ba6d4867f76d87f9a';
+
+/// Which [EventType]s the Events list is filtered to — empty means "show
+/// everything," matching how the filter button reads with nothing toggled
+/// on. Purely local UI state, not persisted.
+
+abstract class _$EventTypeFilter extends $Notifier<Set<EventType>> {
+  Set<EventType> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Set<EventType>, Set<EventType>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<EventType>, Set<EventType>>,
+              Set<EventType>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(eventById)
 const eventByIdProvider = EventByIdFamily._();
 

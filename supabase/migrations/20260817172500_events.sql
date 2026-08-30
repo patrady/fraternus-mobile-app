@@ -7,12 +7,37 @@
 -- are small and this avoids a second migration touching the same table
 -- group later.
 
+create table public.event_locations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  street text,
+  city text,
+  state text,
+  zip_code text,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger set_event_locations_updated_at
+  before update on public.event_locations
+  for each row
+  execute function public.set_updated_at();
+
+alter table public.event_locations enable row level security;
+
+create policy "read event locations"
+  on public.event_locations for select
+  to authenticated
+  using (true);
+
 create table public.events (
   id uuid primary key default gen_random_uuid(),
   type event_type not null,
   title text not null,
   description text,
-  location text,
+  event_location_id uuid references public.event_locations (id) on delete set null,
   start_date timestamptz not null,
   end_date timestamptz not null,
   cancellation_date timestamptz,
@@ -180,6 +205,7 @@ create policy "update own household rsvps"
 
 -- Base table-level grants — see the comment in the public_users migration
 -- for why these are necessary in addition to the RLS policies above.
+grant select on public.event_locations to authenticated;
 grant select on public.events to authenticated;
 grant select on public.event_frat_night_details to authenticated;
 grant select on public.event_excursion_details to authenticated;

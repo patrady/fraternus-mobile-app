@@ -7,6 +7,7 @@ import '../models/event_attendees_chapter.dart';
 import '../models/event_eligible_member.dart';
 import '../models/event_excursion_details.dart';
 import '../models/event_frat_night_details.dart';
+import '../models/event_location.dart';
 import '../models/event_ranch_details.dart';
 import '../models/household_rsvp.dart';
 
@@ -20,14 +21,21 @@ abstract class EventsRepository {
   /// [Event.eligibleHouseholdMembers]' labels and which of the caller's own
   /// members to check eligibility for — same shape as
   /// `ChallengeRepository.fetchChallenges`' own [memberLabels] param.
-  Future<List<Event>> fetchEvents({required DateTime asOf, required Map<String, String> memberLabels});
+  Future<List<Event>> fetchEvents({
+    required DateTime asOf,
+    required Map<String, String> memberLabels,
+  });
 
   /// Submits [memberId]'s RSVP, or clears it back to unanswered if
   /// re-selecting the status they already have (see [HouseholdRsvp]'s "no
   /// row until submitted" rule) — mirrors
   /// `ChallengeRepository.toggleChallengeRep`'s upsert/delete-toggle shape.
   /// Returns the new row, or null if this call cleared it.
-  Future<HouseholdRsvp?> submitRsvp({required String eventId, required String memberId, required RsvpStatus status});
+  Future<HouseholdRsvp?> submitRsvp({
+    required String eventId,
+    required String memberId,
+    required RsvpStatus status,
+  });
 }
 
 /// Hardcoded stand-in for real content, matching
@@ -62,7 +70,10 @@ class StaticEventsRepository implements EventsRepository {
   List<HouseholdRsvp> _rsvpsFor(String eventId, DateTime asOf) {
     return [
       for (final entry in _rsvps.entries)
-        if (entry.key.split(':') case [final eId, final memberId] when eId == eventId)
+        if (entry.key.split(':') case [
+          final eId,
+          final memberId,
+        ] when eId == eventId)
           HouseholdRsvp(
             id: 'rsvp-${entry.key}',
             eventId: eventId,
@@ -119,14 +130,20 @@ class StaticEventsRepository implements EventsRepository {
   ];
 
   @override
-  Future<List<Event>> fetchEvents({required DateTime asOf, required Map<String, String> memberLabels}) async {
+  Future<List<Event>> fetchEvents({
+    required DateTime asOf,
+    required Map<String, String> memberLabels,
+  }) async {
     return [
       Event(
         id: 'captain-meeting',
         type: EventType.custom,
         title: 'Captain Meeting',
         description: 'Planning meeting for the fall semester schedule.',
-        location: 'St. Philips - Parish Hall',
+        location: const EventLocation(
+          id: 'st-philips-parish-hall',
+          name: 'St. Philips - Parish Hall',
+        ),
         startAt: asOf.subtract(const Duration(hours: 5, minutes: 30)),
         endAt: asOf.subtract(const Duration(hours: 5)),
         cancellationDate: asOf.subtract(const Duration(days: 1)),
@@ -142,8 +159,12 @@ class StaticEventsRepository implements EventsRepository {
         id: 'hawc-night',
         type: EventType.custom,
         title: 'HAWC Night',
-        description: 'Holy Hour, Adoration, Worship, and Confession for fathers and captains.',
-        location: 'St. Philips - Youth Room',
+        description:
+            'Holy Hour, Adoration, Worship, and Confession for fathers and captains.',
+        location: const EventLocation(
+          id: 'st-philips-youth-room',
+          name: 'St. Philips - Youth Room',
+        ),
         startAt: asOf.add(const Duration(minutes: 30)),
         endAt: asOf.add(const Duration(hours: 2)),
         createdAt: asOf.subtract(const Duration(days: 10)),
@@ -159,8 +180,12 @@ class StaticEventsRepository implements EventsRepository {
         id: 'frat-night',
         type: EventType.fratNight,
         title: 'Frat Night — Virtue of Fortitude',
-        description: 'Fellowship, formation talk, and games centered on the virtue of fortitude.',
-        location: 'St. Philips - Parish Hall',
+        description:
+            'Fellowship, formation talk, and games centered on the virtue of fortitude.',
+        location: const EventLocation(
+          id: 'st-philips-parish-hall',
+          name: 'St. Philips - Parish Hall',
+        ),
         startAt: asOf.add(const Duration(hours: 2)),
         endAt: asOf.add(const Duration(hours: 4)),
         createdAt: asOf.subtract(const Duration(days: 10)),
@@ -181,8 +206,12 @@ class StaticEventsRepository implements EventsRepository {
         id: 'excursion-buffalo-river',
         type: EventType.excursion,
         title: 'Excursion - Buffalo River',
-        description: 'Full-day canoe excursion. Bring water shoes and a change of clothes.',
-        location: 'Buffalo River',
+        description:
+            'Full-day canoe excursion. Bring water shoes and a change of clothes.',
+        location: const EventLocation(
+          id: 'buffalo-river',
+          name: 'Buffalo River',
+        ),
         startAt: asOf.add(const Duration(days: 12, hours: 9)),
         endAt: asOf.add(const Duration(days: 12, hours: 19)),
         createdAt: asOf.subtract(const Duration(days: 20)),
@@ -204,8 +233,12 @@ class StaticEventsRepository implements EventsRepository {
         id: 'ranch',
         type: EventType.ranch,
         title: 'Ranch',
-        description: 'Multi-day retreat at the ranch — bring gear for both hiking and rain.',
-        location: 'Old Fort, Tennessee',
+        description:
+            'Multi-day retreat at the ranch — bring gear for both hiking and rain.',
+        location: const EventLocation(
+          id: 'old-fort-tn',
+          name: 'Old Fort, Tennessee',
+        ),
         startAt: asOf.add(const Duration(days: 20, hours: 9)),
         endAt: asOf.add(const Duration(days: 24, hours: 15)),
         createdAt: asOf.subtract(const Duration(days: 30)),
@@ -258,17 +291,21 @@ class SupabaseEventsRepository implements EventsRepository {
   final SupabaseClient _client;
 
   @override
-  Future<List<Event>> fetchEvents({required DateTime asOf, required Map<String, String> memberLabels}) async {
+  Future<List<Event>> fetchEvents({
+    required DateTime asOf,
+    required Map<String, String> memberLabels,
+  }) async {
     final rows = await _client
         .from('events')
         .select(
-          '*, event_frat_night_details(*), event_excursion_details(*), event_ranch_details(*), '
+          '*, event_locations(*), event_frat_night_details(*), event_excursion_details(*), event_ranch_details(*), '
           'event_attendees_chapter(*), event_attendees_specific(*), event_rsvps(*)',
         );
 
     final memberIds = memberLabels.keys.toList();
     return Future.wait([
-      for (final row in rows) _hydrate(row, memberIds: memberIds, memberLabels: memberLabels),
+      for (final row in rows)
+        _hydrate(row, memberIds: memberIds, memberLabels: memberLabels),
     ]);
   }
 
@@ -285,9 +322,13 @@ class SupabaseEventsRepository implements EventsRepository {
   }) async {
     final eventId = row['id'];
 
-    final attendeesRows = await _client.rpc('get_event_attendees', params: {'p_event_id': eventId});
+    final attendeesRows = await _client.rpc(
+      'get_event_attendees',
+      params: {'p_event_id': eventId},
+    );
     final othersAttending = [
-      for (final r in attendeesRows as List<dynamic>) EventAttendee.fromJson(r as Map<String, dynamic>),
+      for (final r in attendeesRows as List<dynamic>)
+        EventAttendee.fromJson(r as Map<String, dynamic>),
     ];
 
     if (memberIds.isEmpty) {
@@ -302,7 +343,10 @@ class SupabaseEventsRepository implements EventsRepository {
       'get_event_eligible_members',
       params: {'p_event_id': eventId, 'p_member_ids': memberIds},
     );
-    final eligibleIds = [for (final r in eligible as List<dynamic>) (r as Map<String, dynamic>)['member_id'] as String];
+    final eligibleIds = [
+      for (final r in eligible as List<dynamic>)
+        (r as Map<String, dynamic>)['member_id'] as String,
+    ];
     return Event.fromJson(
       row,
       memberLabels: memberLabels,
@@ -319,11 +363,16 @@ class SupabaseEventsRepository implements EventsRepository {
   }) async {
     final result = await _client.rpc(
       'submit_event_rsvp',
-      params: {'p_event_id': eventId, 'p_member_id': memberId, 'p_response': HouseholdRsvp.statusToDb(status)},
+      params: {
+        'p_event_id': eventId,
+        'p_member_id': memberId,
+        'p_response': HouseholdRsvp.statusToDb(status),
+      },
     );
     if (result == null) return null;
     final row = result as Map<String, dynamic>;
-    if (row['id'] == null) return null; // un-toggled — the RPC returns an all-null row, not absent
+    if (row['id'] == null)
+      return null; // un-toggled — the RPC returns an all-null row, not absent
     return HouseholdRsvp.fromJson(row);
   }
 }

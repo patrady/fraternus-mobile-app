@@ -1,6 +1,7 @@
 import 'package:add_2_calendar/add_2_calendar.dart' as add2cal;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fraternus_mobile_app/shared/formatting/date_time_utils.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
@@ -9,6 +10,7 @@ import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../models/event_attendees_chapter.dart';
 import '../providers/events_providers.dart';
+import 'widgets/open_in_maps_dialog.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   const EventDetailScreen({super.key, required this.eventId});
@@ -31,7 +33,8 @@ class EventDetailScreen extends ConsumerWidget {
                   ? const BodyText('This event could not be found.')
                   : _EventDetailContent(event: event, eventId: eventId),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading this event.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading this event.'),
             ),
           ),
         ],
@@ -48,12 +51,16 @@ class _EventDetailContent extends ConsumerWidget {
 
   String get _scopeLabel {
     final roles = event.attendeesChapter.map((a) => a.role).toSet();
-    if (roles.contains(EventAttendeeChapterRole.chapter)) return 'Entire Chapter';
-    if (roles.contains(EventAttendeeChapterRole.captains) && roles.contains(EventAttendeeChapterRole.brothers)) {
+    if (roles.contains(EventAttendeeChapterRole.chapter))
+      return 'Entire Chapter';
+    if (roles.contains(EventAttendeeChapterRole.captains) &&
+        roles.contains(EventAttendeeChapterRole.brothers)) {
       return 'Entire Chapter';
     }
-    if (roles.contains(EventAttendeeChapterRole.captains)) return 'Captains Only';
-    if (roles.contains(EventAttendeeChapterRole.brothers)) return 'Brothers Only';
+    if (roles.contains(EventAttendeeChapterRole.captains))
+      return 'Captains Only';
+    if (roles.contains(EventAttendeeChapterRole.brothers))
+      return 'Brothers Only';
     if (event.attendeesSpecific.isNotEmpty) return 'Invited';
     return 'Entire Chapter';
   }
@@ -62,7 +69,7 @@ class _EventDetailContent extends ConsumerWidget {
     final calendarEvent = add2cal.Event(
       title: event.title,
       description: event.description,
-      location: event.location,
+      location: event.location?.mapQuery,
       startDate: event.startAt,
       endDate: event.endAt,
     );
@@ -77,7 +84,7 @@ class _EventDetailContent extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Heading(event.title.toUpperCase(), level: HeadingLevel.h2),
+        Heading(event.title.toUpperCase(), level: HeadingLevel.h3),
         const SizedBox(height: 8),
         Tag(label: _scopeLabel, size: TagSize.small),
         if (cancelled) ...[
@@ -96,10 +103,51 @@ class _EventDetailContent extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 16),
-        _DetailMetaLine(icon: 'clock', label: formatEventDateRange(event.startAt, event.endAt)),
+        if (isSameDay(event.startAt.toLocal(), event.endAt.toLocal()))
+          _DetailMetaLine(
+            icon: 'clock',
+            label: formatEventDateRange(
+              event.startAt.toLocal(),
+              event.endAt.toLocal(),
+            ),
+          )
+        else ...[
+          _DetailMetaLine(
+            icon: 'clock',
+            label: formatDayTimeLabel(event.startAt.toLocal()),
+          ),
+          Row(
+            children: [
+              const SizedBox(width: 20),
+              Text(
+                "to ",
+                style: FraternusTypography.body(
+                  color: FraternusColors.accentPrimary,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  formatDayTimeLabel(event.endAt.toLocal()),
+                  style: FraternusTypography.body(
+                    color: FraternusColors.accentPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
         if (event.location case final location?) ...[
           const SizedBox(height: 6),
-          _DetailMetaLine(icon: 'map-pin', label: location),
+          PressableBuilder(
+            onTap: () => showOpenInMapsPrompt(context, location),
+            semanticLabel: 'Open ${location.name} in Maps',
+            builder: (context, isPressed) {
+              return Opacity(
+                opacity: isPressed ? 0.75 : 1,
+                child: _DetailMetaLine(icon: 'map-pin', label: location.name),
+              );
+            },
+          ),
         ],
         if (event.description case final description?) ...[
           const SizedBox(height: 16),
@@ -111,15 +159,23 @@ class _EventDetailContent extends ConsumerWidget {
         rsvpAsync.when(
           data: (statuses) => Column(
             children: [
-              for (var i = 0; i < event.eligibleHouseholdMembers.length; i++) ...[
+              for (
+                var i = 0;
+                i < event.eligibleHouseholdMembers.length;
+                i++
+              ) ...[
                 _RsvpRow(
                   label: event.eligibleHouseholdMembers[i].label,
                   status: statuses[event.eligibleHouseholdMembers[i].memberId],
                   onChanged: (status) => ref
                       .read(eventRsvpProvider(eventId).notifier)
-                      .toggleStatus(event.eligibleHouseholdMembers[i].memberId, status),
+                      .toggleStatus(
+                        event.eligibleHouseholdMembers[i].memberId,
+                        status,
+                      ),
                 ),
-                if (i != event.eligibleHouseholdMembers.length - 1) const SizedBox(height: 12),
+                if (i != event.eligibleHouseholdMembers.length - 1)
+                  const SizedBox(height: 12),
               ],
             ],
           ),
@@ -143,7 +199,8 @@ class _EventDetailContent extends ConsumerWidget {
             children: [
               for (var i = 0; i < event.othersAttending.length; i++) ...[
                 _AttendeeRow(attendee: event.othersAttending[i]),
-                if (i != event.othersAttending.length - 1) const HairlineDivider(),
+                if (i != event.othersAttending.length - 1)
+                  const HairlineDivider(),
               ],
             ],
           ),
@@ -167,7 +224,12 @@ class _DetailMetaLine extends StatelessWidget {
         FraternusIcon(name: icon, size: 16, tone: FraternusIconTone.terracotta),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(label, style: FraternusTypography.body(color: FraternusColors.accentPrimary)),
+          child: Text(
+            label,
+            style: FraternusTypography.body(
+              color: FraternusColors.accentPrimary,
+            ),
+          ),
         ),
       ],
     );
@@ -175,7 +237,11 @@ class _DetailMetaLine extends StatelessWidget {
 }
 
 class _RsvpRow extends StatelessWidget {
-  const _RsvpRow({required this.label, required this.status, required this.onChanged});
+  const _RsvpRow({
+    required this.label,
+    required this.status,
+    required this.onChanged,
+  });
 
   final String label;
   final RsvpStatus? status;
@@ -185,7 +251,12 @@ class _RsvpRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: FraternusTypography.body(color: FraternusColors.ink))),
+        Expanded(
+          child: Text(
+            label,
+            style: FraternusTypography.body(color: FraternusColors.ink),
+          ),
+        ),
         RsvpToggle(status: status, onChanged: onChanged),
       ],
     );
@@ -205,7 +276,10 @@ class _AttendeeRow extends StatelessWidget {
         children: [
           Avatar(initials: attendee.initials, size: AvatarSize.small),
           const SizedBox(width: 12),
-          Text(attendee.name, style: FraternusTypography.body(color: FraternusColors.ink)),
+          Text(
+            attendee.name,
+            style: FraternusTypography.body(color: FraternusColors.ink),
+          ),
         ],
       ),
     );

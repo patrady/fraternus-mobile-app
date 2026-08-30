@@ -259,6 +259,15 @@ otp_expiry = 3600
 subject = "Your Fraternus verification code"
 content_path = "./supabase/templates/magic_link.html"
 
+# signInWithOtp() is called with shouldCreateUser: true (new signups).
+# GoTrue sends the "magic_link" template only to already-confirmed/existing
+# users — a brand-new, unconfirmed user gets the "confirmation" template
+# instead, so it needs the same code-first treatment or new signups fall
+# back to Supabase's stock link-only email.
+[auth.email.template.confirmation]
+subject = "Your Fraternus verification code"
+content_path = "./supabase/templates/confirmation.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

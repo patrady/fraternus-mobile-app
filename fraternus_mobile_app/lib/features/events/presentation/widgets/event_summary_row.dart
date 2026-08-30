@@ -1,8 +1,10 @@
 import 'package:flutter/widgets.dart';
+import 'package:fraternus_mobile_app/shared/formatting/date_time_utils.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../shared/formatting/event_date_formatting.dart';
 import '../../models/event.dart';
+import 'open_in_maps_dialog.dart';
 
 /// One event's card in the Events list — title (struck through when
 /// cancelled), a clock/date line, a location line, and a trailing status
@@ -10,7 +12,11 @@ import '../../models/event.dart';
 /// Feature-local rather than a design-system component: nothing in
 /// components-source.jsx modeled this shape, and it's only used here.
 class EventSummaryRow extends StatelessWidget {
-  const EventSummaryRow({super.key, required this.event, required this.onPressed});
+  const EventSummaryRow({
+    super.key,
+    required this.event,
+    required this.onPressed,
+  });
 
   final Event event;
   final VoidCallback onPressed;
@@ -18,7 +24,9 @@ class EventSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cancelled = event.isCancelled;
-    final startingSoonLabel = cancelled ? null : formatStartingSoonLabel(DateTime.now(), event.startAt);
+    final startingSoonLabel = cancelled
+        ? null
+        : formatStartingSoonLabel(DateTime.now(), event.startAt);
 
     return PressableBuilder(
       onTap: onPressed,
@@ -36,15 +44,58 @@ class EventSummaryRow extends StatelessWidget {
                     children: [
                       Text(
                         event.title,
-                        style: FraternusTypography.h4(
-                          color: cancelled ? FraternusColors.textOnLightMuted : FraternusColors.ink,
-                        ).copyWith(decoration: cancelled ? TextDecoration.lineThrough : null),
+                        style:
+                            FraternusTypography.h4(
+                              color: cancelled
+                                  ? FraternusColors.textOnLightMuted
+                                  : FraternusColors.ink,
+                            ).copyWith(
+                              decoration: cancelled
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
                       ),
                       const SizedBox(height: 8),
-                      _MetaLine(icon: 'clock', label: formatEventDateRange(event.startAt, event.endAt)),
+                      if (isSameDay(
+                        event.startAt.toLocal(),
+                        event.endAt.toLocal(),
+                      ))
+                        _MetaLine(
+                          icon: 'clock',
+                          label: formatEventDateRange(
+                            event.startAt.toLocal(),
+                            event.endAt.toLocal(),
+                          ),
+                        )
+                      else ...[
+                        _MetaLine(
+                          icon: 'clock',
+                          label: formatDayTimeLabel(event.startAt.toLocal()),
+                        ),
+                        Row(
+                          children: [
+                            const SizedBox(width: 20),
+                            Text(
+                              "to ",
+                              style: FraternusTypography.small(
+                                color: FraternusColors.textOnLightMuted,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                formatDayTimeLabel(event.endAt.toLocal()),
+                                style: FraternusTypography.small(
+                                  color: FraternusColors.textOnLightMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
                       if (event.location case final location?) ...[
                         const SizedBox(height: 4),
-                        _MetaLine(icon: 'map-pin', label: location),
+                        _MetaLine(icon: 'map-pin', label: location.name),
                       ],
                     ],
                   ),
@@ -55,11 +106,20 @@ class EventSummaryRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (cancelled)
-                      Text('CANCELLED', style: FraternusTypography.eyebrow(color: FraternusColors.error))
+                      Text(
+                        'CANCELLED',
+                        style: FraternusTypography.eyebrow(
+                          color: FraternusColors.error,
+                        ),
+                      )
                     else if (startingSoonLabel != null)
                       Tag(label: startingSoonLabel, size: TagSize.small),
                     const SizedBox(height: 20),
-                    const FraternusIcon(name: 'chevron-right', size: 18, opacity: 0.5),
+                    const FraternusIcon(
+                      name: 'chevron-right',
+                      size: 18,
+                      opacity: 0.5,
+                    ),
                   ],
                 ),
               ],
@@ -84,7 +144,12 @@ class _MetaLine extends StatelessWidget {
         FraternusIcon(name: icon, size: 14, opacity: 0.55),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(label, style: FraternusTypography.small(color: FraternusColors.textOnLightMuted)),
+          child: Text(
+            label,
+            style: FraternusTypography.small(
+              color: FraternusColors.textOnLightMuted,
+            ),
+          ),
         ),
       ],
     );

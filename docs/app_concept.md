@@ -267,12 +267,23 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
         - custom
     - Title
     - Description (nullable)
-    - Location (nullable)
     - Start Date
     - End Date
+    - Event Location Id (nullable)
     - Cancellation Date (nullable)
     - Created Date
     - Last Modified Date
+- Event Location
+  - Id
+  - Name
+  - Description
+  - Street
+  - City
+  - State
+  - Zip Code
+  - Notes
+  - Created Date
+  - Last Modified Date
 - Event Frat Night Details
     - Id
     - Event Id

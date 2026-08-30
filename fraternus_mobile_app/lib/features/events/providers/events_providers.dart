@@ -27,8 +27,29 @@ Future<List<Event>> visibleEvents(Ref ref) async {
     asOf: now,
     memberLabels: {for (final member in members) member.id: member.firstName},
   );
-  return events.where((event) => now.isBefore(event.endAt.add(const Duration(hours: 12)))).toList()
+  return events
+      .where(
+        (event) => now.isBefore(event.endAt.add(const Duration(hours: 12))),
+      )
+      .toList()
     ..sort((a, b) => a.startAt.compareTo(b.startAt));
+}
+
+/// Which [EventType]s the Events list is filtered to — empty means "show
+/// everything," matching how the filter button reads with nothing toggled
+/// on. Purely local UI state, not persisted.
+@riverpod
+class EventTypeFilter extends _$EventTypeFilter {
+  @override
+  Set<EventType> build() => const {};
+
+  void toggle(EventType type) {
+    state = state.contains(type)
+        ? ({...state}..remove(type))
+        : {...state, type};
+  }
+
+  void clear() => state = const {};
 }
 
 @riverpod
@@ -50,7 +71,10 @@ class EventRsvp extends _$EventRsvp {
   @override
   Future<Map<String, RsvpStatus>> build(String eventId) async {
     final event = await ref.watch(eventByIdProvider(eventId).future);
-    return {for (final rsvp in event?.householdRsvps ?? const []) rsvp.memberId: rsvp.status};
+    return {
+      for (final rsvp in event?.householdRsvps ?? const [])
+        rsvp.memberId: rsvp.status,
+    };
   }
 
   /// Tapping the already-selected option clears the RSVP back to
@@ -58,7 +82,9 @@ class EventRsvp extends _$EventRsvp {
   /// toggle should behave (tap again to undo); the repository's
   /// submitRsvp implements that toggle-to-delete semantics.
   Future<void> toggleStatus(String personKey, RsvpStatus status) async {
-    await ref.read(eventsRepositoryProvider).submitRsvp(eventId: eventId, memberId: personKey, status: status);
+    await ref
+        .read(eventsRepositoryProvider)
+        .submitRsvp(eventId: eventId, memberId: personKey, status: status);
     ref.invalidate(visibleEventsProvider);
   }
 }

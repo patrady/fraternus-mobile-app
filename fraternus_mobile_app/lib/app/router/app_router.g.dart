@@ -19,7 +19,8 @@ const appRouterProvider = AppRouterProvider._();
 /// constant) so it can depend on [authStateChangesProvider] for the auth
 /// gate below.
 
-final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
+final class AppRouterProvider
+    extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
   /// The whole app's [GoRouter], as a provider (not a bare top-level
   /// constant) so it can depend on [authStateChangesProvider] for the auth
@@ -40,7 +41,8 @@ final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, Go
 
   @$internal
   @override
-  $ProviderElement<GoRouter> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GoRouter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   GoRouter create(Ref ref) {
@@ -49,7 +51,10 @@ final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, Go
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GoRouter value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GoRouter>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GoRouter>(value),
+    );
   }
 }
 
