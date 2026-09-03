@@ -118,6 +118,7 @@ class _TodayContent extends ConsumerWidget {
               label: event.title,
               sublabel: event.dateLabel,
               bordered: false,
+              onPressed: () => context.push(RoutePaths.eventDetail(event.id))
             ),
         const SizedBox(height: 24),
       ],

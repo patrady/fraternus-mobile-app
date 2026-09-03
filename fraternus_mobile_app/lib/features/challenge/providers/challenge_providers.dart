@@ -5,6 +5,7 @@ import '../../profile/models/member.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../data/challenge_repository.dart';
 import '../models/challenge_household_member.dart';
+import '../models/challenge_member_rep.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 
@@ -19,7 +20,8 @@ ChallengeRepository challengeRepository(Ref ref) {
 /// (app_concept.md doesn't describe a multi-chapter household) — the first
 /// member's chapter stands in for "the household's chapter", same
 /// simplification guide_providers.dart makes for Field Guide content.
-String? _householdChapterKey(List<Member> members) => members.isEmpty ? null : members.first.chapterKey;
+String? _householdChapterKey(List<Member> members) =>
+    members.isEmpty ? null : members.first.chapterKey;
 
 /// The current user's household, for the Challenge tab's person tabs.
 /// Sourced from Profile's real Member data now — every Member is eligible
@@ -28,7 +30,10 @@ String? _householdChapterKey(List<Member> members) => members.isEmpty ? null : m
 @riverpod
 Future<List<ChallengeHouseholdMember>> challengeHousehold(Ref ref) async {
   final members = await ref.watch(householdMembersProvider.future);
-  return [for (final member in members) ChallengeHouseholdMember(memberId: member.id, label: member.firstName)];
+  return [
+    for (final member in members)
+      ChallengeHouseholdMember(memberId: member.id, label: member.firstName),
+  ];
 }
 
 /// Source of truth for [allChallengesProvider]/[currentChallengeProvider]/
@@ -39,7 +44,8 @@ Future<ChallengeFeed> _challengeFeed(Ref ref) async {
   final repository = ref.watch(challengeRepositoryProvider);
   final members = await ref.watch(householdMembersProvider.future);
   final chapterKey = _householdChapterKey(members);
-  if (chapterKey == null) return const ChallengeFeed(challenges: [], currentChallengeId: null);
+  if (chapterKey == null)
+    return const ChallengeFeed(challenges: [], currentChallengeId: null);
   return repository.fetchChallenges(
     asOf: DateTime.now(),
     chapterKey: chapterKey,
@@ -70,7 +76,10 @@ Future<WeeklyChallenge?> currentChallenge(Ref ref) async {
 @riverpod
 Future<List<WeeklyChallenge>> pastChallenges(Ref ref) async {
   final feed = await ref.watch(_challengeFeedProvider.future);
-  return [for (final challenge in feed.challenges) if (challenge.id != feed.currentChallengeId) challenge];
+  return [
+    for (final challenge in feed.challenges)
+      if (challenge.id != feed.currentChallengeId) challenge,
+  ];
 }
 
 @riverpod
@@ -91,7 +100,9 @@ Future<int> challengeStreak(Ref ref, String personKey) async {
   final challenges = await ref.watch(allChallengesProvider.future);
   var streak = 0;
   for (final challenge in challenges) {
-    final progressByPerson = await ref.watch(challengeProgressProvider(challenge.id).future);
+    final progressByPerson = await ref.watch(
+      challengeProgressProvider(challenge.id).future,
+    );
     final progress = progressByPerson[personKey];
     if (progress == null || !progress.isCompleted) break;
     streak++;
@@ -119,8 +130,13 @@ class ChallengeSelectedPerson extends _$ChallengeSelectedPerson {
 class ChallengeProgress extends _$ChallengeProgress {
   @override
   Future<Map<String, PersonChallengeProgress>> build(String challengeId) async {
-    final challenge = await ref.watch(challengeByIdProvider(challengeId).future);
-    return {for (final progress in challenge?.progress ?? const []) progress.memberId: progress};
+    final challenge = await ref.watch(
+      challengeByIdProvider(challengeId).future,
+    );
+    return {
+      for (final progress in challenge?.progress ?? const [])
+        progress.memberId: progress,
+    };
   }
 
   /// Accepting is what creates the `Challenge Member` row in the first
@@ -128,7 +144,9 @@ class ChallengeProgress extends _$ChallengeProgress {
   Future<void> accept(String personKey) async {
     final current = state.value ?? const {};
     if (current.containsKey(personKey)) return;
-    await ref.read(challengeRepositoryProvider).acceptChallenge(memberId: personKey, challengeId: challengeId);
+    await ref
+        .read(challengeRepositoryProvider)
+        .acceptChallenge(memberId: personKey, challengeId: challengeId);
     ref.invalidate(_challengeFeedProvider);
   }
 
@@ -136,14 +154,62 @@ class ChallengeProgress extends _$ChallengeProgress {
   /// incomplete, or clears it back to incomplete if it's already done —
   /// used both for "Mark Complete" on the current challenge's next rep and
   /// for Past Challenges' any-order retroactive dot taps.
+  ///
+  /// Updates [state] optimistically — including [PersonChallengeProgress
+  /// .completedDate], mirroring the same reps-vs-repsTotal completion rule
+  /// the repository applies server-side (see StaticChallengeRepository
+  /// .toggleChallengeRep) — so both the rep dot and, on the last rep, the
+  /// completion card flip instantly instead of waiting on the round trip.
+  /// Rolls back on failure. Still invalidates [_challengeFeedProvider]
+  /// afterwards so streak/other-screen reads don't go stale, paired with
+  /// `skipLoadingOnReload: true` in the screens so that background reload
+  /// stays invisible rather than a blank-then-repaint flash.
   Future<void> toggleRep(String personKey, int repIndex) async {
     final current = state.value ?? const {};
     final existing = current[personKey];
     if (existing == null) return;
-    await ref.read(challengeRepositoryProvider).toggleChallengeRep(
-      challengeMemberId: existing.id,
-      repNumber: repIndex + 1,
-    );
+
+    final repNumber = repIndex + 1;
+    final hasRep = existing.reps.any((rep) => rep.number == repNumber);
+    final optimisticReps = hasRep
+        ? existing.reps.where((rep) => rep.number != repNumber).toList()
+        : [
+            ...existing.reps,
+            ChallengeMemberRep(
+              id: '${existing.id}-pending-rep-$repNumber',
+              challengeMemberId: existing.id,
+              completedByUserId: '',
+              number: repNumber,
+              createdAt: DateTime.now(),
+            ),
+          ];
+
+    final challenge = await ref.read(challengeByIdProvider(challengeId).future);
+    final repsTotal = challenge?.repsTotal;
+    final isNowComplete =
+        repsTotal != null && optimisticReps.length == repsTotal;
+
+    final previous = state;
+    state = AsyncData({
+      ...current,
+      personKey: existing.copyWith(
+        reps: optimisticReps,
+        completedDate: isNowComplete ? DateTime.now() : null,
+        clearCompletedDate: !isNowComplete,
+      ),
+    });
+
+    try {
+      await ref
+          .read(challengeRepositoryProvider)
+          .toggleChallengeRep(
+            challengeMemberId: existing.id,
+            repNumber: repNumber,
+          );
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
     ref.invalidate(_challengeFeedProvider);
   }
 }

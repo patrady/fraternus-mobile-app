@@ -17,9 +17,10 @@ abstract class ProfileRepository {
   Future<void> updateProfile(AppUser user);
   Future<void> updateMember(Member member);
 
-  /// Atomically creates a Brother Member + Guardian association (+ Pending
-  /// consent if under 13) for the current Guardian. Returns the new
-  /// Member's id.
+  /// Atomically creates a Brother Member + Guardian association (+
+  /// auto-Granted consent if under 13 — see create_child_member's migration
+  /// doc comment for why it isn't Pending) for the current Guardian.
+  /// Returns the new Member's id.
   Future<String> createChildMember({
     required String firstName,
     required String lastName,
@@ -232,13 +233,17 @@ class StaticProfileRepository implements ProfileRepository {
     final age = now.year - birthday.year - (hadBirthdayThisYear ? 0 : 1);
     final requiresConsent = age < 13;
 
+    // Auto-granted, matching create_child_member's RPC — see that
+    // migration's doc comment for why this isn't Pending.
     _associations.add(
       UserMemberAssociation(
         id: '$_userId-$id',
         userId: _userId,
         memberId: id,
         relationship: AssociationRelationship.guardian,
-        consentStatus: requiresConsent ? ConsentStatus.pending : null,
+        consentStatus: requiresConsent ? ConsentStatus.granted : null,
+        consentDate: requiresConsent ? now : null,
+        consentMethod: requiresConsent ? 'auto-granted at signup (verification flow not yet built)' : null,
         createdAt: now,
         lastModifiedAt: now,
       ),

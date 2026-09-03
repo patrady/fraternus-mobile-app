@@ -81,10 +81,33 @@ class EventRsvp extends _$EventRsvp {
   /// unanswered rather than re-selecting it — matches how a real RSVP
   /// toggle should behave (tap again to undo); the repository's
   /// submitRsvp implements that toggle-to-delete semantics.
+  ///
+  /// Updates [state] optimistically so the toggle flips instantly instead
+  /// of waiting on the round trip, rolling back on failure. Still
+  /// invalidates [visibleEventsProvider] afterwards so [Event.householdRsvps]
+  /// doesn't go stale in the cache the Events list screen keeps alive — but
+  /// only once the write has already landed, so the resulting reload
+  /// resolves to the same data this state already shows (paired with
+  /// `skipLoadingOnReload: true` in the screen's `.when()`, that reload is
+  /// invisible rather than a blank-then-repaint flash).
   Future<void> toggleStatus(String personKey, RsvpStatus status) async {
-    await ref
-        .read(eventsRepositoryProvider)
-        .submitRsvp(eventId: eventId, memberId: personKey, status: status);
+    final previous = state;
+    final current = <String, RsvpStatus>{...?state.value};
+    if (current[personKey] == status) {
+      current.remove(personKey);
+    } else {
+      current[personKey] = status;
+    }
+    state = AsyncData(current);
+
+    try {
+      await ref
+          .read(eventsRepositoryProvider)
+          .submitRsvp(eventId: eventId, memberId: personKey, status: status);
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
     ref.invalidate(visibleEventsProvider);
   }
 }

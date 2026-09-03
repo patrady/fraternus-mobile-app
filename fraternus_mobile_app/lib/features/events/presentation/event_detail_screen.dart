@@ -35,6 +35,10 @@ class EventDetailScreen extends ConsumerWidget {
               loading: () => const SizedBox.shrink(),
               error: (error, stackTrace) =>
                   const BodyText('Something went wrong loading this event.'),
+              // A background reload (e.g. the RSVP-toggle-triggered
+              // visibleEventsProvider refresh) should keep showing the
+              // previous event rather than blanking the whole screen.
+              skipLoadingOnReload: true,
             ),
           ),
         ],
@@ -181,6 +185,7 @@ class _EventDetailContent extends ConsumerWidget {
           ),
           loading: () => const SizedBox.shrink(),
           error: (error, stackTrace) => const SizedBox.shrink(),
+          skipLoadingOnReload: true,
         ),
         const SizedBox(height: 20),
         Button(

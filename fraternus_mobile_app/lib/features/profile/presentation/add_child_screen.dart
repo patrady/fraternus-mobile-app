@@ -34,7 +34,7 @@ class AddChildScreen extends ConsumerWidget {
               initialChapterKey: initialChapterKey,
               onSave: ({required firstName, required lastName, required birthday, required email, required chapterKey}) async {
                 // create_child_member (see ProfileRepository) atomically
-                // creates the Member + Guardian association (+ Pending
+                // creates the Member + Guardian association (+ auto-Granted
                 // consent if under 13) — no separate association step here.
                 await ref
                     .read(profileRepositoryProvider)

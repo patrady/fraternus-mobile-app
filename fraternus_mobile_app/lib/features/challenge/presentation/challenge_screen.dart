@@ -15,7 +15,7 @@ class ChallengeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final challengeAsync = ref.watch(currentChallengeProvider);
+    final currentChallengeAsync = ref.watch(currentChallengeProvider);
 
     return ScreenShell(
       child: Padding(
@@ -25,15 +25,22 @@ class ChallengeScreen extends ConsumerWidget {
           children: [
             const Heading('WEEKLY CHALLENGE', level: HeadingLevel.h2),
             const SizedBox(height: 20),
-            challengeAsync.when(
+            currentChallengeAsync.when(
               data: (challenge) => challenge == null
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
-                      child: BodyText('No challenge yet — check back after the next Frat Night.'),
+                      child: BodyText(
+                        'No challenge yet — check back after the next Frat Night.',
+                      ),
                     )
                   : _ChallengeContent(challenge: challenge),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading the challenge.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading the challenge.'),
+              // A background reload (e.g. the accept/toggleRep-triggered
+              // challenge feed refresh) should keep showing the previous
+              // challenge rather than blanking the whole screen.
+              skipLoadingOnReload: true,
             ),
           ],
         ),
@@ -49,7 +56,9 @@ class _ChallengeContent extends ConsumerWidget {
 
   PersonTabStatus _statusFor(PersonChallengeProgress? progress) {
     if (progress == null) return PersonTabStatus.none;
-    return progress.isCompleted ? PersonTabStatus.done : PersonTabStatus.inProgress;
+    return progress.isCompleted
+        ? PersonTabStatus.done
+        : PersonTabStatus.inProgress;
   }
 
   @override
@@ -57,11 +66,42 @@ class _ChallengeContent extends ConsumerWidget {
     final progressAsync = ref.watch(challengeProgressProvider(challenge.id));
     final householdAsync = ref.watch(challengeHouseholdProvider);
     final selectedKey = ref.watch(challengeSelectedPersonProvider);
+    final household = householdAsync.value ?? const [];
+    // selectedKey defaults to the placeholder 'you' (see
+    // ChallengeSelectedPerson), which won't match a real household member's
+    // id — same reconciliation TodayScreen's selectedPerson does, so
+    // "Accept Challenge" doesn't try to insert an invalid member id.
+    final activeKey =
+        household.isEmpty || household.any((m) => m.memberId == selectedKey)
+        ? selectedKey
+        : household.first.memberId;
+
+    final allChallenges = ref.watch(allChallengesProvider).value ?? const [];
+    // The next Frat Night after this Challenge's — i.e. when its week ends
+    // — is whichever other Challenge's fratNightDate is soonest after this
+    // one's, not just adjacent-in-list, since allChallengesProvider isn't
+    // guaranteed contiguous around "now".
+    DateTime? nextFratNightDate;
+    for (final other in allChallenges) {
+      if (!other.fratNightDate.isAfter(challenge.fratNightDate)) continue;
+      if (nextFratNightDate == null ||
+          other.fratNightDate.isBefore(nextFratNightDate)) {
+        nextFratNightDate = other.fratNightDate;
+      }
+    }
+
+    final pastChallenges = ref.watch(pastChallengesProvider).value ?? const [];
+    final hasPastAcceptedChallenge = pastChallenges.any(
+      (c) => c.progress.any((p) => p.memberId == activeKey),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ChallengeInfoCard(challenge: challenge),
+        ChallengeInfoCard(
+          challenge: challenge,
+          nextFratNightDate: nextFratNightDate,
+        ),
         const SizedBox(height: 20),
         householdAsync.when(
           data: (household) => progressAsync.when(
@@ -74,26 +114,31 @@ class _ChallengeContent extends ConsumerWidget {
                     status: _statusFor(progressByPerson[m.memberId]),
                   ),
               ],
-              activeKey: selectedKey,
-              onChanged: (key) => ref.read(challengeSelectedPersonProvider.notifier).select(key),
+              activeKey: activeKey,
+              onChanged: (key) => ref
+                  .read(challengeSelectedPersonProvider.notifier)
+                  .select(key),
             ),
             loading: () => const SizedBox.shrink(),
             error: (error, stackTrace) => const SizedBox.shrink(),
+            skipLoadingOnReload: true,
           ),
           loading: () => const SizedBox.shrink(),
           error: (error, stackTrace) => const SizedBox.shrink(),
         ),
         const SizedBox(height: 16),
-        _ChallengeStateCard(challenge: challenge, personKey: selectedKey),
-        const SizedBox(height: 16),
-        Button(
-          label: 'Past Challenges',
-          variant: ButtonVariant.ghost,
-          fullWidth: true,
-          icon: 'chevron-right',
-          iconPosition: ButtonIconPosition.right,
-          onPressed: () => context.push(RoutePaths.pastChallenges),
-        ),
+        _ChallengeStateCard(challenge: challenge, personKey: activeKey),
+        if (hasPastAcceptedChallenge) ...[
+          const SizedBox(height: 16),
+          Button(
+            label: 'Past Challenges',
+            variant: ButtonVariant.ghost,
+            fullWidth: true,
+            icon: 'chevron-right',
+            iconPosition: ButtonIconPosition.right,
+            onPressed: () => context.push(RoutePaths.pastChallenges),
+          ),
+        ],
         const SizedBox(height: 24),
       ],
     );
@@ -112,7 +157,8 @@ class _ChallengeStateCard extends ConsumerStatefulWidget {
   final String personKey;
 
   @override
-  ConsumerState<_ChallengeStateCard> createState() => _ChallengeStateCardState();
+  ConsumerState<_ChallengeStateCard> createState() =>
+      _ChallengeStateCardState();
 }
 
 class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
@@ -126,18 +172,27 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
 
   @override
   Widget build(BuildContext context) {
-    final progressAsync = ref.watch(challengeProgressProvider(widget.challenge.id));
+    final progressAsync = ref.watch(
+      challengeProgressProvider(widget.challenge.id),
+    );
 
     return progressAsync.when(
       data: (progressByPerson) {
         final progress = progressByPerson[widget.personKey];
         if (progress == null) {
-          return _NotAcceptedCard(challenge: widget.challenge, personKey: widget.personKey);
+          return _NotAcceptedCard(
+            challenge: widget.challenge,
+            personKey: widget.personKey,
+          );
         }
 
         if (progress.isCompleted && !_showReps) {
-          final streakAsync = ref.watch(challengeStreakProvider(widget.personKey));
-          final streakLabel = streakAsync.value == null ? '' : '${streakAsync.value} week streak';
+          final streakAsync = ref.watch(
+            challengeStreakProvider(widget.personKey),
+          );
+          final streakLabel = streakAsync.value == null
+              ? ''
+              : '${streakAsync.value} week streak';
           return SizedBox(
             width: double.infinity,
             child: DarkFeatureCard(
@@ -150,11 +205,17 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
           );
         }
 
-        final completions = List<DateTime?>.filled(widget.challenge.repsTotal, null);
+        final completions = List<DateTime?>.filled(
+          widget.challenge.repsTotal,
+          null,
+        );
         for (final rep in progress.reps) {
-          if (rep.number >= 1 && rep.number <= completions.length) completions[rep.number - 1] = rep.createdAt;
+          if (rep.number >= 1 && rep.number <= completions.length)
+            completions[rep.number - 1] = rep.createdAt;
         }
-        final nextIncompleteIndex = completions.indexWhere((date) => date == null);
+        final nextIncompleteIndex = completions.indexWhere(
+          (date) => date == null,
+        );
 
         return Box(
           child: Column(
@@ -163,9 +224,12 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
                 ChallengeRepRow(
                   index: i,
                   completedAt: completions[i],
-                  isNextIncomplete: !progress.isCompleted && i == nextIncompleteIndex,
+                  isNextIncomplete:
+                      !progress.isCompleted && i == nextIncompleteIndex,
                   onMarkComplete: () => ref
-                      .read(challengeProgressProvider(widget.challenge.id).notifier)
+                      .read(
+                        challengeProgressProvider(widget.challenge.id).notifier,
+                      )
                       .toggleRep(widget.personKey, i),
                 ),
                 if (i != completions.length - 1) const HairlineDivider(),
@@ -184,6 +248,7 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
       },
       loading: () => const SizedBox.shrink(),
       error: (error, stackTrace) => const SizedBox.shrink(),
+      skipLoadingOnReload: true,
     );
   }
 }
@@ -199,7 +264,11 @@ class _NotAcceptedCard extends ConsumerWidget {
     return Box(
       child: Column(
         children: [
-          const FraternusIcon(name: 'mountain', size: 32, tone: FraternusIconTone.terracotta),
+          const FraternusIcon(
+            name: 'mountain',
+            size: 32,
+            tone: FraternusIconTone.terracotta,
+          ),
           const SizedBox(height: 14),
           Text(
             'Every great man had to start with a single decision to be great.',
@@ -212,8 +281,9 @@ class _NotAcceptedCard extends ConsumerWidget {
           Button(
             label: 'Accept Challenge',
             fullWidth: true,
-            onPressed: () =>
-                ref.read(challengeProgressProvider(challenge.id).notifier).accept(personKey),
+            onPressed: () => ref
+                .read(challengeProgressProvider(challenge.id).notifier)
+                .accept(personKey),
           ),
         ],
       ),

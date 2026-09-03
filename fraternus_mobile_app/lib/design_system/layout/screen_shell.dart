@@ -7,13 +7,18 @@ import '../tokens/fraternus_colors.dart';
 /// primary/secondary button stack). Ports components-source.jsx
 /// `ScreenShell`.
 class ScreenShell extends StatelessWidget {
-  const ScreenShell({super.key, required this.child, this.dark = false, this.footer});
+  const ScreenShell({super.key, required this.child, this.dark = false, this.footer, this.scrollable = true});
 
   static const _safeTop = 56.0;
 
   final Widget child;
   final bool dark;
   final Widget? footer;
+
+  /// False lets [child] manage its own scrolling (e.g. a `CustomScrollView`
+  /// with pinned sliver headers) instead of being wrapped in a
+  /// [SingleChildScrollView] — a plain [Column] can't host slivers.
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,7 @@ class ScreenShell extends StatelessWidget {
         padding: const EdgeInsets.only(top: _safeTop),
         child: Column(
           children: [
-            Expanded(child: SingleChildScrollView(child: child)),
+            Expanded(child: scrollable ? SingleChildScrollView(child: child) : child),
             if (footer != null)
               ColoredBox(
                 color: dark ? const Color(0x00000000) : background,

@@ -8,7 +8,9 @@
 -- embed's name lookup work.
 --
 -- Excludes the caller's own household — those members are already shown
--- via the RSVP section, not "Others Attending".
+-- via the RSVP section, not "Others Attending". Ordered alphabetically so
+-- the list reads predictably to a Captain scanning it, rather than
+-- whatever order Postgres happens to return the join in.
 create or replace function public.get_event_attendees(p_event_id uuid)
 returns table (member_id uuid, first_name text, last_name text)
 language sql
@@ -21,7 +23,8 @@ as $$
   join public.members m on m.id = er.member_id
   where er.event_id = p_event_id
     and er.response = 'accepted'
-    and not public.has_member_association(er.member_id);
+    and not public.has_member_association(er.member_id)
+  order by m.last_name, m.first_name;
 $$;
 
 revoke all on function public.get_event_attendees(uuid) from public;

@@ -12,20 +12,34 @@ class PastChallengesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final personKey = ref.watch(challengeSelectedPersonProvider);
+    final selectedKey = ref.watch(challengeSelectedPersonProvider);
+    final household = ref.watch(challengeHouseholdProvider).value ?? const [];
+    // selectedKey defaults to the placeholder 'you' (see
+    // ChallengeSelectedPerson), which won't match a real household member's
+    // id — same reconciliation ChallengeScreen's activeKey does.
+    final personKey =
+        household.isEmpty || household.any((m) => m.memberId == selectedKey)
+        ? selectedKey
+        : household.first.memberId;
     final challengesAsync = ref.watch(pastChallengesProvider);
 
     return ScreenShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ScreenHeader(title: 'Back', onBack: () => context.pop()),
+          ScreenHeader(title: 'Past Challenges', onBack: () => context.pop()),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: challengesAsync.when(
-              data: (challenges) => _PastChallengesList(challenges: challenges, personKey: personKey),
+              data: (challenges) => _PastChallengesList(
+                challenges: challenges,
+                personKey: personKey,
+              ),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading past challenges.'),
+              error: (error, stackTrace) => const BodyText(
+                'Something went wrong loading past challenges.',
+              ),
+              skipLoadingOnReload: true,
             ),
           ),
         ],
@@ -35,7 +49,10 @@ class PastChallengesScreen extends ConsumerWidget {
 }
 
 class _PastChallengesList extends ConsumerWidget {
-  const _PastChallengesList({required this.challenges, required this.personKey});
+  const _PastChallengesList({
+    required this.challenges,
+    required this.personKey,
+  });
 
   final List<WeeklyChallenge> challenges;
   final String personKey;
@@ -54,7 +71,6 @@ class _PastChallengesList extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Heading('PAST CHALLENGES', level: HeadingLevel.h2),
         if (personLabel != null) ...[
           const SizedBox(height: 4),
           Text(
@@ -106,20 +122,28 @@ class _PastChallengeCard extends ConsumerWidget {
                       children: [
                         Text(
                           challenge.title,
-                          style: FraternusTypography.h4(color: FraternusColors.ink),
+                          style: FraternusTypography.h4(
+                            color: FraternusColors.ink,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Week of ${formatOrdinalDate(challenge.fratNightDate)}',
-                          style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+                          style: FraternusTypography.small(
+                            color: FraternusColors.textOnLightMuted,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   FraternusIcon(
-                    name: progress.isCompleted ? 'circle-check' : 'circle-dashed',
+                    name: progress.isCompleted
+                        ? 'circle-check'
+                        : 'circle-dashed',
                     size: 18,
-                    tone: progress.isCompleted ? FraternusIconTone.success : FraternusIconTone.terracotta,
+                    tone: progress.isCompleted
+                        ? FraternusIconTone.success
+                        : FraternusIconTone.terracotta,
                   ),
                 ],
               ),
@@ -144,7 +168,9 @@ class _PastChallengeCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Tap a rep to mark it complete in case you forgot.',
-                  style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+                  style: FraternusTypography.small(
+                    color: FraternusColors.textOnLightMuted,
+                  ),
                 ),
               ],
             ],
@@ -153,6 +179,7 @@ class _PastChallengeCard extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (error, stackTrace) => const SizedBox.shrink(),
+      skipLoadingOnReload: true,
     );
   }
 }

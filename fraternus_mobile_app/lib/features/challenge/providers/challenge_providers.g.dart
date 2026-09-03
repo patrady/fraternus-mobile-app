@@ -597,7 +597,7 @@ final class ChallengeProgressProvider
   }
 }
 
-String _$challengeProgressHash() => r'cc37ef0b579fb693d0094137db774c058d117ecf';
+String _$challengeProgressHash() => r'176651b050d225c02a31a7deafd90356835a06a7';
 
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the

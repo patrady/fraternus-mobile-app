@@ -5,26 +5,34 @@ import '../../../../shared/formatting/ordinal_date_formatting.dart';
 import '../../models/weekly_challenge.dart';
 
 /// The white card at the top of the Challenge tab — title, "NEW" pill,
-/// week label, and a description that expands on tap. Identical across
-/// all 3 accept/complete states, so it lives above the state-specific
-/// card rather than inside it. Feature-local: nothing in
-/// components-source.jsx modeled this shape, and it's only used here.
-class ChallengeInfoCard extends StatefulWidget {
-  const ChallengeInfoCard({super.key, required this.challenge});
+/// week range, and the full description. Identical across all 3
+/// accept/complete states, so it lives above the state-specific card
+/// rather than inside it. Feature-local: nothing in components-source.jsx
+/// modeled this shape, and it's only used here.
+class ChallengeInfoCard extends StatelessWidget {
+  const ChallengeInfoCard({
+    super.key,
+    required this.challenge,
+    required this.nextFratNightDate,
+  });
 
   final WeeklyChallenge challenge;
 
-  @override
-  State<ChallengeInfoCard> createState() => _ChallengeInfoCardState();
-}
-
-class _ChallengeInfoCardState extends State<ChallengeInfoCard> {
-  bool _expanded = false;
+  /// The following Frat Night's start date — i.e. when this Challenge's
+  /// week ends — resolved by the caller from the full challenge list since
+  /// there's no direct link between one Challenge and the next. Null when
+  /// no later Frat Night is scheduled yet, in which case the week label
+  /// falls back to just the start date.
+  final DateTime? nextFratNightDate;
 
   @override
   Widget build(BuildContext context) {
-    final challenge = widget.challenge;
-    final isNew = DateTime.now().isBefore(challenge.fratNightDate.add(const Duration(hours: 48)));
+    final isNew = DateTime.now().isBefore(
+      challenge.fratNightDate.add(const Duration(hours: 48)),
+    );
+    final weekLabel = nextFratNightDate == null
+        ? formatOrdinalDate(challenge.fratNightDate)
+        : '${formatOrdinalDate(challenge.fratNightDate)} – ${formatOrdinalDate(nextFratNightDate!)}';
 
     return Box(
       child: Column(
@@ -34,34 +42,34 @@ class _ChallengeInfoCardState extends State<ChallengeInfoCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(challenge.title, style: FraternusTypography.h4(color: FraternusColors.ink)),
+                child: Text(
+                  challenge.title,
+                  style: FraternusTypography.h4(color: FraternusColors.ink),
+                ),
               ),
               if (isNew) ...[
                 const SizedBox(width: 8),
-                const Tag(label: 'New', color: TagColor.secondary, icon: 'sparkles'),
+                const Tag(
+                  label: 'New',
+                  color: TagColor.secondary,
+                  icon: 'sparkles',
+                ),
               ],
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Week of ${formatOrdinalDate(challenge.fratNightDate)}',
-            style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+            weekLabel,
+            style: FraternusTypography.small(
+              color: FraternusColors.textOnLightMuted,
+            ),
           ),
           const SizedBox(height: 10),
-          PressableBuilder(
-            onTap: () => setState(() => _expanded = !_expanded),
-            semanticLabel: _expanded ? 'Collapse description' : 'Expand description',
-            builder: (context, isPressed) {
-              return Opacity(
-                opacity: isPressed ? 0.75 : 1,
-                child: Text(
-                  challenge.description,
-                  maxLines: _expanded ? null : 2,
-                  overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                  style: FraternusTypography.body(color: FraternusColors.textOnLightMuted),
-                ),
-              );
-            },
+          Text(
+            challenge.description,
+            style: FraternusTypography.body(
+              color: FraternusColors.textOnLightMuted,
+            ),
           ),
         ],
       ),

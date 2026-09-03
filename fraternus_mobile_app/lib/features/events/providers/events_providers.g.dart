@@ -305,7 +305,7 @@ final class EventRsvpProvider
   }
 }
 
-String _$eventRsvpHash() => r'98147e1ed41ccf9d5e2a9530301b1bb110862461';
+String _$eventRsvpHash() => r'c699288d974f5afcbeefc576a18ed493b4126006';
 
 /// Per-event household RSVP state, read straight through from
 /// [EventsRepository] — no local edit buffer, same reasoning as

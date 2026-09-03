@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 final _weekdayMonthDay = DateFormat('EEE, MMM d');
 final _time = DateFormat.jm();
+final _month = DateFormat('MMMM');
 
 /// "Fri, Jul 24 · 8:30 PM – 9:00 PM" for a same-day event, or
 /// "Thu, Jul 8 · 9:00 AM – Mon, Jul 12 · 3:00 PM" once it spans days.
@@ -29,6 +30,14 @@ String formatTimeLabel(DateTime date) => _time.format(date);
 /// A countdown badge label ("IN 30 MINUTES", "IN 2 HOURS") for an event
 /// starting soon, or null once it's more than [within] away (or already
 /// started) — callers treat null as "show no badge".
+/// "August", or "August 2027" once [date] falls outside the current
+/// calendar year — disambiguates a rolling multi-month events list (like
+/// the Events tab's month sections) without cluttering the common case.
+String formatEventMonthLabel(DateTime date) {
+  final month = _month.format(date);
+  return date.year == DateTime.now().year ? month : '$month ${date.year}';
+}
+
 String? formatStartingSoonLabel(
   DateTime now,
   DateTime start, {
