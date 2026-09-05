@@ -23,7 +23,7 @@ class TemperamentDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ScreenHeader(title: 'Back', onBack: () => context.pop()),
+          ScreenHeader(title: 'Guide', onBack: () => context.pop()),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: Column(

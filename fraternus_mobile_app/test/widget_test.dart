@@ -332,7 +332,7 @@ void main() {
     await tester.tap(find.text('CHOLERIC'));
     await tester.pumpAndSettle();
 
-    expect(find.text('BACK'), findsOneWidget);
+    expect(find.text('GUIDE'), findsWidgets);
     expect(find.text('CHOLERIC'), findsOneWidget);
     expect(find.text('STRENGTHS'), findsOneWidget);
     expect(find.text('GROWTH AREAS'), findsOneWidget);

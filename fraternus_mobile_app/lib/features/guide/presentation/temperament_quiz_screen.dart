@@ -124,7 +124,7 @@ class _IntroScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ScreenHeader(title: 'Back', onBack: () => context.pop()),
+          ScreenHeader(title: 'Temperament Quiz', onBack: () => context.pop()),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: Column(
