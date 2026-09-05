@@ -19,14 +19,16 @@ Future<DateTime?> showFraternusDatePicker({
     initialDate: initialDate,
     firstDate: firstDate,
     lastDate: lastDate,
-    builder: (context, child) => Theme(data: _datePickerTheme(context), child: child!),
+    builder: (context, child) =>
+        Theme(data: _datePickerTheme(context), child: child!),
   );
 }
 
 ThemeData _datePickerTheme(BuildContext context) {
   final base = Theme.of(context);
   final selectedDayColor = WidgetStateProperty.resolveWith<Color?>((states) {
-    if (states.contains(WidgetState.selected)) return FraternusColors.terracotta;
+    if (states.contains(WidgetState.selected))
+      return FraternusColors.terracotta;
     return null;
   });
   // Applies to BOTH the plain day-of-month text and "today"'s text — today
@@ -35,7 +37,8 @@ ThemeData _datePickerTheme(BuildContext context) {
   // (invisible) instead of falling back to this white-when-selected logic.
   final selectedTextColor = WidgetStateProperty.resolveWith<Color?>((states) {
     if (states.contains(WidgetState.selected)) return FraternusColors.white;
-    if (states.contains(WidgetState.disabled)) return FraternusColors.textOnLightMuted;
+    if (states.contains(WidgetState.disabled))
+      return FraternusColors.textOnLightMuted;
     return FraternusColors.ink;
   });
   // "Today, not selected" gets terracotta text (matching its border ring)
@@ -73,11 +76,15 @@ ThemeData _datePickerTheme(BuildContext context) {
     datePickerTheme: DatePickerThemeData(
       backgroundColor: FraternusColors.surfaceCardLight,
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(FraternusRadii.lg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FraternusRadii.lg),
+      ),
       headerBackgroundColor: FraternusColors.surfaceDark,
       headerForegroundColor: FraternusColors.white,
       headerHeadlineStyle: FraternusTypography.h3(color: FraternusColors.white),
-      headerHelpStyle: FraternusTypography.eyebrow(color: FraternusColors.textOnDarkMuted),
+      headerHelpStyle: FraternusTypography.eyebrow(
+        color: FraternusColors.textOnDarkMuted,
+      ),
       weekdayStyle: FraternusTypography.small(
         color: FraternusColors.textOnLightMuted,
       ).copyWith(fontWeight: FontWeight.w700),

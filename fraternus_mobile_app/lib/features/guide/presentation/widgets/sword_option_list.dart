@@ -7,7 +7,12 @@ import '../../../../design_system/design_system.dart';
 /// checkbox component exists yet and none of the existing selectable
 /// cards match this bare-row look.
 class SwordOptionList extends StatelessWidget {
-  const SwordOptionList({super.key, required this.options, this.selected, required this.onSelect});
+  const SwordOptionList({
+    super.key,
+    required this.options,
+    this.selected,
+    required this.onSelect,
+  });
 
   final List<String> options;
 
@@ -40,16 +45,25 @@ class SwordOptionList extends StatelessWidget {
                         margin: const EdgeInsets.only(top: 1),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isSelected ? FraternusColors.accentPrimary : null,
+                          color: isSelected
+                              ? FraternusColors.accentPrimary
+                              : null,
                           border: Border.all(
-                            color: isSelected ? FraternusColors.accentPrimary : FraternusColors.borderSubtle,
+                            color: isSelected
+                                ? FraternusColors.accentPrimary
+                                : FraternusColors.borderSubtle,
                             width: isSelected ? 6 : 1.5,
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(option, style: FraternusTypography.body(color: FraternusColors.ink)),
+                        child: Text(
+                          option,
+                          style: FraternusTypography.body(
+                            color: FraternusColors.ink,
+                          ),
+                        ),
                       ),
                     ],
                   ),

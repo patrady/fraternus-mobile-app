@@ -28,7 +28,9 @@ Future<bool> showFraternusConfirmDialog({
       return Dialog(
         backgroundColor: FraternusColors.white,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(FraternusRadii.lg))),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(FraternusRadii.lg)),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -61,7 +63,12 @@ Future<bool> showFraternusConfirmDialog({
                 ],
               ),
               const SizedBox(height: 12),
-              Text(message, style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)),
+              Text(
+                message,
+                style: FraternusTypography.body(
+                  color: FraternusColors.textOnLightMuted,
+                ),
+              ),
               const SizedBox(height: 20),
               ButtonGroup(
                 children: [

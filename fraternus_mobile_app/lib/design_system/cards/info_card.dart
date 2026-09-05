@@ -51,14 +51,15 @@ class InfoCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: FraternusTypography.body(color: FraternusColors.ink).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
+                  style: FraternusTypography.body(
+                    color: FraternusColors.ink,
+                  ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
                 Text(
                   subtitle,
-                  style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+                  style: FraternusTypography.small(
+                    color: FraternusColors.textOnLightMuted,
+                  ),
                 ),
                 if (badge != null) ...[
                   const SizedBox(height: 8),

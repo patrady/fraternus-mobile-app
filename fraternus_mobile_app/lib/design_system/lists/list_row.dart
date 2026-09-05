@@ -43,7 +43,9 @@ class ListRow extends StatelessWidget {
             padding: bordered
                 ? const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
                 : const EdgeInsets.symmetric(vertical: 11),
-            constraints: const BoxConstraints(minHeight: FraternusSpacing.tapTargetMin),
+            constraints: const BoxConstraints(
+              minHeight: FraternusSpacing.tapTargetMin,
+            ),
             decoration: bordered
                 ? BoxDecoration(
                     color: FraternusColors.white,
@@ -61,15 +63,18 @@ class ListRow extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: FraternusTypography.body(color: FraternusColors.ink)
-                            .copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+                        style: FraternusTypography.body(
+                          color: FraternusColors.ink,
+                        ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
                       ),
                       if (sublabel != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             sublabel!,
-                            style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+                            style: FraternusTypography.small(
+                              color: FraternusColors.textOnLightMuted,
+                            ),
                           ),
                         ),
                     ],

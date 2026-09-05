@@ -43,14 +43,18 @@ class RsvpToggle extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected ? selectedColor : FraternusColors.white,
-              border: selected ? null : Border.all(color: FraternusColors.borderSubtle),
+              border: selected
+                  ? null
+                  : Border.all(color: FraternusColors.borderSubtle),
               borderRadius: BorderRadius.circular(FraternusRadii.sm),
             ),
             child: Text(
               label.toUpperCase(),
               style: FraternusTypography.button(
                 fontSize: 12,
-                color: selected ? FraternusColors.white : FraternusColors.textOnLightMuted,
+                color: selected
+                    ? FraternusColors.white
+                    : FraternusColors.textOnLightMuted,
               ).copyWith(letterSpacing: 12 * 0.03),
             ),
           ),

@@ -47,7 +47,9 @@ class FieldGuideDailyDevotionalMember {
       submittedByUserId: submittedByUserId ?? this.submittedByUserId,
       sword: sword ?? this.sword,
       spade: spade ?? this.spade,
-      completedDate: clearCompleted ? null : (completedDate ?? this.completedDate),
+      completedDate: clearCompleted
+          ? null
+          : (completedDate ?? this.completedDate),
       createdAt: createdAt,
       lastModifiedAt: lastModifiedAt,
     );
@@ -61,7 +63,9 @@ class FieldGuideDailyDevotionalMember {
       submittedByUserId: json['submitted_by_user_id'] as String?,
       sword: json['sword'] as String?,
       spade: json['spade'] as String?,
-      completedDate: json['completed_date'] == null ? null : DateTime.parse(json['completed_date'] as String),
+      completedDate: json['completed_date'] == null
+          ? null
+          : DateTime.parse(json['completed_date'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),
     );

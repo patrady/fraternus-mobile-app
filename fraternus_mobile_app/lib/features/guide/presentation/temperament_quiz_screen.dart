@@ -23,7 +23,8 @@ class TemperamentQuizScreen extends ConsumerStatefulWidget {
   final String personKey;
 
   @override
-  ConsumerState<TemperamentQuizScreen> createState() => _TemperamentQuizScreenState();
+  ConsumerState<TemperamentQuizScreen> createState() =>
+      _TemperamentQuizScreenState();
 }
 
 class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
@@ -64,12 +65,15 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
     for (var i = 0; i < questions.length; i++) {
       final selectedText = _answers[i];
       for (final option in questions[i].options) {
-        if (option.text == selectedText) selectedKeys.add(option.temperamentKey);
+        if (option.text == selectedText)
+          selectedKeys.add(option.temperamentKey);
       }
     }
 
     final result = scoreTemperamentQuiz(selectedKeys);
-    ref.read(guideTemperamentResultProvider(widget.personKey).notifier).save(result);
+    ref
+        .read(guideTemperamentResultProvider(widget.personKey).notifier)
+        .save(result);
     setState(() {
       _result = result;
       _phase = _QuizPhase.results;
@@ -82,7 +86,9 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
 
     return questionsAsync.when(
       data: (questions) => switch (_phase) {
-        _QuizPhase.intro => _IntroScreen(onBegin: () => setState(() => _phase = _QuizPhase.question)),
+        _QuizPhase.intro => _IntroScreen(
+          onBegin: () => setState(() => _phase = _QuizPhase.question),
+        ),
         _QuizPhase.question => _QuestionScreen(
           question: questions[_questionIndex],
           index: _questionIndex,
@@ -93,11 +99,15 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
           onBack: _goBack,
           onNext: () => _goNext(questions),
         ),
-        _QuizPhase.results => _ResultsScreen(result: _result!, onOk: () => context.pop()),
+        _QuizPhase.results => _ResultsScreen(
+          result: _result!,
+          onOk: () => context.pop(),
+        ),
       },
       loading: () => const ScreenShell(child: SizedBox.shrink()),
-      error: (error, stackTrace) =>
-          const ScreenShell(child: BodyText('Something went wrong loading the quiz.')),
+      error: (error, stackTrace) => const ScreenShell(
+        child: BodyText('Something went wrong loading the quiz.'),
+      ),
     );
   }
 }
@@ -132,11 +142,17 @@ class _IntroScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    const FraternusIcon(name: 'clock', size: 18, tone: FraternusIconTone.ink),
+                    const FraternusIcon(
+                      name: 'clock',
+                      size: 18,
+                      tone: FraternusIconTone.ink,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '10 minutes',
-                      style: FraternusTypography.body(color: FraternusColors.textOnLightMuted),
+                      style: FraternusTypography.body(
+                        color: FraternusColors.textOnLightMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -177,7 +193,12 @@ class _QuestionScreen extends StatelessWidget {
     return ScreenShell(
       footer: ButtonGroup(
         children: [
-          Button(label: 'Back', variant: ButtonVariant.ghost, icon: 'chevron-left', onPressed: onBack),
+          Button(
+            label: 'Back',
+            variant: ButtonVariant.ghost,
+            icon: 'chevron-left',
+            onPressed: onBack,
+          ),
           Button(
             label: isLastQuestion ? 'Finish' : 'Next',
             icon: 'chevron-right',
@@ -208,7 +229,10 @@ class _QuestionScreen extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             'EXIT',
-                            style: FraternusTypography.button(fontSize: 13, color: FraternusColors.ink),
+                            style: FraternusTypography.button(
+                              fontSize: 13,
+                              color: FraternusColors.ink,
+                            ),
                           ),
                         ],
                       ),
@@ -242,7 +266,8 @@ class _ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = temperamentDisplayNames[result.primaryKey] ?? result.primaryKey;
+    final name =
+        temperamentDisplayNames[result.primaryKey] ?? result.primaryKey;
     final profile = temperamentProfiles[result.primaryKey];
 
     return ScreenShell(
@@ -258,10 +283,16 @@ class _ResultsScreen extends StatelessWidget {
             Text(
               'YOUR TEMPERAMENT',
               textAlign: TextAlign.center,
-              style: FraternusTypography.eyebrow(color: FraternusColors.textOnLightMuted),
+              style: FraternusTypography.eyebrow(
+                color: FraternusColors.textOnLightMuted,
+              ),
             ),
             const SizedBox(height: 8),
-            Heading(name.toUpperCase(), level: HeadingLevel.h2, align: TextAlign.center),
+            Heading(
+              name.toUpperCase(),
+              level: HeadingLevel.h2,
+              align: TextAlign.center,
+            ),
             if (profile != null) ...[
               const SizedBox(height: 16),
               BodyText(profile.description, align: TextAlign.center),

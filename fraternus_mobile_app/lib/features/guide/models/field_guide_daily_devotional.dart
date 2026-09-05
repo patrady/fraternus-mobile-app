@@ -50,7 +50,9 @@ class FieldGuideDailyDevotional {
   /// SupabaseGuideRepository) — absent (defaults to empty) for a plain
   /// non-embedded row.
   factory FieldGuideDailyDevotional.fromJson(Map<String, dynamic> json) {
-    final membersJson = json['field_guide_daily_devotional_members'] as List<dynamic>? ?? const [];
+    final membersJson =
+        json['field_guide_daily_devotional_members'] as List<dynamic>? ??
+        const [];
     return FieldGuideDailyDevotional(
       id: json['id'] as String,
       fieldGuideWeekId: json['field_guide_week_id'] as String,
@@ -65,7 +67,9 @@ class FieldGuideDailyDevotional {
       closingPrayerAuthor: json['closing_prayer_author'] as String,
       members: [
         for (final memberJson in membersJson)
-          FieldGuideDailyDevotionalMember.fromJson(memberJson as Map<String, dynamic>),
+          FieldGuideDailyDevotionalMember.fromJson(
+            memberJson as Map<String, dynamic>,
+          ),
       ],
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),

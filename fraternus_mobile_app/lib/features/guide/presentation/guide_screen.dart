@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../models/field_guide_daily_devotional.dart';
@@ -33,13 +34,16 @@ class GuideScreen extends ConsumerWidget {
             // picker — the only way back to a valid date — stays reachable.
             GuideDateHeader(
               date: date,
-              virtue: weekAsync.value?.devotionalForDate(date) != null ? weekAsync.value!.virtue : null,
+              virtue: weekAsync.value?.devotionalForDate(date) != null
+                  ? weekAsync.value!.virtue
+                  : null,
               onCalendarTap: () async {
+                final now = ref.read(nowProvider);
                 final picked = await showFraternusDatePicker(
                   context: context,
                   initialDate: date,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now(),
+                  firstDate: now.subtract(const Duration(days: 365)),
+                  lastDate: now,
                 );
                 if (picked != null) {
                   ref.read(guideSelectedDateProvider.notifier).select(picked);
@@ -56,10 +60,15 @@ class GuideScreen extends ConsumerWidget {
                     child: BodyText('Nothing to read for this date yet.'),
                   );
                 }
-                return _GuideContent(date: date, week: week, devotional: devotional);
+                return _GuideContent(
+                  date: date,
+                  week: week,
+                  devotional: devotional,
+                );
               },
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading the Guide.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading the Guide.'),
             ),
           ],
         ),
@@ -69,7 +78,11 @@ class GuideScreen extends ConsumerWidget {
 }
 
 class _GuideContent extends ConsumerWidget {
-  const _GuideContent({required this.date, required this.week, required this.devotional});
+  const _GuideContent({
+    required this.date,
+    required this.week,
+    required this.devotional,
+  });
 
   final DateTime date;
   final FieldGuideWeek week;
@@ -81,6 +94,15 @@ class _GuideContent extends ConsumerWidget {
     final householdAsync = ref.watch(guideHouseholdProvider);
     final progressAsync = ref.watch(guideDevotionalProgressProvider(date));
     final likedItems = ref.watch(guideLikedItemsProvider);
+    final household = householdAsync.value ?? const [];
+    // selectedKey defaults to the placeholder 'you' (see
+    // GuideSelectedPerson), which won't match a real household member's
+    // id — same reconciliation Challenge/Today do, so Sword/Spade/Mark
+    // Complete don't try to write an invalid member id.
+    final activeKey =
+        household.isEmpty || household.any((m) => m.memberId == selectedKey)
+        ? selectedKey
+        : household.first.memberId;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,13 +115,15 @@ class _GuideContent extends ConsumerWidget {
                   PersonTabItem(
                     key: member.memberId,
                     label: member.label,
-                    status: progressByPerson[member.memberId]?.isCompleted == true
+                    status:
+                        progressByPerson[member.memberId]?.isCompleted == true
                         ? PersonTabStatus.done
                         : PersonTabStatus.none,
                   ),
               ],
-              activeKey: selectedKey,
-              onChanged: (key) => ref.read(guideSelectedPersonProvider.notifier).select(key),
+              activeKey: activeKey,
+              onChanged: (key) =>
+                  ref.read(guideSelectedPersonProvider.notifier).select(key),
             ),
             loading: () => const SizedBox.shrink(),
             error: (error, stackTrace) => const SizedBox.shrink(),
@@ -111,8 +135,8 @@ class _GuideContent extends ConsumerWidget {
         progressAsync.when(
           data: (progressByPerson) => _DailyCards(
             devotional: devotional,
-            member: progressByPerson[selectedKey],
-            personKey: selectedKey,
+            member: progressByPerson[activeKey],
+            personKey: activeKey,
             date: date,
             virtue: week.virtue,
             likedItems: likedItems,
@@ -160,14 +184,41 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
   void didUpdateWidget(covariant _DailyCards oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.personKey != widget.personKey) {
+      // The field never lost focus (switching person tabs doesn't blur it)
+      // — flush any unsaved edit for the outgoing person before swapping
+      // the controller's text out from under them, so it isn't silently
+      // discarded.
+      _flushSpadeIfDirty(
+        personKey: oldWidget.personKey,
+        savedSpade: oldWidget.member?.spade,
+      );
       _spadeController.text = widget.member?.spade ?? '';
     }
   }
 
   @override
   void dispose() {
+    // Same reasoning as didUpdateWidget above — leaving the screen entirely
+    // (e.g. switching bottom-nav tabs) doesn't necessarily blur the field
+    // either.
+    _flushSpadeIfDirty(
+      personKey: widget.personKey,
+      savedSpade: widget.member?.spade,
+    );
     _spadeController.dispose();
     super.dispose();
+  }
+
+  void _flushSpadeIfDirty({
+    required String personKey,
+    required String? savedSpade,
+  }) {
+    final currentText = _spadeController.text;
+    if (currentText != (savedSpade ?? '')) {
+      ref
+          .read(guideDevotionalProgressProvider(widget.date).notifier)
+          .setSpade(personKey, currentText);
+    }
   }
 
   @override
@@ -176,33 +227,50 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
     final member = widget.member;
     final personKey = widget.personKey;
     final isCompleted = member?.isCompleted == true;
-    final notifier = ref.read(guideDevotionalProgressProvider(widget.date).notifier);
+    final notifier = ref.read(
+      guideDevotionalProgressProvider(widget.date).notifier,
+    );
     final likedNotifier = ref.read(guideLikedItemsProvider.notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         StreakBannerRow(personKey: personKey, isCompletedToday: isCompleted),
-        const SizedBox(height: 16),
         ContentCard(
           eyebrow: 'Identity',
-          onLike: () => likedNotifier.toggle(personKey, 'identity-${devotional.id}'),
-          liked: _isLiked(widget.likedItems, personKey, 'identity-${devotional.id}'),
-          child: Text(devotional.identityReading, style: FraternusTypography.body(color: FraternusColors.ink)),
+          onLike: () =>
+              likedNotifier.toggle(personKey, 'identity-${devotional.id}'),
+          liked: _isLiked(
+            widget.likedItems,
+            personKey,
+            'identity-${devotional.id}',
+          ),
+          child: Text(
+            devotional.identityReading,
+            style: FraternusTypography.body(color: FraternusColors.ink),
+          ),
         ),
         ContentCard(
           eyebrow: 'Wisdom for the Day',
-          onLike: () => likedNotifier.toggle(personKey, 'wisdom-${devotional.id}'),
-          liked: _isLiked(widget.likedItems, personKey, 'wisdom-${devotional.id}'),
+          onLike: () =>
+              likedNotifier.toggle(personKey, 'wisdom-${devotional.id}'),
+          liked: _isLiked(
+            widget.likedItems,
+            personKey,
+            'wisdom-${devotional.id}',
+          ),
           subtitle: devotional.wisdomQuote,
           child: Text(
             '— ${devotional.wisdomAuthor}',
-            style: FraternusTypography.body(color: FraternusColors.accentPrimary).copyWith(fontSize: 13),
+            style: FraternusTypography.body(
+              color: FraternusColors.accentPrimary,
+            ).copyWith(fontSize: 13),
           ),
         ),
         ContentCard(
           eyebrow: 'My Sword',
-          subtitle: 'Where will the battle find me today? Choose which one will be harder for you',
+          subtitle:
+              'Where will the battle find me today? Choose which one will be harder for you',
           child: SwordOptionList(
             options: devotional.swordOptions,
             selected: member?.sword,
@@ -215,7 +283,7 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
           child: JournalTextarea(
             controller: _spadeController,
             placeholder: 'Write your answer...',
-            onChanged: (text) => notifier.setSpade(personKey, text),
+            onFocusLost: (text) => notifier.setSpade(personKey, text),
           ),
         ),
         ContentCard(
@@ -225,12 +293,16 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
             children: [
               Text(
                 devotional.closingPrayer,
-                style: FraternusTypography.body(color: FraternusColors.ink).copyWith(fontStyle: FontStyle.italic),
+                style: FraternusTypography.body(
+                  color: FraternusColors.ink,
+                ).copyWith(fontStyle: FontStyle.italic),
               ),
               const SizedBox(height: 4),
               Text(
                 '— ${devotional.closingPrayerAuthor}',
-                style: FraternusTypography.body(color: FraternusColors.accentPrimary).copyWith(fontSize: 13),
+                style: FraternusTypography.body(
+                  color: FraternusColors.accentPrimary,
+                ).copyWith(fontSize: 13),
               ),
             ],
           ),
@@ -257,9 +329,15 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
 
 /// Base streak (excludes today) + live +1 the moment today's row is
 /// completed — kept as its own small ConsumerWidget so only the streak
-/// number rebuilds off the (separate) base-streak provider.
+/// number rebuilds off the (separate) base-streak provider. Hidden entirely
+/// (no banner, no reserved space) unless the resulting streak is at least 1
+/// — a "0 Day Streak" banner isn't useful to show.
 class StreakBannerRow extends ConsumerWidget {
-  const StreakBannerRow({super.key, required this.personKey, required this.isCompletedToday});
+  const StreakBannerRow({
+    super.key,
+    required this.personKey,
+    required this.isCompletedToday,
+  });
 
   final String personKey;
   final bool isCompletedToday;
@@ -268,10 +346,17 @@ class StreakBannerRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final baseStreakAsync = ref.watch(guideBaseStreakProvider(personKey));
     return baseStreakAsync.when(
-      data: (baseStreak) => SizedBox(
-        width: double.infinity,
-        child: StreakBanner(count: baseStreak + (isCompletedToday ? 1 : 0)),
-      ),
+      data: (baseStreak) {
+        final streak = baseStreak + (isCompletedToday ? 1 : 0);
+        if (streak <= 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: StreakBanner(count: streak),
+          ),
+        );
+      },
       loading: () => const SizedBox.shrink(),
       error: (error, stackTrace) => const SizedBox.shrink(),
     );

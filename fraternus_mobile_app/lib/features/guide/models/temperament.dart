@@ -14,7 +14,10 @@ const temperamentDisplayNames = {
 /// no such entity exists in the Field Guide schema. `null` (surfaced via a
 /// nullable provider) means "hasn't taken the quiz".
 class TemperamentResult {
-  const TemperamentResult({required this.primaryKey, required this.secondaryKey});
+  const TemperamentResult({
+    required this.primaryKey,
+    required this.secondaryKey,
+  });
 
   final String primaryKey;
   final String secondaryKey;
@@ -59,7 +62,12 @@ const temperamentProfiles = {
     description:
         'The Sanguine is warm, expressive, and energized by people. He brings life to a room '
         'and connects easily, but can struggle to finish what he starts.',
-    strengths: ['Natural charisma', 'Quick to connect with others', 'Optimistic under pressure', 'Generous with encouragement'],
+    strengths: [
+      'Natural charisma',
+      'Quick to connect with others',
+      'Optimistic under pressure',
+      'Generous with encouragement',
+    ],
     growthAreas: [
       'Difficulty with follow-through',
       'Distractibility',
@@ -77,13 +85,23 @@ const temperamentProfiles = {
       'Loyalty and follow-through',
       "Sensitivity to others' needs",
     ],
-    growthAreas: ['Perfectionism', 'Withdrawing under stress', 'Dwelling on past mistakes', 'Slow to trust'],
+    growthAreas: [
+      'Perfectionism',
+      'Withdrawing under stress',
+      'Dwelling on past mistakes',
+      'Slow to trust',
+    ],
   ),
   'phlegmatic': TemperamentProfile(
     description:
         'The Phlegmatic is steady, patient, and easygoing. He brings calm to chaos and rarely '
         'reacts rashly, but can drift toward passivity.',
-    strengths: ['Even temper under pressure', 'Natural peacemaker', 'Reliable and consistent', 'Good listener'],
+    strengths: [
+      'Even temper under pressure',
+      'Natural peacemaker',
+      'Reliable and consistent',
+      'Good listener',
+    ],
     growthAreas: [
       'Avoiding necessary conflict',
       'Passivity in the face of challenge',

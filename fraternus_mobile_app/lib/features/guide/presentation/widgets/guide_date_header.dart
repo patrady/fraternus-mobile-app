@@ -13,7 +13,12 @@ final _dateFormat = DateFormat('MMMM d');
 /// way back to a valid date) can still render on dates with no reading —
 /// see GuideScreen's no-reading fallback.
 class GuideDateHeader extends StatelessWidget {
-  const GuideDateHeader({super.key, required this.date, this.virtue, this.onCalendarTap});
+  const GuideDateHeader({
+    super.key,
+    required this.date,
+    this.virtue,
+    this.onCalendarTap,
+  });
 
   final DateTime date;
   final String? virtue;
@@ -29,7 +34,10 @@ class GuideDateHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Heading(_dateFormat.format(date).toUpperCase(), level: HeadingLevel.h2),
+              Heading(
+                _dateFormat.format(date).toUpperCase(),
+                level: HeadingLevel.h2,
+              ),
               if (virtue != null) ...[
                 const SizedBox(height: 4),
                 Heading(virtue!.toUpperCase(), level: HeadingLevel.h4),

@@ -1,7 +1,10 @@
 /// One selectable answer on a [TemperamentQuizQuestion] — picking it adds
 /// one point toward [temperamentKey] when the quiz is scored.
 class TemperamentQuizOption {
-  const TemperamentQuizOption({required this.text, required this.temperamentKey});
+  const TemperamentQuizOption({
+    required this.text,
+    required this.temperamentKey,
+  });
 
   final String text;
   final String temperamentKey;

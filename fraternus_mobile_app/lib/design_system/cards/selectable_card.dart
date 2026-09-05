@@ -44,7 +44,9 @@ class SelectableCard extends StatelessWidget {
                   : BoxDecoration(
                       color: FraternusColors.white,
                       border: Border.all(
-                        color: selected ? FraternusColors.accentPrimary : FraternusColors.borderSubtle,
+                        color: selected
+                            ? FraternusColors.accentPrimary
+                            : FraternusColors.borderSubtle,
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(FraternusRadii.lg),
@@ -57,13 +59,17 @@ class SelectableCard extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: selected ? FraternusColors.accentPrimary : FraternusColors.surfaceCardDim,
+                      color: selected
+                          ? FraternusColors.accentPrimary
+                          : FraternusColors.surfaceCardDim,
                     ),
                     alignment: Alignment.center,
                     child: FraternusIcon(
                       name: icon,
                       size: 22,
-                      tone: selected ? FraternusIconTone.white : FraternusIconTone.ink,
+                      tone: selected
+                          ? FraternusIconTone.white
+                          : FraternusIconTone.ink,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -73,15 +79,16 @@ class SelectableCard extends StatelessWidget {
                       children: [
                         Text(
                           title.toUpperCase(),
-                          style: FraternusTypography.h4(color: FraternusColors.forestGreen).copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
+                          style: FraternusTypography.h4(
+                            color: FraternusColors.forestGreen,
+                          ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           description,
-                          style: FraternusTypography.small(color: FraternusColors.textOnLightMuted),
+                          style: FraternusTypography.small(
+                            color: FraternusColors.textOnLightMuted,
+                          ),
                         ),
                       ],
                     ),

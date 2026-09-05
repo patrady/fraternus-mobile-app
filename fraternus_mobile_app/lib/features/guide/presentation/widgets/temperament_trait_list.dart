@@ -4,7 +4,12 @@ import '../../../../design_system/design_system.dart';
 
 /// A "Strengths"/"Growth Areas" bullet list — one icon+text row per trait.
 class TemperamentTraitList extends StatelessWidget {
-  const TemperamentTraitList({super.key, required this.items, required this.icon, required this.tone});
+  const TemperamentTraitList({
+    super.key,
+    required this.items,
+    required this.icon,
+    required this.tone,
+  });
 
   final List<String> items;
   final String icon;
@@ -24,7 +29,10 @@ class TemperamentTraitList extends StatelessWidget {
                 FraternusIcon(name: icon, size: 18, tone: tone),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(items[i], style: FraternusTypography.body(color: FraternusColors.ink)),
+                  child: Text(
+                    items[i],
+                    style: FraternusTypography.body(color: FraternusColors.ink),
+                  ),
                 ),
               ],
             ),

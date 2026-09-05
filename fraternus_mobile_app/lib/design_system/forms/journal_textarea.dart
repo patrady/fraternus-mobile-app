@@ -7,19 +7,51 @@ import '../tokens/fraternus_typography.dart';
 /// Freeform multi-line entry — the "My Spade" daily reflection field. Not
 /// yet a Design System component; should eventually formalize into a DS
 /// `Textarea`. Ports components-source.jsx `JournalTextarea`.
-class JournalTextarea extends StatelessWidget {
+class JournalTextarea extends StatefulWidget {
   const JournalTextarea({
     super.key,
     this.controller,
     this.onChanged,
+    this.onFocusLost,
     this.placeholder,
     this.rows = 4,
   });
 
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+
+  /// Fires with the field's current text the moment it loses focus (the
+  /// user taps away) — the one point a caller should actually persist a
+  /// write, rather than on every keystroke via [onChanged].
+  final ValueChanged<String>? onFocusLost;
   final String? placeholder;
   final int rows;
+
+  @override
+  State<JournalTextarea> createState() => _JournalTextareaState();
+}
+
+class _JournalTextareaState extends State<JournalTextarea> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode()..addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus) {
+      widget.onFocusLost?.call(widget.controller?.text ?? '');
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +64,14 @@ class JournalTextarea extends StatelessWidget {
         borderRadius: BorderRadius.circular(FraternusRadii.sm),
       ),
       child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        minLines: rows,
-        maxLines: rows,
+        controller: widget.controller,
+        focusNode: _focusNode,
+        onChanged: widget.onChanged,
+        minLines: widget.rows,
+        maxLines: widget.rows,
         style: FraternusTypography.body().copyWith(fontSize: 15),
         decoration: InputDecoration(
-          hintText: placeholder,
+          hintText: widget.placeholder,
           hintStyle: FraternusTypography.body(
             color: FraternusColors.textOnLightMuted,
           ).copyWith(fontSize: 15),

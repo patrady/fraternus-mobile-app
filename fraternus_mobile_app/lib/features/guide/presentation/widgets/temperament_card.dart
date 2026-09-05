@@ -46,27 +46,38 @@ class TemperamentCard extends StatelessWidget {
                           children: [
                             Text(
                               name.toUpperCase(),
-                              style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+                              style: FraternusTypography.eyebrow(
+                                color: FraternusColors.accentPrimary,
+                              ),
                             ),
-                            const FraternusIcon(name: 'chevron-right', size: 16),
+                            const FraternusIcon(
+                              name: 'chevron-right',
+                              size: 16,
+                            ),
                           ],
                         ),
                       ),
                       if (tagLabel != null)
                         Tag(
                           label: tagLabel!,
-                          color: tagLabel == 'Primary' ? TagColor.primary : TagColor.secondary,
+                          color: tagLabel == 'Primary'
+                              ? TagColor.primary
+                              : TagColor.secondary,
                           size: TagSize.small,
                         ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Text(application, style: FraternusTypography.body(color: FraternusColors.ink)),
+                  Text(
+                    application,
+                    style: FraternusTypography.body(color: FraternusColors.ink),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Common vices: $vices',
-                    style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
-                        .copyWith(fontSize: 13, fontStyle: FontStyle.italic),
+                    style: FraternusTypography.body(
+                      color: FraternusColors.textOnLightMuted,
+                    ).copyWith(fontSize: 13, fontStyle: FontStyle.italic),
                   ),
                 ],
               ),

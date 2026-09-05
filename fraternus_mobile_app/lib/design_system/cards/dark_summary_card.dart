@@ -12,7 +12,12 @@ import '../tokens/fraternus_typography.dart';
 /// "Humility" on the Today screen). Distinct from [DarkFeatureCard], which
 /// is a centered icon/eyebrow/value/body/CTA column, not a tappable link row.
 class DarkSummaryCard extends StatelessWidget {
-  const DarkSummaryCard({super.key, required this.eyebrow, required this.title, this.onPressed});
+  const DarkSummaryCard({
+    super.key,
+    required this.eyebrow,
+    required this.title,
+    this.onPressed,
+  });
 
   final String eyebrow;
   final String title;
@@ -42,18 +47,30 @@ class DarkSummaryCard extends StatelessWidget {
                     children: [
                       Text(
                         eyebrow.toUpperCase(),
-                        style: FraternusTypography.eyebrow(color: FraternusColors.textOnDarkMuted),
+                        style: FraternusTypography.eyebrow(
+                          color: FraternusColors.textOnDarkMuted,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         title.toUpperCase(),
-                        style: FraternusTypography.button(fontSize: 22, color: FraternusColors.white)
-                            .copyWith(fontWeight: FontWeight.w700, letterSpacing: 0),
+                        style:
+                            FraternusTypography.button(
+                              fontSize: 22,
+                              color: FraternusColors.white,
+                            ).copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
                       ),
                     ],
                   ),
                 ),
-                const FraternusIcon(name: 'chevron-right', size: 20, tone: FraternusIconTone.white),
+                const FraternusIcon(
+                  name: 'chevron-right',
+                  size: 20,
+                  tone: FraternusIconTone.white,
+                ),
               ],
             ),
           ),

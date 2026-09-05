@@ -9,7 +9,11 @@ import '../tokens/fraternus_typography.dart';
 /// reading content on the Guide tab. Ports components-source.jsx
 /// `StreakBanner`.
 class StreakBanner extends StatelessWidget {
-  const StreakBanner({super.key, required this.count, this.label = 'Day Streak'});
+  const StreakBanner({
+    super.key,
+    required this.count,
+    this.label = 'Day Streak',
+  });
 
   final int count;
   final String label;
@@ -26,7 +30,11 @@ class StreakBanner extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const FraternusIcon(name: 'flame', size: 16, tone: FraternusIconTone.terracotta),
+          const FraternusIcon(
+            name: 'flame',
+            size: 16,
+            tone: FraternusIconTone.terracotta,
+          ),
           const SizedBox(width: 8),
           Text(
             '$count ${label.toUpperCase()}',

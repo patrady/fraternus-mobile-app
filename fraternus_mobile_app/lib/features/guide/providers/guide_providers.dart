@@ -84,12 +84,17 @@ class GuideSelectedPerson extends _$GuideSelectedPerson {
   void select(String key) => state = key;
 }
 
-/// Per-person completion rows for one date, read straight through from
-/// [GuideRepository] — no local edit buffer. Every mutation method here
-/// calls the repository (a real write against Supabase, or a mutation of
-/// StaticGuideRepository's in-memory map in tests) and then invalidates
-/// this provider so the UI reflects whatever the repository now reports,
-/// rather than optimistically guessing at the new state itself.
+/// Per-person completion rows for one date. Seeded once from
+/// [GuideRepository], then every mutation applies an optimistic update to
+/// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+/// so the UI reflects the change on the same frame, before the network
+/// write resolves. Invalidating the upstream week provider would force it
+/// (and everything watching it, including this provider's own `build`)
+/// through a fresh fetch, which is what caused the old implementation's
+/// screen flash/scroll-reset: a real network round trip standing between
+/// the tap and any visible feedback, during which `.when()`'s `loading`
+/// branches collapse the content. On write failure, the optimistic change
+/// is rolled back.
 @riverpod
 class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   @override
@@ -107,37 +112,37 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   Future<void> setSword(String personKey, String swordText) async {
     final devotionalId = await _dailyDevotionalId();
     if (devotionalId == null) return;
-    await ref
-        .read(guideRepositoryProvider)
-        .upsertDevotionalMember(
-          dailyDevotionalId: devotionalId,
-          memberId: personKey,
-          sword: swordText,
-        );
-    // Invalidating guideWeekForDateProvider — not just this notifier — is
-    // what actually surfaces the write: build() derives its data from that
-    // provider's cached result, which a bare invalidateSelf() wouldn't
-    // touch (nothing about `date` or the household changed, so it'd stay
-    // cached and this notifier would just re-read the same stale value).
-    ref.invalidate(guideWeekForDateProvider(date));
+    await _optimisticUpsert(
+      personKey: personKey,
+      devotionalId: devotionalId,
+      apply: (member) => member.copyWith(sword: swordText),
+      write: () => ref
+          .read(guideRepositoryProvider)
+          .upsertDevotionalMember(
+            dailyDevotionalId: devotionalId,
+            memberId: personKey,
+            sword: swordText,
+          ),
+    );
   }
 
+  /// Called with the field's current text when the user leaves it (not on
+  /// every keystroke) — see JournalTextarea's `onFocusLost`.
   Future<void> setSpade(String personKey, String spadeText) async {
     final devotionalId = await _dailyDevotionalId();
     if (devotionalId == null) return;
-    await ref
-        .read(guideRepositoryProvider)
-        .upsertDevotionalMember(
-          dailyDevotionalId: devotionalId,
-          memberId: personKey,
-          spade: spadeText,
-        );
-    // Invalidating guideWeekForDateProvider — not just this notifier — is
-    // what actually surfaces the write: build() derives its data from that
-    // provider's cached result, which a bare invalidateSelf() wouldn't
-    // touch (nothing about `date` or the household changed, so it'd stay
-    // cached and this notifier would just re-read the same stale value).
-    ref.invalidate(guideWeekForDateProvider(date));
+    await _optimisticUpsert(
+      personKey: personKey,
+      devotionalId: devotionalId,
+      apply: (member) => member.copyWith(spade: spadeText),
+      write: () => ref
+          .read(guideRepositoryProvider)
+          .upsertDevotionalMember(
+            dailyDevotionalId: devotionalId,
+            memberId: personKey,
+            spade: spadeText,
+          ),
+    );
   }
 
   /// Marks complete (now) if incomplete, or clears back to incomplete if
@@ -146,21 +151,70 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   Future<void> toggleComplete(String personKey) async {
     final devotionalId = await _dailyDevotionalId();
     if (devotionalId == null) return;
-    final current = state.value ?? const {};
-    final wasCompleted = current[personKey]?.isCompleted ?? false;
-    await ref
-        .read(guideRepositoryProvider)
-        .upsertDevotionalMember(
-          dailyDevotionalId: devotionalId,
-          memberId: personKey,
-          completed: !wasCompleted,
-        );
-    // Invalidating guideWeekForDateProvider — not just this notifier — is
-    // what actually surfaces the write: build() derives its data from that
-    // provider's cached result, which a bare invalidateSelf() wouldn't
-    // touch (nothing about `date` or the household changed, so it'd stay
-    // cached and this notifier would just re-read the same stale value).
-    ref.invalidate(guideWeekForDateProvider(date));
+    final wasCompleted =
+        (state.value ?? const {})[personKey]?.isCompleted ?? false;
+    await _optimisticUpsert(
+      personKey: personKey,
+      devotionalId: devotionalId,
+      apply: (member) => member.copyWith(
+        completedDate: wasCompleted ? null : DateTime.now(),
+        clearCompleted: wasCompleted,
+      ),
+      write: () => ref
+          .read(guideRepositoryProvider)
+          .upsertDevotionalMember(
+            dailyDevotionalId: devotionalId,
+            memberId: personKey,
+            completed: !wasCompleted,
+          ),
+    );
+  }
+
+  /// Applies [apply] to [personKey]'s row immediately (creating a
+  /// placeholder row first if none exists yet), then runs [write] in the
+  /// background and reconciles [state] with its authoritative result —
+  /// or rolls back to the pre-optimistic value if [write] throws.
+  Future<void> _optimisticUpsert({
+    required String personKey,
+    required String devotionalId,
+    required FieldGuideDailyDevotionalMember Function(
+      FieldGuideDailyDevotionalMember current,
+    )
+    apply,
+    required Future<FieldGuideDailyDevotionalMember> Function() write,
+  }) async {
+    final previous =
+        state.value ?? const <String, FieldGuideDailyDevotionalMember>{};
+    final baseline =
+        previous[personKey] ?? _placeholderMember(devotionalId, personKey);
+    state = AsyncData({...previous, personKey: apply(baseline)});
+    try {
+      final saved = await write();
+      state = AsyncData({...(state.value ?? previous), personKey: saved});
+    } catch (_) {
+      final rolledBack = {...(state.value ?? previous)};
+      if (previous.containsKey(personKey)) {
+        rolledBack[personKey] = previous[personKey]!;
+      } else {
+        rolledBack.remove(personKey);
+      }
+      state = AsyncData(rolledBack);
+      rethrow;
+    }
+  }
+
+  FieldGuideDailyDevotionalMember _placeholderMember(
+    String devotionalId,
+    String personKey,
+  ) {
+    final now = DateTime.now();
+    return FieldGuideDailyDevotionalMember(
+      id: 'optimistic-$devotionalId-$personKey',
+      dailyDevotionalId: devotionalId,
+      memberId: personKey,
+      createdAt: now,
+      lastModifiedAt: now,
+    );
   }
 
   Future<String?> _dailyDevotionalId() async {

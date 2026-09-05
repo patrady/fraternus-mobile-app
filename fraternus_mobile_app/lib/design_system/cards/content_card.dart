@@ -42,7 +42,7 @@ class ContentCard extends StatelessWidget {
         return Opacity(
           opacity: isPressed ? 0.75 : 1,
           child: FraternusIcon(
-            name: 'heart',
+            name: liked ? 'heart-filled' : 'heart',
             size: 19,
             tone: liked ? FraternusIconTone.error : FraternusIconTone.ink,
           ),
@@ -71,11 +71,15 @@ class ContentCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     subtitle!,
-                    style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
-                        .copyWith(fontSize: 15, fontStyle: FontStyle.italic),
+                    style: FraternusTypography.body(
+                      color: FraternusColors.textOnLightMuted,
+                    ).copyWith(fontSize: 15, fontStyle: FontStyle.italic),
                   ),
                 ),
-                if (onLike != null) ...[const SizedBox(width: 12), _likeButton(context)],
+                if (onLike != null) ...[
+                  const SizedBox(width: 12),
+                  _likeButton(context),
+                ],
               ],
             )
           else ...[
@@ -90,7 +94,9 @@ class ContentCard extends StatelessWidget {
                       if (eyebrow != null)
                         Text(
                           eyebrow!.toUpperCase(),
-                          style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+                          style: FraternusTypography.eyebrow(
+                            color: FraternusColors.accentPrimary,
+                          ),
                         ),
                       if (title != null)
                         Text(
@@ -111,8 +117,9 @@ class ContentCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   subtitle!,
-                  style: FraternusTypography.body(color: FraternusColors.textOnLightMuted)
-                      .copyWith(fontSize: 13, fontStyle: FontStyle.italic),
+                  style: FraternusTypography.body(
+                    color: FraternusColors.textOnLightMuted,
+                  ).copyWith(fontSize: 13, fontStyle: FontStyle.italic),
                 ),
               ),
           ],

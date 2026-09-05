@@ -7,7 +7,11 @@ import '../tokens/fraternus_spacing.dart';
 /// [StepProgress]'s discrete segments. Ports components-source.jsx
 /// `ContinuousProgressBar`.
 class ContinuousProgressBar extends StatelessWidget {
-  const ContinuousProgressBar({super.key, required this.index, required this.total});
+  const ContinuousProgressBar({
+    super.key,
+    required this.index,
+    required this.total,
+  });
 
   final int index;
   final int total;

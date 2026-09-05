@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-typedef PressableWidgetBuilder = Widget Function(BuildContext context, bool isPressed);
+typedef PressableWidgetBuilder =
+    Widget Function(BuildContext context, bool isPressed);
 
 /// Shared tap-state tracker for controls that need a simple pressed/unpressed
 /// visual (color darken or opacity dim) instead of Material's ripple —
@@ -46,7 +47,9 @@ class _PressableBuilderState extends State<PressableBuilder> {
           onTapUp: enabled ? (_) => _setPressed(false) : null,
           onTapCancel: enabled ? () => _setPressed(false) : null,
           behavior: HitTestBehavior.opaque,
-          child: ExcludeSemantics(child: widget.builder(context, _pressed && enabled)),
+          child: ExcludeSemantics(
+            child: widget.builder(context, _pressed && enabled),
+          ),
         ),
       ),
     );

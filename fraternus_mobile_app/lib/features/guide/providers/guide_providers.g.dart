@@ -333,34 +333,49 @@ abstract class _$GuideSelectedPerson extends $Notifier<String> {
   }
 }
 
-/// Per-person completion rows for one date, read straight through from
-/// [GuideRepository] — no local edit buffer. Every mutation method here
-/// calls the repository (a real write against Supabase, or a mutation of
-/// StaticGuideRepository's in-memory map in tests) and then invalidates
-/// this provider so the UI reflects whatever the repository now reports,
-/// rather than optimistically guessing at the new state itself.
+/// Per-person completion rows for one date. Seeded once from
+/// [GuideRepository], then every mutation applies an optimistic update to
+/// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+/// so the UI reflects the change on the same frame, before the network
+/// write resolves. Invalidating the upstream week provider would force it
+/// (and everything watching it, including this provider's own `build`)
+/// through a fresh fetch, which is what caused the old implementation's
+/// screen flash/scroll-reset: a real network round trip standing between
+/// the tap and any visible feedback, during which `.when()`'s `loading`
+/// branches collapse the content. On write failure, the optimistic change
+/// is rolled back.
 
 @ProviderFor(GuideDevotionalProgress)
 const guideDevotionalProgressProvider = GuideDevotionalProgressFamily._();
 
-/// Per-person completion rows for one date, read straight through from
-/// [GuideRepository] — no local edit buffer. Every mutation method here
-/// calls the repository (a real write against Supabase, or a mutation of
-/// StaticGuideRepository's in-memory map in tests) and then invalidates
-/// this provider so the UI reflects whatever the repository now reports,
-/// rather than optimistically guessing at the new state itself.
+/// Per-person completion rows for one date. Seeded once from
+/// [GuideRepository], then every mutation applies an optimistic update to
+/// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+/// so the UI reflects the change on the same frame, before the network
+/// write resolves. Invalidating the upstream week provider would force it
+/// (and everything watching it, including this provider's own `build`)
+/// through a fresh fetch, which is what caused the old implementation's
+/// screen flash/scroll-reset: a real network round trip standing between
+/// the tap and any visible feedback, during which `.when()`'s `loading`
+/// branches collapse the content. On write failure, the optimistic change
+/// is rolled back.
 final class GuideDevotionalProgressProvider
     extends
         $AsyncNotifierProvider<
           GuideDevotionalProgress,
           Map<String, FieldGuideDailyDevotionalMember>
         > {
-  /// Per-person completion rows for one date, read straight through from
-  /// [GuideRepository] — no local edit buffer. Every mutation method here
-  /// calls the repository (a real write against Supabase, or a mutation of
-  /// StaticGuideRepository's in-memory map in tests) and then invalidates
-  /// this provider so the UI reflects whatever the repository now reports,
-  /// rather than optimistically guessing at the new state itself.
+  /// Per-person completion rows for one date. Seeded once from
+  /// [GuideRepository], then every mutation applies an optimistic update to
+  /// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+  /// so the UI reflects the change on the same frame, before the network
+  /// write resolves. Invalidating the upstream week provider would force it
+  /// (and everything watching it, including this provider's own `build`)
+  /// through a fresh fetch, which is what caused the old implementation's
+  /// screen flash/scroll-reset: a real network round trip standing between
+  /// the tap and any visible feedback, during which `.when()`'s `loading`
+  /// branches collapse the content. On write failure, the optimistic change
+  /// is rolled back.
   const GuideDevotionalProgressProvider._({
     required GuideDevotionalProgressFamily super.from,
     required DateTime super.argument,
@@ -399,14 +414,19 @@ final class GuideDevotionalProgressProvider
 }
 
 String _$guideDevotionalProgressHash() =>
-    r'7beb0a3e33dede06800e59d67af0cf1aedf62cda';
+    r'54519101024de50c69040be18ba81b5fc1cc4237';
 
-/// Per-person completion rows for one date, read straight through from
-/// [GuideRepository] — no local edit buffer. Every mutation method here
-/// calls the repository (a real write against Supabase, or a mutation of
-/// StaticGuideRepository's in-memory map in tests) and then invalidates
-/// this provider so the UI reflects whatever the repository now reports,
-/// rather than optimistically guessing at the new state itself.
+/// Per-person completion rows for one date. Seeded once from
+/// [GuideRepository], then every mutation applies an optimistic update to
+/// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+/// so the UI reflects the change on the same frame, before the network
+/// write resolves. Invalidating the upstream week provider would force it
+/// (and everything watching it, including this provider's own `build`)
+/// through a fresh fetch, which is what caused the old implementation's
+/// screen flash/scroll-reset: a real network round trip standing between
+/// the tap and any visible feedback, during which `.when()`'s `loading`
+/// branches collapse the content. On write failure, the optimistic change
+/// is rolled back.
 
 final class GuideDevotionalProgressFamily extends $Family
     with
@@ -426,12 +446,17 @@ final class GuideDevotionalProgressFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Per-person completion rows for one date, read straight through from
-  /// [GuideRepository] — no local edit buffer. Every mutation method here
-  /// calls the repository (a real write against Supabase, or a mutation of
-  /// StaticGuideRepository's in-memory map in tests) and then invalidates
-  /// this provider so the UI reflects whatever the repository now reports,
-  /// rather than optimistically guessing at the new state itself.
+  /// Per-person completion rows for one date. Seeded once from
+  /// [GuideRepository], then every mutation applies an optimistic update to
+  /// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+  /// so the UI reflects the change on the same frame, before the network
+  /// write resolves. Invalidating the upstream week provider would force it
+  /// (and everything watching it, including this provider's own `build`)
+  /// through a fresh fetch, which is what caused the old implementation's
+  /// screen flash/scroll-reset: a real network round trip standing between
+  /// the tap and any visible feedback, during which `.when()`'s `loading`
+  /// branches collapse the content. On write failure, the optimistic change
+  /// is rolled back.
 
   GuideDevotionalProgressProvider call(DateTime date) =>
       GuideDevotionalProgressProvider._(argument: date, from: this);
@@ -440,12 +465,17 @@ final class GuideDevotionalProgressFamily extends $Family
   String toString() => r'guideDevotionalProgressProvider';
 }
 
-/// Per-person completion rows for one date, read straight through from
-/// [GuideRepository] — no local edit buffer. Every mutation method here
-/// calls the repository (a real write against Supabase, or a mutation of
-/// StaticGuideRepository's in-memory map in tests) and then invalidates
-/// this provider so the UI reflects whatever the repository now reports,
-/// rather than optimistically guessing at the new state itself.
+/// Per-person completion rows for one date. Seeded once from
+/// [GuideRepository], then every mutation applies an optimistic update to
+/// [state] directly — never `ref.invalidate(guideWeekForDateProvider)` —
+/// so the UI reflects the change on the same frame, before the network
+/// write resolves. Invalidating the upstream week provider would force it
+/// (and everything watching it, including this provider's own `build`)
+/// through a fresh fetch, which is what caused the old implementation's
+/// screen flash/scroll-reset: a real network round trip standing between
+/// the tap and any visible feedback, during which `.when()`'s `loading`
+/// branches collapse the content. On write failure, the optimistic change
+/// is rolled back.
 
 abstract class _$GuideDevotionalProgress
     extends $AsyncNotifier<Map<String, FieldGuideDailyDevotionalMember>> {

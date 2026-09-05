@@ -42,7 +42,9 @@ class RepDots extends StatelessWidget {
       height: 9,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: done ? FraternusColors.forestGreen : FraternusColors.borderSubtle,
+        color: done
+            ? FraternusColors.forestGreen
+            : FraternusColors.borderSubtle,
       ),
     );
   }
@@ -59,7 +61,9 @@ class RepDots extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: done ? FraternusColors.forestGreen : FraternusColors.white,
-              border: done ? null : Border.all(color: FraternusColors.borderSubtle),
+              border: done
+                  ? null
+                  : Border.all(color: FraternusColors.borderSubtle),
             ),
           ),
         );

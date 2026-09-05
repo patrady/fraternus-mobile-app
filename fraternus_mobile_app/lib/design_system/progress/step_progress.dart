@@ -21,7 +21,9 @@ class StepProgress extends StatelessWidget {
               margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
               height: 4,
               decoration: BoxDecoration(
-                color: i < step ? FraternusColors.accentPrimary : FraternusColors.borderSubtle,
+                color: i < step
+                    ? FraternusColors.accentPrimary
+                    : FraternusColors.borderSubtle,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

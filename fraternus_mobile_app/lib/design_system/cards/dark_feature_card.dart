@@ -45,7 +45,9 @@ class DarkFeatureCard extends StatelessWidget {
             Text(
               eyebrow!.toUpperCase(),
               textAlign: TextAlign.center,
-              style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+              style: FraternusTypography.eyebrow(
+                color: FraternusColors.accentPrimary,
+              ),
             ),
             const SizedBox(height: 6),
           ],
@@ -53,8 +55,10 @@ class DarkFeatureCard extends StatelessWidget {
             Text(
               value!.toUpperCase(),
               textAlign: TextAlign.center,
-              style: FraternusTypography.button(fontSize: 22, color: FraternusColors.white)
-                  .copyWith(fontWeight: FontWeight.w700, letterSpacing: 0),
+              style: FraternusTypography.button(
+                fontSize: 22,
+                color: FraternusColors.white,
+              ).copyWith(fontWeight: FontWeight.w700, letterSpacing: 0),
             ),
             const SizedBox(height: 18),
           ],
@@ -62,7 +66,9 @@ class DarkFeatureCard extends StatelessWidget {
             Text(
               body!,
               textAlign: TextAlign.center,
-              style: FraternusTypography.body(color: FraternusColors.textOnDarkMuted),
+              style: FraternusTypography.body(
+                color: FraternusColors.textOnDarkMuted,
+              ),
             ),
             const SizedBox(height: 16),
           ],
@@ -74,7 +80,10 @@ class DarkFeatureCard extends StatelessWidget {
                 return Opacity(
                   opacity: isPressed ? 0.75 : 1,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 11,
+                    ),
                     constraints: const BoxConstraints(minHeight: 44),
                     decoration: BoxDecoration(
                       border: Border.all(color: const Color(0x66FFFFFF)),
@@ -83,8 +92,10 @@ class DarkFeatureCard extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Text(
                       ctaLabel!.toUpperCase(),
-                      style: FraternusTypography.button(fontSize: 12, color: FraternusColors.white)
-                          .copyWith(letterSpacing: 12 * 0.03),
+                      style: FraternusTypography.button(
+                        fontSize: 12,
+                        color: FraternusColors.white,
+                      ).copyWith(letterSpacing: 12 * 0.03),
                     ),
                   ),
                 );

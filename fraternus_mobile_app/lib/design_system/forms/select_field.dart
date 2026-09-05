@@ -30,7 +30,9 @@ class SelectField extends StatelessWidget {
 
   Future<void> _openPicker(BuildContext context) async {
     final keys = options.keys.toList();
-    final initialIndex = value == null ? 0 : keys.indexOf(value!).clamp(0, keys.length - 1);
+    final initialIndex = value == null
+        ? 0
+        : keys.indexOf(value!).clamp(0, keys.length - 1);
     var selectedIndex = initialIndex;
 
     final picked = await showCupertinoModalPopup<String>(
@@ -40,14 +42,18 @@ class SelectField extends StatelessWidget {
           height: 260,
           decoration: const BoxDecoration(
             color: FraternusColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(FraternusRadii.lg)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(FraternusRadii.lg),
+            ),
           ),
           child: Column(
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: FraternusColors.borderSubtle)),
+                  border: Border(
+                    bottom: BorderSide(color: FraternusColors.borderSubtle),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -62,7 +68,8 @@ class SelectField extends StatelessWidget {
                       label: 'Done',
                       variant: ButtonVariant.underlined,
                       size: ButtonSize.small,
-                      onPressed: () => Navigator.of(context).pop(keys[selectedIndex]),
+                      onPressed: () =>
+                          Navigator.of(context).pop(keys[selectedIndex]),
                     ),
                   ],
                 ),
@@ -70,12 +77,19 @@ class SelectField extends StatelessWidget {
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 40,
-                  scrollController: FixedExtentScrollController(initialItem: selectedIndex),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: selectedIndex,
+                  ),
                   onSelectedItemChanged: (index) => selectedIndex = index,
                   children: [
                     for (final key in keys)
                       Center(
-                        child: Text(options[key]!, style: FraternusTypography.body().copyWith(fontSize: 17)),
+                        child: Text(
+                          options[key]!,
+                          style: FraternusTypography.body().copyWith(
+                            fontSize: 17,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -112,7 +126,9 @@ class SelectField extends StatelessWidget {
                   child: Text(
                     label ?? placeholder,
                     style: FraternusTypography.body(
-                      color: label == null ? FraternusColors.textOnLightMuted : FraternusColors.ink,
+                      color: label == null
+                          ? FraternusColors.textOnLightMuted
+                          : FraternusColors.ink,
                     ).copyWith(fontSize: 15),
                   ),
                 ),

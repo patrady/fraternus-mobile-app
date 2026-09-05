@@ -34,7 +34,9 @@ class FormTextField extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: readOnly ? FraternusColors.surfaceCardDim : FraternusColors.white,
+        color: readOnly
+            ? FraternusColors.surfaceCardDim
+            : FraternusColors.white,
         border: Border.all(color: FraternusColors.borderSubtle),
         borderRadius: BorderRadius.circular(FraternusRadii.sm),
       ),
@@ -45,9 +47,11 @@ class FormTextField extends StatelessWidget {
         obscureText: obscureText,
         readOnly: readOnly,
         enableInteractiveSelection: !readOnly,
-        style: FraternusTypography.body().copyWith(fontSize: 15).copyWith(
-          color: readOnly ? FraternusColors.textOnLightMuted : null,
-        ),
+        style: FraternusTypography.body()
+            .copyWith(fontSize: 15)
+            .copyWith(
+              color: readOnly ? FraternusColors.textOnLightMuted : null,
+            ),
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: FraternusTypography.body(

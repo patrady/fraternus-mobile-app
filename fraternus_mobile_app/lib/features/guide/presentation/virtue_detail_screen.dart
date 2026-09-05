@@ -34,7 +34,8 @@ class VirtueDetailScreen extends ConsumerWidget {
                   ? const BodyText('Nothing to show for this date yet.')
                   : _VirtueDetailContent(week: week),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading this virtue.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading this virtue.'),
             ),
           ),
         ],
@@ -53,7 +54,9 @@ class _VirtueDetailContent extends ConsumerWidget {
     final selectedKey = ref.watch(guideSelectedPersonProvider);
     final likedItems = ref.watch(guideLikedItemsProvider);
     final likedNotifier = ref.read(guideLikedItemsProvider.notifier);
-    final temperamentResult = ref.watch(guideTemperamentResultProvider(selectedKey));
+    final temperamentResult = ref.watch(
+      guideTemperamentResultProvider(selectedKey),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,20 +65,28 @@ class _VirtueDetailContent extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           'Vice: ${week.vice} | Extreme: ${week.extreme}',
-          style: FraternusTypography.body(color: FraternusColors.textOnLightMuted),
+          style: FraternusTypography.body(
+            color: FraternusColors.textOnLightMuted,
+          ),
         ),
         const SizedBox(height: 20),
         for (final quote in week.quotes)
           ContentCard(
             subtitle: quote.quote,
-            onLike: () => likedNotifier.toggle(selectedKey, 'quote-${quote.id}'),
+            onLike: () =>
+                likedNotifier.toggle(selectedKey, 'quote-${quote.id}'),
             liked: likedItems.contains('$selectedKey:quote-${quote.id}'),
             child: Text(
               '— ${quote.author}',
-              style: FraternusTypography.body(color: FraternusColors.accentPrimary).copyWith(fontSize: 13),
+              style: FraternusTypography.body(
+                color: FraternusColors.accentPrimary,
+              ).copyWith(fontSize: 13),
             ),
           ),
-        ContentCard(eyebrow: 'Reflection', child: MarkdownBody(data: week.reflection)),
+        ContentCard(
+          eyebrow: 'Reflection',
+          child: MarkdownBody(data: week.reflection),
+        ),
         const SizedBox(height: 8),
         const Heading('THE TEMPERAMENTS', level: HeadingLevel.h3),
         const SizedBox(height: 14),
@@ -85,7 +96,8 @@ class _VirtueDetailContent extends ConsumerWidget {
             child: Button(
               label: 'Find Your Temperament',
               fullWidth: true,
-              onPressed: () => context.push(RoutePaths.temperamentQuiz(selectedKey)),
+              onPressed: () =>
+                  context.push(RoutePaths.temperamentQuiz(selectedKey)),
             ),
           ),
         for (final key in temperamentOrder)

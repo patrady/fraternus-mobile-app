@@ -32,7 +32,10 @@ class TemperamentDetailScreen extends StatelessWidget {
                 Heading(name.toUpperCase(), level: HeadingLevel.h3),
                 const SizedBox(height: 16),
                 ContentCard(
-                  child: Text(profile.description, style: FraternusTypography.body(color: FraternusColors.ink)),
+                  child: Text(
+                    profile.description,
+                    style: FraternusTypography.body(color: FraternusColors.ink),
+                  ),
                 ),
                 ContentCard(
                   eyebrow: 'Strengths',

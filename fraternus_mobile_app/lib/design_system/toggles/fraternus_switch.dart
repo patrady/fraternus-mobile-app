@@ -9,7 +9,11 @@ import '../tokens/fraternus_colors.dart';
 /// building its own themed primitives instead (see [PressableBuilder] over
 /// `InkWell`).
 class FraternusSwitch extends StatelessWidget {
-  const FraternusSwitch({super.key, required this.value, required this.onChanged});
+  const FraternusSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -38,7 +42,10 @@ class FraternusSwitch extends StatelessWidget {
           child: Container(
             width: _thumbSize,
             height: _thumbSize,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: FraternusColors.white),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: FraternusColors.white,
+            ),
           ),
         ),
       ),

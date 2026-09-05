@@ -192,5 +192,8 @@ TemperamentResult scoreTemperamentQuiz(List<String> selectedTemperamentKeys) {
       final byCount = counts[b]!.compareTo(counts[a]!);
       return byCount != 0 ? byCount : a.compareTo(b);
     });
-  return TemperamentResult(primaryKey: rankedKeys[0], secondaryKey: rankedKeys[1]);
+  return TemperamentResult(
+    primaryKey: rankedKeys[0],
+    secondaryKey: rankedKeys[1],
+  );
 }

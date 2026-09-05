@@ -6,7 +6,11 @@ import '../tokens/fraternus_colors.dart';
 import '../tokens/fraternus_typography.dart';
 
 class BottomTabItem {
-  const BottomTabItem({required this.key, required this.label, required this.icon});
+  const BottomTabItem({
+    required this.key,
+    required this.label,
+    required this.icon,
+  });
 
   final String key;
   final String label;
@@ -45,14 +49,19 @@ class BottomTabBar extends StatelessWidget {
               semanticLabel: tab.label,
               builder: (context, isPressed) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 2,
+                    vertical: 4,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       FraternusIcon(
                         name: tab.icon,
                         size: 24,
-                        tone: active ? FraternusIconTone.terracotta : FraternusIconTone.white,
+                        tone: active
+                            ? FraternusIconTone.terracotta
+                            : FraternusIconTone.white,
                         opacity: active ? 1 : 0.62,
                       ),
                       const SizedBox(height: 5),
@@ -60,7 +69,9 @@ class BottomTabBar extends StatelessWidget {
                         tab.label.toUpperCase(),
                         style: FraternusTypography.button(
                           fontSize: 11,
-                          color: active ? FraternusColors.accentPrimary : const Color(0x9ECDDAD5),
+                          color: active
+                              ? FraternusColors.accentPrimary
+                              : const Color(0x9ECDDAD5),
                         ).copyWith(letterSpacing: 11 * 0.04),
                       ),
                     ],

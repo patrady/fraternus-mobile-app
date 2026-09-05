@@ -58,7 +58,11 @@ class Tag extends StatelessWidget {
   Widget build(BuildContext context) {
     final iconWidget = icon == null
         ? null
-        : Icon(FraternusIcons.resolve(icon!), size: _iconSize, color: FraternusColors.white);
+        : Icon(
+            FraternusIcons.resolve(icon!),
+            size: _iconSize,
+            color: FraternusColors.white,
+          );
 
     return Container(
       padding: _padding,
@@ -75,10 +79,14 @@ class Tag extends StatelessWidget {
           ],
           Text(
             label.toUpperCase(),
-            style: FraternusTypography.button(
-              fontSize: _fontSize,
-              color: FraternusColors.white,
-            ).copyWith(fontWeight: FontWeight.w700, letterSpacing: _fontSize * 0.04),
+            style:
+                FraternusTypography.button(
+                  fontSize: _fontSize,
+                  color: FraternusColors.white,
+                ).copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: _fontSize * 0.04,
+                ),
           ),
           if (iconWidget != null && iconPosition == TagIconPosition.right) ...[
             const SizedBox(width: 4),

@@ -70,9 +70,18 @@ class Button extends StatelessWidget {
   };
 
   EdgeInsets get _padding => switch (size) {
-    ButtonSize.small => const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-    ButtonSize.medium => const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-    ButtonSize.large => const EdgeInsets.symmetric(horizontal: 38, vertical: 22),
+    ButtonSize.small => const EdgeInsets.symmetric(
+      horizontal: 18,
+      vertical: 10,
+    ),
+    ButtonSize.medium => const EdgeInsets.symmetric(
+      horizontal: 26,
+      vertical: 14,
+    ),
+    ButtonSize.large => const EdgeInsets.symmetric(
+      horizontal: 38,
+      vertical: 22,
+    ),
   };
 
   Color get _fillColor => switch (color) {
@@ -82,7 +91,8 @@ class Button extends StatelessWidget {
     ButtonColor.success => FraternusColors.success,
   };
 
-  Color get _fillColorPressed => Color.lerp(_fillColor, const Color(0xFF000000), 0.16)!;
+  Color get _fillColorPressed =>
+      Color.lerp(_fillColor, const Color(0xFF000000), 0.16)!;
 
   Color get _textColor {
     if (variant == ButtonVariant.primary) return FraternusColors.white;
@@ -96,9 +106,15 @@ class Button extends StatelessWidget {
   }
 
   TextStyle get _textStyle {
-    final style = FraternusTypography.button(fontSize: _fontSize, color: _textColor);
+    final style = FraternusTypography.button(
+      fontSize: _fontSize,
+      color: _textColor,
+    );
     return variant == ButtonVariant.underlined
-        ? style.copyWith(decoration: TextDecoration.underline, decorationColor: _textColor)
+        ? style.copyWith(
+            decoration: TextDecoration.underline,
+            decorationColor: _textColor,
+          )
         : style;
   }
 
@@ -118,7 +134,11 @@ class Button extends StatelessWidget {
   Widget _buildContent(bool isPressed) {
     final iconWidget = icon == null
         ? null
-        : Icon(FraternusIcons.resolve(icon!), size: _iconSize, color: _textColor);
+        : Icon(
+            FraternusIcons.resolve(icon!),
+            size: _iconSize,
+            color: _textColor,
+          );
 
     final content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -139,7 +159,9 @@ class Button extends StatelessWidget {
     final Widget child = switch (variant) {
       ButtonVariant.primary => Container(
         padding: _padding,
-        constraints: const BoxConstraints(minHeight: FraternusSpacing.tapTargetMin),
+        constraints: const BoxConstraints(
+          minHeight: FraternusSpacing.tapTargetMin,
+        ),
         decoration: BoxDecoration(
           color: isPressed ? _fillColorPressed : _fillColor,
           borderRadius: BorderRadius.circular(FraternusRadii.sm),
@@ -151,11 +173,15 @@ class Button extends StatelessWidget {
         opacity: isPressed ? 0.75 : 1,
         child: Container(
           padding: _padding,
-          constraints: const BoxConstraints(minHeight: FraternusSpacing.tapTargetMin),
+          constraints: const BoxConstraints(
+            minHeight: FraternusSpacing.tapTargetMin,
+          ),
           decoration: BoxDecoration(
             color: onDark ? null : FraternusColors.white,
             border: Border.all(
-              color: onDark ? FraternusColors.borderOnDark : FraternusColors.borderSubtle,
+              color: onDark
+                  ? FraternusColors.borderOnDark
+                  : FraternusColors.borderSubtle,
             ),
             borderRadius: BorderRadius.circular(FraternusRadii.sm),
           ),
@@ -165,7 +191,10 @@ class Button extends StatelessWidget {
       ),
       ButtonVariant.underlined => Opacity(
         opacity: isPressed ? 0.75 : 1,
-        child: Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: content),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: content,
+        ),
       ),
     };
 

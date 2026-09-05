@@ -36,6 +36,11 @@ abstract final class FraternusIcons {
       fontFamily: _fontFamily,
       fontPackage: _fontPackage,
     ),
+    // Lucide is an outline-only icon set (no filled variant of any icon,
+    // 'heart' included) — sourced from Flutter's bundled Material Icons
+    // font instead for the one place a solid vs. hollow heart actually
+    // matters (ContentCard's like toggle).
+    'heart-filled': IconData(0xe25b, fontFamily: 'MaterialIcons'),
     'clock': IconData(
       0xf221,
       fontFamily: _fontFamily,

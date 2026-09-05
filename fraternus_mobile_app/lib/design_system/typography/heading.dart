@@ -21,7 +21,8 @@ class Heading extends StatelessWidget {
   final bool onDark;
   final TextAlign align;
 
-  Color get _color => onDark ? FraternusColors.textOnDark : FraternusColors.textOnLight;
+  Color get _color =>
+      onDark ? FraternusColors.textOnDark : FraternusColors.textOnLight;
 
   TextStyle get _style => switch (level) {
     HeadingLevel.h1 => FraternusTypography.h1(color: _color),
@@ -31,5 +32,6 @@ class Heading extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => Text(text, textAlign: align, style: _style);
+  Widget build(BuildContext context) =>
+      Text(text, textAlign: align, style: _style);
 }

@@ -40,8 +40,16 @@ class FormCard extends StatelessWidget {
           const SizedBox(height: 4),
           ButtonGroup(
             children: [
-              Button(label: 'Cancel', variant: ButtonVariant.ghost, onPressed: onCancel),
-              Button(label: saveLabel, onPressed: canSave ? onSave : null, disabled: !canSave),
+              Button(
+                label: 'Cancel',
+                variant: ButtonVariant.ghost,
+                onPressed: onCancel,
+              ),
+              Button(
+                label: saveLabel,
+                onPressed: canSave ? onSave : null,
+                disabled: !canSave,
+              ),
             ],
           ),
         ],

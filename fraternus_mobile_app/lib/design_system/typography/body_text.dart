@@ -21,7 +21,8 @@ class BodyText extends StatelessWidget {
   final bool onDark;
   final TextAlign align;
 
-  Color get _color => onDark ? FraternusColors.textOnDarkMuted : FraternusColors.textOnLight;
+  Color get _color =>
+      onDark ? FraternusColors.textOnDarkMuted : FraternusColors.textOnLight;
 
   TextStyle get _style => switch (size) {
     BodyTextSize.large => FraternusTypography.bodyLg(color: _color),
@@ -31,5 +32,6 @@ class BodyText extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => Text(text, textAlign: align, style: _style);
+  Widget build(BuildContext context) =>
+      Text(text, textAlign: align, style: _style);
 }

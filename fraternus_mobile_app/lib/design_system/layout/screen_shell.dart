@@ -7,7 +7,13 @@ import '../tokens/fraternus_colors.dart';
 /// primary/secondary button stack). Ports components-source.jsx
 /// `ScreenShell`.
 class ScreenShell extends StatelessWidget {
-  const ScreenShell({super.key, required this.child, this.dark = false, this.footer, this.scrollable = true});
+  const ScreenShell({
+    super.key,
+    required this.child,
+    this.dark = false,
+    this.footer,
+    this.scrollable = true,
+  });
 
   static const _safeTop = 56.0;
 
@@ -22,14 +28,18 @@ class ScreenShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = dark ? FraternusColors.surfaceDark : FraternusColors.surfaceCardDim;
+    final background = dark
+        ? FraternusColors.surfaceDark
+        : FraternusColors.surfaceCardDim;
     return ColoredBox(
       color: background,
       child: Padding(
         padding: const EdgeInsets.only(top: _safeTop),
         child: Column(
           children: [
-            Expanded(child: scrollable ? SingleChildScrollView(child: child) : child),
+            Expanded(
+              child: scrollable ? SingleChildScrollView(child: child) : child,
+            ),
             if (footer != null)
               ColoredBox(
                 color: dark ? const Color(0x00000000) : background,
