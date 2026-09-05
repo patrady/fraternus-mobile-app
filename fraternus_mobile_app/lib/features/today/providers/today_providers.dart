@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../design_system/design_system.dart' show PersonTabStatus;
 import '../../../shared/formatting/date_time_utils.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
@@ -88,7 +89,7 @@ HouseholdPerson _buildPerson({
 /// it in SQL. See the migration plan's decision notes.
 @riverpod
 Future<TodayDashboard> todayDashboard(Ref ref) async {
-  final now = DateTime.now();
+  final now = ref.watch(nowProvider);
   final today = _dateOnly(now);
 
   final user = await ref.watch(currentUserProvider.future);

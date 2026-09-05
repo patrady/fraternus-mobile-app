@@ -62,7 +62,7 @@ final class TodayDashboardProvider
   }
 }
 
-String _$todayDashboardHash() => r'266df1aad00da71ac115e8fe5f253536568958c9';
+String _$todayDashboardHash() => r'85e2b959604d47691c9621c6bd395142b079b546';
 
 /// Which household member (You/Jack/Thomas) is active in the [PersonTabs]
 /// switcher. Lives in a provider rather than local widget state so it

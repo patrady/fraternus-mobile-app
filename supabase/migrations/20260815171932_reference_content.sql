@@ -1,9 +1,8 @@
--- Shared reference/seed content: Chapters, Field Guide school-year
--- configuration, and Frat Night template catalog. Not user-specific — read
--- for authenticated (and, for chapters, anon — needed by the signup
--- screens' chapter picker before a session exists) users, writable only via
--- service_role (seed.sql / direct SQL) since there's no admin UI yet per
--- app_concept.md.
+-- Shared reference/seed content: Chapters and the Frat Night template
+-- catalog. Not user-specific — read for authenticated (and, for chapters,
+-- anon — needed by the signup screens' chapter picker before a session
+-- exists) users, writable only via service_role (seed.sql / direct SQL)
+-- since there's no admin UI yet per app_concept.md.
 
 create table public.chapters (
   id uuid primary key default gen_random_uuid(),
@@ -29,31 +28,6 @@ create policy "read chapters"
   to anon, authenticated
   using (true);
 
-create table public.chapter_field_guide_details (
-  id uuid primary key default gen_random_uuid(),
-  chapter_key text not null references public.chapters (key) on delete cascade,
-  school_year_start_date date not null,
-  school_year_end_date date not null,
-  field_guide_start_date date not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-alter table public.chapter_field_guide_details enable row level security;
-
-create policy "read chapter field guide details"
-  on public.chapter_field_guide_details for select
-  to authenticated
-  using (true);
-
-create trigger set_chapter_field_guide_details_updated_at
-  before update on public.chapter_field_guide_details
-  for each row
-  execute function public.set_updated_at();
-
-create index idx_chapter_field_guide_details_chapter_key
-  on public.chapter_field_guide_details (chapter_key);
-
 create table public.frat_night_templates (
   id uuid primary key default gen_random_uuid(),
   -- Stable natural key (distinct from id) — the FK target for challenges and
@@ -72,6 +46,10 @@ create table public.frat_night_templates (
 -- date is whichever Event references it via
 -- event_frat_night_details.frat_night_template_key (see the events
 -- migration's unique constraint on that column).
+--
+-- field_guide_week_id is added later, by the field_guide migration — it
+-- can't be added here since public.field_guide_weeks doesn't exist yet at
+-- this point in migration order.
 
 alter table public.frat_night_templates enable row level security;
 
@@ -89,5 +67,4 @@ create trigger set_frat_night_templates_updated_at
 -- requires this separate grant before RLS is even evaluated (see the
 -- comment in the public_users migration for how this was verified).
 grant select on public.chapters to anon, authenticated;
-grant select on public.chapter_field_guide_details to authenticated;
 grant select on public.frat_night_templates to authenticated;

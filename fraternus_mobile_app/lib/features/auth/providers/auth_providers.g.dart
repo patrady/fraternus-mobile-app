@@ -17,7 +17,8 @@ const authRepositoryProvider = AuthRepositoryProvider._();
 /// Swap this provider's implementation to change where auth comes from —
 /// nothing downstream (screens, the router) needs to change.
 
-final class AuthRepositoryProvider extends $FunctionalProvider<AuthRepository, AuthRepository, AuthRepository>
+final class AuthRepositoryProvider
+    extends $FunctionalProvider<AuthRepository, AuthRepository, AuthRepository>
     with $Provider<AuthRepository> {
   /// Swap this provider's implementation to change where auth comes from —
   /// nothing downstream (screens, the router) needs to change.
@@ -37,7 +38,8 @@ final class AuthRepositoryProvider extends $FunctionalProvider<AuthRepository, A
 
   @$internal
   @override
-  $ProviderElement<AuthRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<AuthRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   AuthRepository create(Ref ref) {
@@ -46,7 +48,10 @@ final class AuthRepositoryProvider extends $FunctionalProvider<AuthRepository, A
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AuthRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AuthRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AuthRepository>(value),
+    );
   }
 }
 
@@ -62,7 +67,8 @@ const authStateChangesProvider = AuthStateChangesProvider._();
 /// `redirect` callback whenever auth state changes.
 
 final class AuthStateChangesProvider
-    extends $FunctionalProvider<AsyncValue<AuthState>, AuthState, Stream<AuthState>>
+    extends
+        $FunctionalProvider<AsyncValue<AuthState>, AuthState, Stream<AuthState>>
     with $FutureModifier<AuthState>, $StreamProvider<AuthState> {
   /// The router watches this (via GoRouterRefreshStream) to re-run its
   /// `redirect` callback whenever auth state changes.
@@ -125,7 +131,8 @@ const signUpWizardActiveProvider = SignUpWizardActiveProvider._();
 /// default autoDispose, riverpod tears it down (back to `false`) the
 /// moment nothing's listening, which is immediately after every read —
 /// the flag would never actually stick.
-final class SignUpWizardActiveProvider extends $NotifierProvider<SignUpWizardActive, bool> {
+final class SignUpWizardActiveProvider
+    extends $NotifierProvider<SignUpWizardActive, bool> {
   /// True from the moment SignUpRoleScreen's Continue button navigates into
   /// SignUpAccountScreen until that wizard is explicitly left (back to role
   /// selection, or "Let's Get Started" on the finished step). The router's
@@ -160,11 +167,15 @@ final class SignUpWizardActiveProvider extends $NotifierProvider<SignUpWizardAct
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
   }
 }
 
-String _$signUpWizardActiveHash() => r'aefcaae79478aba7a367ee7e774541752ecd47ce';
+String _$signUpWizardActiveHash() =>
+    r'aefcaae79478aba7a367ee7e774541752ecd47ce';
 
 /// True from the moment SignUpRoleScreen's Continue button navigates into
 /// SignUpAccountScreen until that wizard is explicitly left (back to role
@@ -188,7 +199,14 @@ abstract class _$SignUpWizardActive extends $Notifier<bool> {
   void runBuild() {
     final created = build();
     final ref = this.ref as $Ref<bool, bool>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
     element.handleValue(ref, created);
   }
 }

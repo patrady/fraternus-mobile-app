@@ -7,7 +7,7 @@
 
 insert into public.event_attendees_chapter (event_id, chapter_key, role)
 values
-  -- Commitment Ceremony (custom)
+  -- Commitment Ceremony (commitment_ceremony)
   ('3160bf41-01d8-4c20-abb7-109928f64788', 'st_philip_franklin_tn', 'chapter'),
   -- Excursion #1: Battle (same 6-chapter list for all 4 excursions)
   ('a6e18f09-c712-485f-b6d3-7014ccc3859c', 'st_philip_franklin_tn', 'chapter'),

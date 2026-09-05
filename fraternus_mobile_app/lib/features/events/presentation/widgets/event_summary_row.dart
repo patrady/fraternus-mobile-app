@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fraternus_mobile_app/shared/formatting/date_time_utils.dart';
 
+import '../../../../app/clock_provider.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../shared/formatting/event_date_formatting.dart';
 import '../../models/event.dart';
@@ -11,7 +13,7 @@ import 'open_in_maps_dialog.dart';
 /// (a countdown [Tag] when starting soon, "CANCELLED" text, or nothing).
 /// Feature-local rather than a design-system component: nothing in
 /// components-source.jsx modeled this shape, and it's only used here.
-class EventSummaryRow extends StatelessWidget {
+class EventSummaryRow extends ConsumerWidget {
   const EventSummaryRow({
     super.key,
     required this.event,
@@ -22,11 +24,11 @@ class EventSummaryRow extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cancelled = event.isCancelled;
     final startingSoonLabel = cancelled
         ? null
-        : formatStartingSoonLabel(DateTime.now(), event.startAt);
+        : formatStartingSoonLabel(ref.watch(nowProvider), event.startAt);
 
     return PressableBuilder(
       onTap: onPressed,
@@ -42,18 +44,31 @@ class EventSummaryRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        event.title,
-                        style:
-                            FraternusTypography.h4(
-                              color: cancelled
-                                  ? FraternusColors.textOnLightMuted
-                                  : FraternusColors.ink,
-                            ).copyWith(
-                              decoration: cancelled
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FraternusIcon(
+                            name: event.type.iconName,
+                            size: 16,
+                            opacity: cancelled ? 0.4 : 0.6,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              event.title,
+                              style:
+                                  FraternusTypography.h4(
+                                    color: cancelled
+                                        ? FraternusColors.textOnLightMuted
+                                        : FraternusColors.ink,
+                                  ).copyWith(
+                                    decoration: cancelled
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
                             ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (isSameDay(

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
@@ -17,6 +18,7 @@ class EventsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(visibleEventsProvider);
     final typeFilter = ref.watch(eventTypeFilterProvider);
+    final now = ref.watch(nowProvider);
 
     return ScreenShell(
       // A plain Column (ScreenShell's default SingleChildScrollView body)
@@ -80,7 +82,12 @@ class EventsScreen extends ConsumerWidget {
                   : events
                         .where((event) => typeFilter.contains(event.type))
                         .toList();
-              return _eventSlivers(context, events: filtered, filtered: typeFilter.isNotEmpty);
+              return _eventSlivers(
+                context,
+                events: filtered,
+                filtered: typeFilter.isNotEmpty,
+                now: now,
+              );
             },
             loading: () => const [SliverToBoxAdapter(child: SizedBox.shrink())],
             error: (error, stackTrace) => const [
@@ -98,7 +105,12 @@ class EventsScreen extends ConsumerWidget {
   }
 }
 
-List<Widget> _eventSlivers(BuildContext context, {required List<Event> events, required bool filtered}) {
+List<Widget> _eventSlivers(
+  BuildContext context, {
+  required List<Event> events,
+  required bool filtered,
+  required DateTime now,
+}) {
   if (events.isEmpty) {
     return [
       SliverToBoxAdapter(
@@ -130,22 +142,28 @@ List<Widget> _eventSlivers(BuildContext context, {required List<Event> events, r
     if (currentGroup.isNotEmpty &&
         (event.startAt.year != currentGroup.first.startAt.year ||
             event.startAt.month != currentGroup.first.startAt.month)) {
-      monthSlivers.add(_monthSliver(context, currentGroup));
+      monthSlivers.add(_monthSliver(context, currentGroup, now: now));
       currentGroup = [];
     }
     currentGroup.add(event);
   }
-  monthSlivers.add(_monthSliver(context, currentGroup));
+  monthSlivers.add(_monthSliver(context, currentGroup, now: now));
 
   return monthSlivers;
 }
 
-Widget _monthSliver(BuildContext context, List<Event> monthEvents) {
+Widget _monthSliver(
+  BuildContext context,
+  List<Event> monthEvents, {
+  required DateTime now,
+}) {
   return SliverMainAxisGroup(
     slivers: [
       SliverPersistentHeader(
         pinned: true,
-        delegate: _MonthHeaderDelegate(formatEventMonthLabel(monthEvents.first.startAt)),
+        delegate: _MonthHeaderDelegate(
+          formatEventMonthLabel(monthEvents.first.startAt, now),
+        ),
       ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
@@ -162,7 +180,8 @@ Widget _monthSliver(BuildContext context, List<Event> monthEvents) {
               for (final event in monthEvents) ...[
                 EventSummaryRow(
                   event: event,
-                  onPressed: () => context.push(RoutePaths.eventDetail(event.id)),
+                  onPressed: () =>
+                      context.push(RoutePaths.eventDetail(event.id)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -191,7 +210,11 @@ class _MonthHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return ColoredBox(
       color: FraternusColors.surfaceCardDim,
       child: Padding(
@@ -205,5 +228,6 @@ class _MonthHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant _MonthHeaderDelegate oldDelegate) => label != oldDelegate.label;
+  bool shouldRebuild(covariant _MonthHeaderDelegate oldDelegate) =>
+      label != oldDelegate.label;
 }

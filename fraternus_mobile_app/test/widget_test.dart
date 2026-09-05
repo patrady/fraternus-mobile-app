@@ -5,9 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fraternus_mobile_app/app/fraternus_app.dart';
+import 'package:fraternus_mobile_app/app/shared_preferences_provider.dart';
 import 'package:fraternus_mobile_app/design_system/design_system.dart';
 import 'package:fraternus_mobile_app/features/auth/data/auth_repository.dart';
 import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart';
@@ -112,6 +114,14 @@ class _FakeAuthRepository implements AuthRepository {
 // keep running without a live Supabase connection. A fresh
 // StaticGuideRepository per call means each test gets its own isolated
 // mutable state, same isolation _FakeAuthRepository already gives auth.
+//
+// sharedPreferencesProvider reads from `_sharedPreferences`, reset to an
+// empty mock store by the `setUp` below before every test — AppShell reads
+// it (via debugMenuUnlockedProvider) on every render, so leaving it
+// unoverridden would throw in every single test, not just ones that
+// exercise the Debug tab.
+late SharedPreferences _sharedPreferences;
+
 List<Override> _testOverrides({
   bool signedIn = true,
   AuthRepository? authRepository,
@@ -124,9 +134,15 @@ List<Override> _testOverrides({
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
   eventsRepositoryProvider.overrideWithValue(StaticEventsRepository()),
   chapterRepositoryProvider.overrideWithValue(const StaticChapterRepository()),
+  sharedPreferencesProvider.overrideWithValue(_sharedPreferences),
 ];
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _sharedPreferences = await SharedPreferences.getInstance();
+  });
+
   testWidgets('Today screen renders the weekly focus and tab bar', (
     WidgetTester tester,
   ) async {

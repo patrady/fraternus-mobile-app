@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/supabase_provider.dart';
 import '../../profile/models/member.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -47,7 +48,7 @@ Future<ChallengeFeed> _challengeFeed(Ref ref) async {
   if (chapterKey == null)
     return const ChallengeFeed(challenges: [], currentChallengeId: null);
   return repository.fetchChallenges(
-    asOf: DateTime.now(),
+    asOf: ref.watch(nowProvider),
     chapterKey: chapterKey,
     memberLabels: {for (final member in members) member.id: member.firstName},
   );
@@ -98,8 +99,15 @@ Future<WeeklyChallenge?> challengeById(Ref ref, String challengeId) async {
 @riverpod
 Future<int> challengeStreak(Ref ref, String personKey) async {
   final challenges = await ref.watch(allChallengesProvider.future);
+  final now = ref.watch(nowProvider);
   var streak = 0;
   for (final challenge in challenges) {
+    // allChallenges includes Challenges for Frat Nights that haven't
+    // happened yet (content gets seeded ahead of time) — sorted first since
+    // they're the most recent by date, they'd otherwise always short-
+    // circuit the streak to 0 via the null-progress break below. A
+    // not-yet-happened challenge can't count for or against the streak.
+    if (challenge.fratNightDate.isAfter(now)) continue;
     final progressByPerson = await ref.watch(
       challengeProgressProvider(challenge.id).future,
     );

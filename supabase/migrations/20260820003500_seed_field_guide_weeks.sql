@@ -100,3 +100,21 @@ join (
     (7, 7, 'By God''s grace, I am a man who is diligent, avoiding both sloth and workaholism.', 'How conducive it is for the keeping of heavenly grace, to fly the gaze of men, not to seek abroad things which seem to cause admiration, but to follow with the utmost diligence those which give fervor and amendment of life! How many have been harmed by having their virtue known and praised too hastily! And how truly profitable it has been when grace remained hidden during this frail life, which is all temptation and warfare!', 'Thomas à Kempis', 'The battle against thinking only of my own goals; I will work for the good of someone else''s goals.', 'The battle against working hard to be liked or left undisturbed; I will work in hidden ways that are hard for me.', 'Where did I notice sloth or diligence at work in me today?', 'Illuminate my darkness, O Lord, and give me true understanding, that I may know what is of You and what is not. Amen.', 'St. Bonaventure')
 ) as d(week_number, day_number, identity_reading, wisdom_quote, wisdom_author, sword_option_1, sword_option_2, spade_prompt, closing_prayer, closing_prayer_author)
 on d.week_number = w.week_number;
+
+-- Links each virtue-week Frat Night Template (seeded in
+-- 20260820000500_seed_frat_night_templates.sql, before these Field Guide
+-- Weeks existed) to its matching Field Guide Week, by virtue. The Year 1
+-- Rush Night templates are deliberately left unlinked (field_guide_week_id
+-- stays null) — they run before the Field Guide curriculum begins.
+update public.frat_night_templates fnt
+set field_guide_week_id = fgw.id
+from public.field_guide_weeks fgw
+join (
+  values
+    ('year_1_week_27', 1), -- Humility vs Pride
+    ('year_1_week_28', 2), -- Generosity vs Greed
+    ('year_1_week_29', 6), -- Kindness vs Envy
+    ('year_1_week_30', 5), -- Temperance vs Gluttony
+    ('year_1_week_31', 3)  -- Chastity vs Lust
+) as mapping(template_key, week_number) on fgw.week_number = mapping.week_number
+where fnt.key = mapping.template_key;

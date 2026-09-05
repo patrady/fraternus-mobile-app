@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/supabase_provider.dart';
 import '../../../design_system/design_system.dart' show RsvpStatus;
 import '../../profile/providers/profile_providers.dart';
@@ -22,7 +23,7 @@ EventsRepository eventsRepository(Ref ref) {
 Future<List<Event>> visibleEvents(Ref ref) async {
   final repository = ref.watch(eventsRepositoryProvider);
   final members = await ref.watch(householdMembersProvider.future);
-  final now = DateTime.now();
+  final now = ref.watch(nowProvider);
   final events = await repository.fetchEvents(
     asOf: now,
     memberLabels: {for (final member in members) member.id: member.firstName},

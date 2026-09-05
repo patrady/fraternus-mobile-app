@@ -13,6 +13,7 @@ import '../../features/auth/presentation/sign_up_welcome_screen.dart';
 import '../../features/auth/providers/auth_providers.dart';
 import '../../features/challenge/presentation/challenge_screen.dart';
 import '../../features/challenge/presentation/past_challenges_screen.dart';
+import '../../features/debug/presentation/debug_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
 import '../../features/events/presentation/events_screen.dart';
 import '../../features/guide/presentation/guide_screen.dart';
@@ -26,6 +27,7 @@ import '../../features/profile/presentation/my_kids_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/reminders_screen.dart';
 import '../../features/today/presentation/today_screen.dart';
+import '../debug_unlock_provider.dart';
 import 'app_shell.dart';
 import 'route_paths.dart';
 
@@ -73,7 +75,9 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) {
       final signedIn = authRepository.currentSession != null;
       final location = state.matchedLocation;
-      final onAuthRoute = _authRoutePaths.any((path) => location.startsWith(path));
+      final onAuthRoute = _authRoutePaths.any(
+        (path) => location.startsWith(path),
+      );
       // SignUpAccountScreen (the OTP-based signup wizard) establishes a
       // session partway through — right after the email code is verified,
       // several steps before the wizard actually finishes (see that
@@ -90,22 +94,48 @@ GoRouter appRouter(Ref ref) {
       final wizardActive = ref.read(signUpWizardActiveProvider);
       if (!signedIn && !onAuthRoute) return RoutePaths.welcome;
       if (signedIn && onAuthRoute && !wizardActive) return RoutePaths.today;
+      // The Debug tab (see clock_provider.dart) is only reachable once
+      // unlocked via TodayHeader's tap gesture — reached directly (a deep
+      // link, a restored navigation stack) without that, bounce back to
+      // Today rather than showing it. kDebugMode is checked too since the
+      // route itself doesn't exist in a release build's branch list, but
+      // matching on `location` alone shouldn't rely on that.
+      if (location.startsWith(RoutePaths.debug) &&
+          !(kDebugMode && ref.read(debugMenuUnlockedProvider))) {
+        return RoutePaths.today;
+      }
       return null;
     },
     routes: [
-      GoRoute(path: RoutePaths.welcome, builder: (context, state) => const SignUpWelcomeScreen()),
-      GoRoute(path: RoutePaths.signIn, builder: (context, state) => const SignInScreen()),
-      GoRoute(path: RoutePaths.forgotPassword, builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(
+        path: RoutePaths.welcome,
+        builder: (context, state) => const SignUpWelcomeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.signIn,
+        builder: (context, state) => const SignInScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
         path: RoutePaths.signUp,
         builder: (context, state) => const SignUpRoleScreen(),
         routes: [
-          GoRoute(path: 'brother', builder: (context, state) => const SignUpBrotherBlockedScreen()),
-          GoRoute(path: 'account', builder: (context, state) => const SignUpAccountScreen()),
+          GoRoute(
+            path: 'brother',
+            builder: (context, state) => const SignUpBrotherBlockedScreen(),
+          ),
+          GoRoute(
+            path: 'account',
+            builder: (context, state) => const SignUpAccountScreen(),
+          ),
         ],
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -131,8 +161,9 @@ GoRouter appRouter(Ref ref) {
                           ),
                           GoRoute(
                             path: ':memberId',
-                            builder: (context, state) =>
-                                EditChildScreen(memberId: state.pathParameters['memberId']!),
+                            builder: (context, state) => EditChildScreen(
+                              memberId: state.pathParameters['memberId']!,
+                            ),
                           ),
                         ],
                       ),
@@ -194,12 +225,28 @@ GoRouter appRouter(Ref ref) {
                 routes: [
                   GoRoute(
                     path: ':eventId',
-                    builder: (context, state) => EventDetailScreen(eventId: state.pathParameters['eventId']!),
+                    builder: (context, state) => EventDetailScreen(
+                      eventId: state.pathParameters['eventId']!,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
+          // Debug-build-only tab (see AppShell's matching kDebugMode guard on
+          // the bottom tab bar entry) for overriding the app's notion of
+          // "now" — see clock_provider.dart. Gated here too (not just the
+          // tab bar entry) so the route doesn't exist at all in a release
+          // build, not just lack a way to reach it.
+          if (kDebugMode)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: RoutePaths.debug,
+                  builder: (context, state) => const DebugScreen(),
+                ),
+              ],
+            ),
         ],
       ),
     ],

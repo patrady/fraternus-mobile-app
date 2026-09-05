@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/supabase_provider.dart';
 import '../../profile/models/member.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -21,7 +22,8 @@ GuideRepository guideRepository(Ref ref) {
 /// first household member's chapter stands in for "the household's
 /// chapter" when resolving shared Field Guide content. Returns null for an
 /// empty household (no data to show either way).
-String? _householdChapterKey(List<Member> members) => members.isEmpty ? null : members.first.chapterKey;
+String? _householdChapterKey(List<Member> members) =>
+    members.isEmpty ? null : members.first.chapterKey;
 
 Member? _memberById(List<Member> members, String memberId) {
   for (final member in members) {
@@ -35,7 +37,10 @@ Member? _memberById(List<Member> members, String memberId) {
 @riverpod
 Future<List<GuideHouseholdMember>> guideHousehold(Ref ref) async {
   final members = await ref.watch(householdMembersProvider.future);
-  return [for (final member in members) GuideHouseholdMember(memberId: member.id, label: member.firstName)];
+  return [
+    for (final member in members)
+      GuideHouseholdMember(memberId: member.id, label: member.firstName),
+  ];
 }
 
 /// [date] must already be truncated to year/month/day — see
@@ -47,7 +52,11 @@ Future<FieldGuideWeek?> guideWeekForDate(Ref ref, DateTime date) async {
   final members = await ref.watch(householdMembersProvider.future);
   final chapterKey = _householdChapterKey(members);
   if (chapterKey == null) return null;
-  return repository.fetchWeekForDate(date: date, chapterKey: chapterKey, memberIds: [for (final m in members) m.id]);
+  return repository.fetchWeekForDate(
+    date: date,
+    chapterKey: chapterKey,
+    memberIds: [for (final m in members) m.id],
+  );
 }
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
@@ -59,7 +68,7 @@ DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 @riverpod
 class GuideSelectedDate extends _$GuideSelectedDate {
   @override
-  DateTime build() => _dateOnly(DateTime.now());
+  DateTime build() => _dateOnly(ref.watch(nowProvider));
 
   void select(DateTime date) => state = _dateOnly(date);
 }
@@ -84,20 +93,27 @@ class GuideSelectedPerson extends _$GuideSelectedPerson {
 @riverpod
 class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   @override
-  Future<Map<String, FieldGuideDailyDevotionalMember>> build(DateTime date) async {
+  Future<Map<String, FieldGuideDailyDevotionalMember>> build(
+    DateTime date,
+  ) async {
     final week = await ref.watch(guideWeekForDateProvider(date).future);
     final devotional = week?.devotionalForDate(date);
-    return {for (final member in devotional?.members ?? const []) member.memberId: member};
+    return {
+      for (final member in devotional?.members ?? const [])
+        member.memberId: member,
+    };
   }
 
   Future<void> setSword(String personKey, String swordText) async {
     final devotionalId = await _dailyDevotionalId();
     if (devotionalId == null) return;
-    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
-      dailyDevotionalId: devotionalId,
-      memberId: personKey,
-      sword: swordText,
-    );
+    await ref
+        .read(guideRepositoryProvider)
+        .upsertDevotionalMember(
+          dailyDevotionalId: devotionalId,
+          memberId: personKey,
+          sword: swordText,
+        );
     // Invalidating guideWeekForDateProvider — not just this notifier — is
     // what actually surfaces the write: build() derives its data from that
     // provider's cached result, which a bare invalidateSelf() wouldn't
@@ -109,11 +125,13 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
   Future<void> setSpade(String personKey, String spadeText) async {
     final devotionalId = await _dailyDevotionalId();
     if (devotionalId == null) return;
-    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
-      dailyDevotionalId: devotionalId,
-      memberId: personKey,
-      spade: spadeText,
-    );
+    await ref
+        .read(guideRepositoryProvider)
+        .upsertDevotionalMember(
+          dailyDevotionalId: devotionalId,
+          memberId: personKey,
+          spade: spadeText,
+        );
     // Invalidating guideWeekForDateProvider — not just this notifier — is
     // what actually surfaces the write: build() derives its data from that
     // provider's cached result, which a bare invalidateSelf() wouldn't
@@ -130,11 +148,13 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
     if (devotionalId == null) return;
     final current = state.value ?? const {};
     final wasCompleted = current[personKey]?.isCompleted ?? false;
-    await ref.read(guideRepositoryProvider).upsertDevotionalMember(
-      dailyDevotionalId: devotionalId,
-      memberId: personKey,
-      completed: !wasCompleted,
-    );
+    await ref
+        .read(guideRepositoryProvider)
+        .upsertDevotionalMember(
+          dailyDevotionalId: devotionalId,
+          memberId: personKey,
+          completed: !wasCompleted,
+        );
     // Invalidating guideWeekForDateProvider — not just this notifier — is
     // what actually surfaces the write: build() derives its data from that
     // provider's cached result, which a bare invalidateSelf() wouldn't
@@ -159,7 +179,11 @@ Future<int> guideBaseStreak(Ref ref, String personKey) async {
   final members = await ref.watch(householdMembersProvider.future);
   final member = _memberById(members, personKey);
   if (member == null) return 0;
-  return repository.fetchStreak(memberId: personKey, chapterKey: member.chapterKey, asOf: date);
+  return repository.fetchStreak(
+    memberId: personKey,
+    chapterKey: member.chapterKey,
+    asOf: date,
+  );
 }
 
 /// Fake temperament-quiz-result seed — see models/temperament.dart. Only
@@ -172,7 +196,10 @@ class GuideTemperamentResult extends _$GuideTemperamentResult {
   @override
   TemperamentResult? build(String personKey) {
     return switch (personKey) {
-      'you' => const TemperamentResult(primaryKey: 'choleric', secondaryKey: 'melancholic'),
+      'you' => const TemperamentResult(
+        primaryKey: 'choleric',
+        secondaryKey: 'melancholic',
+      ),
       _ => null,
     };
   }
@@ -194,5 +221,6 @@ class GuideLikedItems extends _$GuideLikedItems {
     state = state.contains(key) ? ({...state}..remove(key)) : {...state, key};
   }
 
-  bool isLiked(String personKey, String itemId) => state.contains('$personKey:$itemId');
+  bool isLiked(String personKey, String itemId) =>
+      state.contains('$personKey:$itemId');
 }

@@ -159,6 +159,21 @@ abstract final class FraternusIcons {
       fontFamily: _fontFamily,
       fontPackage: _fontPackage,
     ),
+    'shapes': IconData(
+      0xf4bb,
+      fontFamily: _fontFamily,
+      fontPackage: _fontPackage,
+    ),
+    'backpack': IconData(
+      0xf176,
+      fontFamily: _fontFamily,
+      fontPackage: _fontPackage,
+    ),
+    'sword': IconData(
+      0xf519,
+      fontFamily: _fontFamily,
+      fontPackage: _fontPackage,
+    ),
   };
 
   /// Falls back to `circle-check` for an unknown name, matching the JSX

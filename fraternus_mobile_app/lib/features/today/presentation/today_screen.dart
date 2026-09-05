@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../challenge/providers/challenge_providers.dart';
@@ -118,7 +119,7 @@ class _TodayContent extends ConsumerWidget {
               label: event.title,
               sublabel: event.dateLabel,
               bordered: false,
-              onPressed: () => context.push(RoutePaths.eventDetail(event.id))
+              onPressed: () => context.push(RoutePaths.eventDetail(event.id)),
             ),
         const SizedBox(height: 24),
       ],
@@ -151,7 +152,11 @@ class _TodayTaskCard extends ConsumerWidget {
     // actionable task kinds check against their own feature's real data.
     final isFieldGuideComplete =
         ref
-            .watch(guideDevotionalProgressProvider(_dateOnly(DateTime.now())))
+            .watch(
+              guideDevotionalProgressProvider(
+                _dateOnly(ref.watch(nowProvider)),
+              ),
+            )
             .value?[person.memberId]
             ?.isCompleted ??
         false;

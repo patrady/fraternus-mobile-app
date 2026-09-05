@@ -8,7 +8,21 @@ import 'event_location.dart';
 import 'event_ranch_details.dart';
 import 'household_rsvp.dart';
 
-enum EventType { fratNight, excursion, ranch, custom }
+enum EventType { fratNight, excursion, ranch, custom, commitmentCeremony, ceremony }
+
+extension EventTypeIcon on EventType {
+  /// Lucide icon name shown on the event's card — [EventType.custom]
+  /// doubles as the fallback for an [Event._typeFromDb] value the backend
+  /// sends that this client doesn't recognize yet.
+  String get iconName => switch (this) {
+    EventType.fratNight => 'users',
+    EventType.excursion => 'tent',
+    EventType.ranch => 'backpack',
+    EventType.custom => 'shapes',
+    EventType.commitmentCeremony => 'sword',
+    EventType.ceremony => 'award',
+  };
+}
 
 /// A single chapter event — richer than `today/models/event_summary.dart`'s
 /// `EventSummary`, which is deliberately thin and stays scoped to the Today
@@ -76,12 +90,16 @@ class Event {
   /// The UI only needs cancelled-or-not, not when it was cancelled.
   bool get isCancelled => cancellationDate != null;
 
+  /// Falls back to [EventType.custom] for a value this client doesn't
+  /// recognize yet, since `event_type` is backend-defined and new values
+  /// can ship there before this client knows about them.
   static EventType _typeFromDb(String value) => switch (value) {
     'frat_night' => EventType.fratNight,
     'excursion' => EventType.excursion,
     'ranch' => EventType.ranch,
-    'custom' => EventType.custom,
-    _ => throw ArgumentError('Unknown event_type: $value'),
+    'commitment_ceremony' => EventType.commitmentCeremony,
+    'ceremony' => EventType.ceremony,
+    _ => EventType.custom,
   };
 
   /// Expects the nested-embed shape `*, event_locations(*),

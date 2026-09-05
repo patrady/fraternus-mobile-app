@@ -33,9 +33,9 @@ String formatTimeLabel(DateTime date) => _time.format(date);
 /// "August", or "August 2027" once [date] falls outside the current
 /// calendar year — disambiguates a rolling multi-month events list (like
 /// the Events tab's month sections) without cluttering the common case.
-String formatEventMonthLabel(DateTime date) {
+String formatEventMonthLabel(DateTime date, DateTime now) {
   final month = _month.format(date);
-  return date.year == DateTime.now().year ? month : '$month ${date.year}';
+  return date.year == now.year ? month : '$month ${date.year}';
 }
 
 String? formatStartingSoonLabel(

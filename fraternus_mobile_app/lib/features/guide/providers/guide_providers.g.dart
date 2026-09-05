@@ -239,7 +239,7 @@ final class GuideSelectedDateProvider
   }
 }
 
-String _$guideSelectedDateHash() => r'5e68e9b3df691178661a86ed189a582977ba0089';
+String _$guideSelectedDateHash() => r'5669ac4353594cdd2f16133cf10f53a7ec3a4fa9';
 
 /// The single shared date for the whole Guide screen — switching it
 /// applies to every household member, unlike [GuideSelectedPerson] which

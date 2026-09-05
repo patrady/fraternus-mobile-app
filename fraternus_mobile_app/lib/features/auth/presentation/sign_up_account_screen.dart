@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart' show InputBorder, InputDecoration, TextField;
 import 'package:flutter/services.dart';
@@ -361,7 +362,8 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     try {
       await ref.read(authRepositoryProvider).sendEmailOtp(_emailController.text.trim());
       if (mounted) setState(() => _step = 1);
-    } catch (_) {
+    } catch (e, stackTrace) {
+      developer.log('sendEmailOtp failed', name: 'SignUpAccountScreen', error: e, stackTrace: stackTrace);
       if (mounted) setState(() => _errorMessage = 'Could not send a code. Try again in a moment.');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -377,9 +379,11 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     _startResendCooldown();
     try {
       await ref.read(authRepositoryProvider).sendEmailOtp(_emailController.text.trim());
-    } catch (_) {
+    } catch (e, stackTrace) {
       // Resend failures surface the next time the user submits the code —
-      // no separate error UI for a background resend tap.
+      // no separate error UI for a background resend tap — but still worth
+      // logging so a silent resend failure isn't invisible.
+      developer.log('resendCode failed', name: 'SignUpAccountScreen', error: e, stackTrace: stackTrace);
     }
   }
 

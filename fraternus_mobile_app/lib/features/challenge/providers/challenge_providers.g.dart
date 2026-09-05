@@ -161,7 +161,7 @@ final class _ChallengeFeedProvider
   }
 }
 
-String _$_challengeFeedHash() => r'f2186e69e64411cd0c67ca6457f32473fc010e06';
+String _$_challengeFeedHash() => r'005d5528cb5d70e256e9c6383f17f51c9d5b4ffa';
 
 /// All challenges the chapter has ever had, by template date descending.
 
@@ -438,7 +438,7 @@ final class ChallengeStreakProvider
   }
 }
 
-String _$challengeStreakHash() => r'42a27a2de7d79aaad5da8a2833a4a990e70f08ee';
+String _$challengeStreakHash() => r'cf8b89cb98b6674b6c90271695a93944eb4a9995';
 
 /// Consecutive completed challenges for [personKey], most recent first,
 /// stopping at the first not-yet-completed one — streak is purely computed

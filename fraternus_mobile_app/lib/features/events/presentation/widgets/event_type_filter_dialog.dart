@@ -9,6 +9,8 @@ const _filterOptions = [
   (type: EventType.fratNight, label: 'Frat Night'),
   (type: EventType.excursion, label: 'Excursions'),
   (type: EventType.ranch, label: 'Ranch'),
+  (type: EventType.commitmentCeremony, label: 'Commitment Ceremony'),
+  (type: EventType.ceremony, label: 'Ceremony'),
   (type: EventType.custom, label: 'Other'),
 ];
 

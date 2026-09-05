@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/clock_provider.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../shared/formatting/ordinal_date_formatting.dart';
 import '../../models/weekly_challenge.dart';
@@ -9,7 +11,7 @@ import '../../models/weekly_challenge.dart';
 /// accept/complete states, so it lives above the state-specific card
 /// rather than inside it. Feature-local: nothing in components-source.jsx
 /// modeled this shape, and it's only used here.
-class ChallengeInfoCard extends StatelessWidget {
+class ChallengeInfoCard extends ConsumerWidget {
   const ChallengeInfoCard({
     super.key,
     required this.challenge,
@@ -26,10 +28,10 @@ class ChallengeInfoCard extends StatelessWidget {
   final DateTime? nextFratNightDate;
 
   @override
-  Widget build(BuildContext context) {
-    final isNew = DateTime.now().isBefore(
-      challenge.fratNightDate.add(const Duration(hours: 48)),
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isNew = ref
+        .watch(nowProvider)
+        .isBefore(challenge.fratNightDate.add(const Duration(hours: 48)));
     final weekLabel = nextFratNightDate == null
         ? formatOrdinalDate(challenge.fratNightDate)
         : '${formatOrdinalDate(challenge.fratNightDate)} – ${formatOrdinalDate(nextFratNightDate!)}';

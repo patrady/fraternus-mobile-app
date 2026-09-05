@@ -18,6 +18,7 @@ class FratNightTemplate {
     required this.createdAt,
     required this.lastModifiedAt,
     this.videoClipUrl,
+    this.fieldGuideWeekId,
   });
 
   final String id;
@@ -36,6 +37,12 @@ class FratNightTemplate {
   /// Optional — not every template has an accompanying video clip.
   final String? videoClipUrl;
 
+  /// Optional — not every template has daily devotional content (e.g. Rush
+  /// Night templates run before the Field Guide curriculum begins). When
+  /// present, day 1 of that Field Guide Week falls on whichever Event
+  /// references this template (see GuideRepository.fetchWeekForDate).
+  final String? fieldGuideWeekId;
+
   factory FratNightTemplate.fromJson(Map<String, dynamic> json) {
     return FratNightTemplate(
       id: json['id'] as String,
@@ -46,6 +53,7 @@ class FratNightTemplate {
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),
       videoClipUrl: json['video_clip_url'] as String?,
+      fieldGuideWeekId: json['field_guide_week_id'] as String?,
     );
   }
 }

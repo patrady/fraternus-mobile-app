@@ -1,3 +1,0 @@
-| type   | title               | description                  | event_location_id                    | start_date             | end_date               | chapter_key/attendees         |
-| ------ | ------------------- | ---------------------------- | ------------------------------------ | ---------------------- | ---------------------- | ----------------------------- |
-| custom | Commitment Ceremony | Fraternus induction ceremony | 9f9bae55-a5d9-473f-8eee-79d4da2b18e1 | 2026-09-22 18:30:00-05 | 2026-09-22 20:00:00-05 | st_philip_franklin_tn/chapter |

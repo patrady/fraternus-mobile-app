@@ -110,7 +110,7 @@ final class VisibleEventsProvider
   }
 }
 
-String _$visibleEventsHash() => r'01705ccd50650c82a33e0ef68b44ce8c4fd8e37e';
+String _$visibleEventsHash() => r'1983fdfd674a15f7198df1988f8af2297172f1d5';
 
 /// Which [EventType]s the Events list is filtered to — empty means "show
 /// everything," matching how the filter button reads with nothing toggled

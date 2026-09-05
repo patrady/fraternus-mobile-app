@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/chapter_field_guide_details.dart';
 import '../models/field_guide_daily_devotional.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
@@ -10,14 +9,15 @@ import '../models/field_guide_week_quote.dart';
 /// TodayDashboardRepository — swap the implementation later, nothing
 /// downstream (providers, screens) needs to change.
 abstract class GuideRepository {
-  /// The devotional-selection algorithm from docs/app_concept.md: finds the
-  /// `Chapter Field Guide Details` row covering [date] for [chapterKey],
-  /// computes `weekNumber`/`dayNumber` as an offset from that row's
-  /// `fieldGuideStartDate`, and returns the `FieldGuideWeek` containing that
-  /// week (with each devotional's `members` filtered to [memberIds]) — null
-  /// if [date] falls outside the school year, or past the last authored
-  /// week (the UI shows a "nothing to read"/"completed" fallback either
-  /// way).
+  /// The devotional-selection algorithm from docs/app_concept.md: finds
+  /// [chapterKey]'s most recent past (non-cancelled) Frat Night Event,
+  /// computes `dayNumber` as an offset from that Event's `startDate` (day 1
+  /// = the Event's own date), and returns the `FieldGuideWeek` tied to that
+  /// Frat Night Template containing that day (with each devotional's
+  /// `members` filtered to [memberIds]) — null if that Frat Night Template
+  /// has no Field Guide Week (e.g. a Rush Night), [date] is more than 6
+  /// days past the Event, or there's no past Frat Night Event at all (the
+  /// UI shows a "nothing to read"/"completed" fallback either way).
   Future<FieldGuideWeek?> fetchWeekForDate({
     required DateTime date,
     required String chapterKey,
@@ -51,9 +51,9 @@ abstract class GuideRepository {
 /// anything to show. Used as the default in tests (see test/widget_test.dart)
 /// since there's no live Supabase connection in that environment.
 ///
-/// Only one week of content is authored ("humility-week", Week Number 12).
-/// [_chapterFieldGuideDetails] anchors `fieldGuideStartDate` 12 weeks before
-/// the current week's Monday (computed once, at construction) so the real
+/// Only one week of content is authored ("humility-week"). [_fratNightStartDate]
+/// anchors day 1 to the current week's Monday (standing in for "the
+/// chapter's most recent past Frat Night Event start date") so the real
 /// algorithm in [fetchWeekForDate] resolves to that authored week
 /// regardless of which day the app happens to launch on. Ignores the real
 /// [chapterKey]/[memberIds] passed in — this fake only ever knows about
@@ -62,7 +62,6 @@ abstract class GuideRepository {
 class StaticGuideRepository implements GuideRepository {
   StaticGuideRepository() : _completions = _seedCompletions(DateTime.now());
 
-  static const _chapterKey = 'st_philips_franklin_franklin_tn';
   static const _authoredYearNumber = 1;
   static const _authoredWeekNumber = 12;
   static const _memberIds = ['you', 'jack', 'thomas'];
@@ -141,20 +140,12 @@ class StaticGuideRepository implements GuideRepository {
     return completions;
   }
 
-  ChapterFieldGuideDetails _chapterFieldGuideDetails(DateTime asOf) {
-    // Monday-anchored so the mod-7 day number always lines up with
-    // DateTime.weekday, same as FieldGuideWeek.devotionalForDate expects.
-    final fieldGuideStartDate = _weekStart(asOf).subtract(Duration(days: _authoredWeekNumber * 7));
-    return ChapterFieldGuideDetails(
-      id: 'cfgd-$_chapterKey',
-      chapterKey: _chapterKey,
-      schoolYearStartDate: fieldGuideStartDate.subtract(const Duration(days: 14)),
-      schoolYearEndDate: fieldGuideStartDate.add(const Duration(days: 300)),
-      fieldGuideStartDate: fieldGuideStartDate,
-      createdAt: fieldGuideStartDate,
-      lastModifiedAt: fieldGuideStartDate,
-    );
-  }
+  /// Day 1 of the authored week — stands in for "the chapter's most recent
+  /// past Frat Night Event start date" (see [GuideRepository.fetchWeekForDate]'s
+  /// doc comment). Monday-anchored purely so the fake has a stable,
+  /// deterministic date to build devotionals against; a real chapter's Frat
+  /// Night can fall on any day of the week.
+  static DateTime _fratNightStartDate(DateTime asOf) => _weekStart(asOf);
 
   FieldGuideWeek _authoredWeek(DateTime asOf) {
     final weekStart = _weekStart(asOf);
@@ -259,20 +250,9 @@ class StaticGuideRepository implements GuideRepository {
     required List<String> memberIds,
   }) async {
     final asOf = DateTime.now();
-    final details = _chapterFieldGuideDetails(asOf);
-
     final dateOnly = _dateOnly(date);
-    final schoolYearStart = _dateOnly(details.schoolYearStartDate);
-    final schoolYearEnd = _dateOnly(details.schoolYearEndDate);
-    if (dateOnly.isBefore(schoolYearStart) || dateOnly.isAfter(schoolYearEnd)) return null;
-
-    final daysSinceStart = dateOnly.difference(_dateOnly(details.fieldGuideStartDate)).inDays;
-    if (daysSinceStart < 0) return null;
-    final weekNumber = daysSinceStart ~/ 7;
-
-    // Only one week is authored in this seed — a real repository would
-    // query `Field Guide Week` by weekNumber instead of this early-out.
-    if (weekNumber != _authoredWeekNumber) return null;
+    final daysSinceStart = dateOnly.difference(_fratNightStartDate(asOf)).inDays;
+    if (daysSinceStart < 0 || daysSinceStart > 6) return null;
     return _authoredWeek(asOf);
   }
 
@@ -335,9 +315,9 @@ class SupabaseGuideRepository implements GuideRepository {
     required String chapterKey,
     required List<String> memberIds,
   }) async {
-    // RPC #1: resolves which devotional/week apply via the school-year/
-    // week/day algorithm — the one place that logic is allowed to live
-    // (see supabase/migrations/..._rpc_functions.sql).
+    // RPC #1: resolves which devotional/week apply via the Frat-Night-Event-
+    // anchored algorithm — the one place that logic is allowed to live (see
+    // supabase/migrations/..._field_guide_frat_night_rpcs.sql).
     final resolvedRows = await _client.rpc(
       'get_field_guide_devotional_for_date',
       params: {'p_chapter_key': chapterKey, 'p_date': _isoDate(date)},

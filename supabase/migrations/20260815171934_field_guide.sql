@@ -39,6 +39,21 @@ create trigger set_field_guide_weeks_updated_at
   for each row
   execute function public.set_updated_at();
 
+-- Links a Frat Night Template to the Field Guide Week whose daily
+-- devotionals run for the 7 days starting on whichever Event references
+-- that template (see get_field_guide_devotional_for_date in
+-- 20260817172600_field_guide_frat_night_rpcs.sql — day 1 of the week is
+-- literally that Event's start_date, not a separately configured
+-- school-year offset). Added here (not in reference_content.sql, where
+-- frat_night_templates is created) since this table doesn't exist yet at
+-- that point in migration order.
+--
+-- Nullable: not every Frat Night Template has daily devotional content —
+-- e.g. Rush Night templates run before the Field Guide curriculum begins,
+-- and simply show no current devotional for that week.
+alter table public.frat_night_templates
+  add column field_guide_week_id uuid references public.field_guide_weeks (id) on delete restrict;
+
 create table public.field_guide_week_quotes (
   id uuid primary key default gen_random_uuid(),
   field_guide_week_id uuid not null references public.field_guide_weeks (id) on delete cascade,

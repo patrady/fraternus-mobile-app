@@ -7,7 +7,7 @@ create extension if not exists pgcrypto;
 create type member_role as enum ('brother', 'captain', 'commander');
 create type association_relationship as enum ('self', 'guardian');
 create type consent_status as enum ('pending', 'granted', 'revoked');
-create type event_type as enum ('frat_night', 'excursion', 'ranch', 'custom');
+create type event_type as enum ('frat_night', 'excursion', 'ranch', 'custom', 'commitment_ceremony', 'ceremony');
 create type event_attendee_chapter_role as enum ('captains', 'brothers', 'chapter');
 create type rsvp_response as enum ('accepted', 'declined', 'tentative');
 create type reminder_type as enum (

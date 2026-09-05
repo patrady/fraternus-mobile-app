@@ -44,12 +44,12 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Spade (i.e. reflection) where the user notices where the virtue's vice was present throughout the day
     - Closing Prayer reading
 - A Guardian or Captain can complete a Field Guide Daily Devotional entry on behalf of a child Member, the same way they can for Challenges and Event RSVPs. The User submitting must have a User Member Association row (Self or Guardian) with that Member.
-- Algorithm to determine which devotional is shown:
-    - Find where the current date is between the Chapter's Field Guide Details School Year Start Date and School Year End Date
-    - Take that record's Field Guide Start Date and calculate how many days it has been since that date using today's date (`days_since_field_guide_start_date`)
-    - Find the Field Guide Daily Devotional record where:
-        - `Field Guide Daily Devotional`.`Field Guide Week`.`Week Number` = floor(days_since_field_guide_start_date / 7)
-        - `Field Guide Daily Devotional`.`Day Number` = (days_since_field_guide_start_date mod 7) + 1 — 1–7, Monday-anchored, matching `DateTime.weekday` (Monday = 1 .. Sunday = 7); `Field Guide Start Date` must fall on a Monday for this to line up
+- Each Frat Night Template may have a Field Guide Week tied to it (see the Frat Night Template data model) — not every template does (e.g. Rush Night templates run before the Field Guide curriculum begins and have no Field Guide Week).
+- Algorithm to determine which devotional is shown, tied to the chapter's Frat Nights the same way a Challenge is (see Challenges' "most recent past (non-cancelled) Frat Night" rule):
+    - Find the chapter's most recent past (non-cancelled) Frat Night Event (via that Event's `Event Frat Night Details`)
+    - Day 1 of that Frat Night Template's Field Guide Week falls on that Event's Start Date — calculate how many days it has been since that date using today's date (`days_since_frat_night`)
+    - If the Frat Night Template has no Field Guide Week, or `days_since_frat_night` is not between 0 and 6, there's no current devotional
+    - Otherwise, find the Field Guide Daily Devotional record where `Day Number` = `days_since_frat_night` + 1 (1–7)
     - If that record exists, find or create a Field Guide Daily Devotional Member record
     - If that record doesn't exist, show a "you've completed the field guide" screen
 - When the user (or their Guardian/Captain on their behalf) selects a sword for the day, populate `Field Guide Daily Devotional Member`.`Sword`, and set `Submitted By User Id` to whoever submitted it
@@ -59,7 +59,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - A notification reminder is sent at 8pm to tell the user to do their spade reflection and closing prayer for the day (if it exists)
 - A streak is shown on the field guide of how many times they have consecutively completed the field guide daily devotional
 - There is no bound on how far back a user can retroactively complete a missed day to correct their streak
-- A field guide streak resets at the start of each new school year (i.e. each new Chapter Field Guide Details record). This should naturally happen since the field guide will not have content during the summer.
+- A field guide streak resets naturally whenever there's a gap in authored content to complete — e.g. a stretch of Rush Nights with no Field Guide Week, or a summer break between school years where the chapter has no Frat Nights at all
 
 ### Challenges
 
@@ -103,7 +103,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - A streak is the number of consecutive challenges (or, for the Field Guide, consecutive days) that have been accepted and completed. If a user misses one either because they didn't accept/complete it, the streak restarts
     - Cancelled Frat Nights do not count against a Weekly Challenge streak
     - Late completed challenges or field guide days retroactively apply to the streak, with no limit on how far back this can reach
-    - A Field Guide streak resets at the start of each new school year due to challenges not being available during the summer
+    - A Field Guide streak resets naturally whenever there's a gap in authored content to complete (e.g. summer break, when the chapter has no Frat Nights)
 - Timezones
     - The user's timezone is assumed to be the same time zone as the chapter's location
 - Chapters
@@ -165,14 +165,6 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Frat Night Location
     - Constraints:
         - Unique constraint on Key
-- Chapter Field Guide Details
-    - Id
-    - Chapter Key (referenced by Key, not Id)
-    - School Year Start Date
-    - School Year End Date
-    - Field Guide Start Date
-    - Created Date
-    - Last Modified Date
 - Frat Night Template
     - Id
     - Title (ex. "the fortitudious man defends his brothers")
@@ -180,11 +172,12 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Reading (markdown enabled)
     - Video Clip URL (optional)
     - Key
+    - Field Guide Week Id (nullable — not every template has daily devotional content, e.g. Rush Night templates)
     - Created Date
     - Last Modified Date
     - Constraints:
         - Unique constraint on Key
-    - Note: a template has no date of its own — its effective date is whichever Event references it via Event Frat Night Details' Frat Night Template Key (see that table's uniqueness constraint below)
+    - Note: a template has no date of its own — its effective date is whichever Event references it via Event Frat Night Details' Frat Night Template Key (see that table's uniqueness constraint below). Day 1 of its Field Guide Week (if any) falls on that Event's Start Date — see the Field Guide algorithm above.
 - Challenge
     - Id
     - Frat Night Template Key 

@@ -18,6 +18,7 @@ abstract final class RoutePaths {
   static const guide = '/guide';
   static const challenge = '/challenge';
   static const events = '/events';
+  static const debug = '/debug';
 
   static const profileSegment = 'profile';
   static const editSegment = 'edit';
