@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/reminder_setting.dart';
 import '../providers/profile_providers.dart';
 
@@ -31,9 +32,20 @@ class RemindersScreen extends ConsumerWidget {
                       bordered: false,
                       trailing: FraternusSwitch(
                         value: user.isRemindersEnabled,
-                        onChanged: (_) => ref
-                            .read(currentUserProvider.notifier)
-                            .toggleRemindersEnabled(),
+                        onChanged: (_) async {
+                          try {
+                            await ref
+                                .read(currentUserProvider.notifier)
+                                .toggleRemindersEnabled();
+                          } catch (_) {
+                            if (context.mounted) {
+                              showErrorSnackBar(
+                                context,
+                                'Something went wrong. Please try again.',
+                              );
+                            }
+                          }
+                        },
                       ),
                     ),
                   ),
@@ -97,9 +109,20 @@ class _RemindersList extends ConsumerWidget {
                       trailing: FraternusSwitch(
                         value: group.reminders[i].enabled,
                         onChanged: enabled
-                            ? (_) => ref
-                                  .read(profileRemindersProvider.notifier)
-                                  .toggle(group.reminders[i].type)
+                            ? (_) async {
+                                try {
+                                  await ref
+                                      .read(profileRemindersProvider.notifier)
+                                      .toggle(group.reminders[i].type);
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    showErrorSnackBar(
+                                      context,
+                                      'Could not save your reminder settings. Please try again.',
+                                    );
+                                  }
+                                }
+                              }
                             : (_) {},
                       ),
                     ),

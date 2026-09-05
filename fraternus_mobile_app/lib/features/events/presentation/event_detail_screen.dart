@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../models/event_attendees_chapter.dart';
@@ -174,12 +175,23 @@ class _EventDetailContent extends ConsumerWidget {
                 _RsvpRow(
                   label: event.eligibleHouseholdMembers[i].label,
                   status: statuses[event.eligibleHouseholdMembers[i].memberId],
-                  onChanged: (status) => ref
-                      .read(eventRsvpProvider(eventId).notifier)
-                      .toggleStatus(
-                        event.eligibleHouseholdMembers[i].memberId,
-                        status,
-                      ),
+                  onChanged: (status) async {
+                    try {
+                      await ref
+                          .read(eventRsvpProvider(eventId).notifier)
+                          .toggleStatus(
+                            event.eligibleHouseholdMembers[i].memberId,
+                            status,
+                          );
+                    } catch (_) {
+                      if (context.mounted) {
+                        showErrorSnackBar(
+                          context,
+                          'Something went wrong. Please try again.',
+                        );
+                      }
+                    }
+                  },
                 ),
                 if (i != event.eligibleHouseholdMembers.length - 1)
                   const SizedBox(height: 12),

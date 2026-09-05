@@ -6,6 +6,7 @@ import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/providers/selected_household_member_provider.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/field_guide_daily_devotional.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
@@ -209,10 +210,33 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
     required String? savedSpade,
   }) {
     final currentText = _spadeController.text;
-    if (currentText != (savedSpade ?? '')) {
-      ref
-          .read(guideDevotionalProgressProvider(widget.date).notifier)
-          .setSpade(personKey, currentText);
+    if (currentText == (savedSpade ?? '')) return;
+    // Fire-and-forget by necessity — this runs from dispose() as well as
+    // didUpdateWidget, so there's no caller left to await. Still catch the
+    // failure so it doesn't become an unhandled rejection, and surface it
+    // if the widget (e.g. the didUpdateWidget case) is still around to show
+    // it — dispose() itself will already be unmounted by the time this
+    // resolves.
+    ref
+        .read(guideDevotionalProgressProvider(widget.date).notifier)
+        .setSpade(personKey, currentText)
+        .catchError((_) {
+          if (mounted) {
+            showErrorSnackBar(context, 'Your Spade couldn\'t be saved.');
+          }
+        });
+  }
+
+  /// Awaits [write] and, on failure, shows [errorMessage] in a SnackBar
+  /// instead of letting the [_optimisticUpsert] rollback happen silently.
+  Future<void> _reportOnFailure(
+    Future<void> Function() write,
+    String errorMessage,
+  ) async {
+    try {
+      await write();
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, errorMessage);
     }
   }
 
@@ -232,7 +256,10 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
         StreakBannerRow(personKey: personKey, isCompletedToday: isCompleted),
         ContentCard(
           eyebrow: 'Identity',
-          onLike: () => notifier.toggleIdentityFavorite(personKey),
+          onLike: () => _reportOnFailure(
+            () => notifier.toggleIdentityFavorite(personKey),
+            'Something went wrong. Please try again.',
+          ),
           liked: member?.isIdentityFavorite ?? false,
           child: Text(
             devotional.identityReading,
@@ -241,7 +268,10 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
         ),
         ContentCard(
           eyebrow: 'Wisdom for the Day',
-          onLike: () => notifier.toggleWisdomFavorite(personKey),
+          onLike: () => _reportOnFailure(
+            () => notifier.toggleWisdomFavorite(personKey),
+            'Something went wrong. Please try again.',
+          ),
           liked: member?.isWisdomFavorite ?? false,
           subtitle: devotional.wisdomQuote,
           child: Text(
@@ -258,7 +288,10 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
           child: SwordOptionList(
             options: devotional.swordOptions,
             selected: member?.sword,
-            onSelect: (text) => notifier.setSword(personKey, text),
+            onSelect: (text) => _reportOnFailure(
+              () => notifier.setSword(personKey, text),
+              'Something went wrong. Please try again.',
+            ),
           ),
         ),
         ContentCard(
@@ -267,7 +300,10 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
           child: JournalTextarea(
             controller: _spadeController,
             placeholder: 'Write your answer...',
-            onFocusLost: (text) => notifier.setSpade(personKey, text),
+            onFocusLost: (text) => _reportOnFailure(
+              () => notifier.setSpade(personKey, text),
+              'Something went wrong. Please try again.',
+            ),
           ),
         ),
         ContentCard(
@@ -296,7 +332,10 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
           label: isCompleted ? '✓ Completed' : 'Mark Complete',
           color: isCompleted ? ButtonColor.success : ButtonColor.primary,
           fullWidth: true,
-          onPressed: () => notifier.toggleComplete(personKey),
+          onPressed: () => _reportOnFailure(
+            () => notifier.toggleComplete(personKey),
+            'Something went wrong. Please try again.',
+          ),
         ),
         const SizedBox(height: 12),
         Button(

@@ -30,6 +30,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   AppUser? _user;
   Member? _selfMember;
   bool _initialized = false;
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   /// Runs once, the first time `user`/`selfMember` actually resolve —
   /// [build] re-runs on every provider change, but the controllers/fields
@@ -55,28 +57,43 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _save() async {
-    final user = _user!;
-    final selfMember = _selfMember;
-    await ref
-        .read(currentUserProvider.notifier)
-        .save(
-          user.copyWith(
-            firstName: _firstNameController!.text,
-            lastName: _lastNameController!.text,
-          ),
-        );
-    if (selfMember != null && _chapterKey != null) {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    try {
+      final user = _user!;
+      final selfMember = _selfMember;
       await ref
-          .read(householdMembersProvider.notifier)
-          .updateMember(
-            selfMember.copyWith(
+          .read(currentUserProvider.notifier)
+          .save(
+            user.copyWith(
               firstName: _firstNameController!.text,
               lastName: _lastNameController!.text,
-              chapterKey: _chapterKey,
             ),
           );
+      if (selfMember != null && _chapterKey != null) {
+        await ref
+            .read(householdMembersProvider.notifier)
+            .updateMember(
+              selfMember.copyWith(
+                firstName: _firstNameController!.text,
+                lastName: _lastNameController!.text,
+                chapterKey: _chapterKey,
+              ),
+            );
+      }
+      if (mounted) context.pop();
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () =>
+              _errorMessage = 'Your profile couldn\'t be saved. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
-    if (mounted) context.pop();
   }
 
   @override
@@ -187,11 +204,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildFooter(Member? selfMember) {
-    return Button(
-      label: 'Save',
-      fullWidth: true,
-      disabled: selfMember != null && _chapterKey == null,
-      onPressed: _save,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_errorMessage != null) ...[
+          Text(
+            _errorMessage!,
+            style: FraternusTypography.small(color: FraternusColors.error),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Button(
+          label: _isSubmitting ? 'Saving…' : 'Save',
+          fullWidth: true,
+          disabled:
+              _isSubmitting || (selfMember != null && _chapterKey == null),
+          onPressed: _save,
+        ),
+      ],
     );
   }
 }

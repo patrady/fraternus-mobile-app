@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/providers/selected_household_member_provider.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/field_guide_week.dart';
 import '../models/temperament.dart';
 import '../providers/guide_providers.dart';
@@ -78,7 +79,18 @@ class _VirtueDetailContent extends ConsumerWidget {
         for (final quote in week.quotes)
           ContentCard(
             subtitle: quote.quote,
-            onLike: () => quoteFavoritesNotifier.toggle(selectedKey, quote.id),
+            onLike: () async {
+              try {
+                await quoteFavoritesNotifier.toggle(selectedKey, quote.id);
+              } catch (_) {
+                if (context.mounted) {
+                  showErrorSnackBar(
+                    context,
+                    'Something went wrong. Please try again.',
+                  );
+                }
+              }
+            },
             liked: quoteFavorites['${quote.id}:$selectedKey'] ?? false,
             child: Text(
               '— ${quote.author}',

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/providers/selected_household_member_provider.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 import '../providers/challenge_providers.dart';
@@ -228,11 +229,24 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
                   completedAt: completions[i],
                   isNextIncomplete:
                       !progress.isCompleted && i == nextIncompleteIndex,
-                  onMarkComplete: () => ref
-                      .read(
-                        challengeProgressProvider(widget.challenge.id).notifier,
-                      )
-                      .toggleRep(widget.personKey, i),
+                  onMarkComplete: () async {
+                    try {
+                      await ref
+                          .read(
+                            challengeProgressProvider(
+                              widget.challenge.id,
+                            ).notifier,
+                          )
+                          .toggleRep(widget.personKey, i);
+                    } catch (_) {
+                      if (context.mounted) {
+                        showErrorSnackBar(
+                          context,
+                          'Something went wrong. Please try again.',
+                        );
+                      }
+                    }
+                  },
                 ),
                 if (i != completions.length - 1) const HairlineDivider(),
               ],
@@ -283,9 +297,20 @@ class _NotAcceptedCard extends ConsumerWidget {
           Button(
             label: 'Accept Challenge',
             fullWidth: true,
-            onPressed: () => ref
-                .read(challengeProgressProvider(challenge.id).notifier)
-                .accept(personKey),
+            onPressed: () async {
+              try {
+                await ref
+                    .read(challengeProgressProvider(challenge.id).notifier)
+                    .accept(personKey);
+              } catch (_) {
+                if (context.mounted) {
+                  showErrorSnackBar(
+                    context,
+                    'Something went wrong. Please try again.',
+                  );
+                }
+              }
+            },
           ),
         ],
       ),

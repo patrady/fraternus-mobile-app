@@ -31,14 +31,25 @@ class CurrentUser extends _$CurrentUser {
     ref.invalidateSelf();
   }
 
-  /// The master reminders switch — [AppUser.isRemindersEnabled].
+  /// The master reminders switch — [AppUser.isRemindersEnabled]. Flips
+  /// [state] optimistically so the switch responds instantly, rolling back
+  /// on failure — same shape as GuideDevotionalProgress's mutations.
   Future<void> toggleRemindersEnabled() async {
     final current = state.value;
     if (current == null) return;
-    await ref
-        .read(profileRepositoryProvider)
-        .setRemindersEnabled(!current.isRemindersEnabled);
-    ref.invalidateSelf();
+    final previous = state;
+    final optimistic = current.copyWith(
+      isRemindersEnabled: !current.isRemindersEnabled,
+    );
+    state = AsyncData(optimistic);
+    try {
+      await ref
+          .read(profileRepositoryProvider)
+          .setRemindersEnabled(optimistic.isRemindersEnabled);
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
   }
 }
 
@@ -131,6 +142,8 @@ class ProfileReminders extends _$ProfileReminders {
     return ref.watch(profileRepositoryProvider).fetchReminders();
   }
 
+  /// Flips the one [type]'s switch optimistically, rolling back to
+  /// [previous] on failure — same shape as [CurrentUser.toggleRemindersEnabled].
   Future<void> toggle(ReminderType type) async {
     final current = state.value ?? const [];
     ReminderSetting? existing;
@@ -143,9 +156,28 @@ class ProfileReminders extends _$ProfileReminders {
       }
     }
     if (existing == null) return;
-    await ref
-        .read(profileRepositoryProvider)
-        .setReminderEnabled(type, !existing.enabled);
-    ref.invalidateSelf();
+
+    final newEnabled = !existing.enabled;
+    final previous = state;
+    state = AsyncData([
+      for (final group in current)
+        ReminderGroup(
+          title: group.title,
+          reminders: [
+            for (final reminder in group.reminders)
+              reminder.type == type
+                  ? reminder.copyWith(enabled: newEnabled)
+                  : reminder,
+          ],
+        ),
+    ]);
+    try {
+      await ref
+          .read(profileRepositoryProvider)
+          .setReminderEnabled(type, newEnabled);
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
   }
 }

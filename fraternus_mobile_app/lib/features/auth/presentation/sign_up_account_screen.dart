@@ -410,20 +410,23 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     // alongside the button itself being disabled for the same window.
     if (_resendCooldownSeconds > 0) return;
     _startResendCooldown();
+    setState(() => _errorMessage = null);
     try {
       await ref
           .read(authRepositoryProvider)
           .sendEmailOtp(_emailController.text.trim());
     } catch (e, stackTrace) {
-      // Resend failures surface the next time the user submits the code —
-      // no separate error UI for a background resend tap — but still worth
-      // logging so a silent resend failure isn't invisible.
       developer.log(
         'resendCode failed',
         name: 'SignUpAccountScreen',
         error: e,
         stackTrace: stackTrace,
       );
+      if (mounted) {
+        setState(
+          () => _errorMessage = 'Could not resend the code. Please try again.',
+        );
+      }
     }
   }
 

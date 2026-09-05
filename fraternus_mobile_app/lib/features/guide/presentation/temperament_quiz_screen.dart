@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../data/temperament_quiz_repository.dart';
 import '../models/temperament.dart';
 import '../models/temperament_quiz_question.dart';
@@ -80,6 +81,14 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
       await ref
           .read(guideTemperamentResultProvider(widget.personKey).notifier)
           .save(result, answers);
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Something went wrong. Please try again.',
+        );
+      }
+      return;
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

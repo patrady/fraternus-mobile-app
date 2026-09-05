@@ -28,14 +28,14 @@ class ChildForm extends StatefulWidget {
   /// EditChildScreen) — kept plain (not repository-aware) here since this
   /// widget already only talks to its parent via callbacks.
   final List<Chapter> chapters;
-  final void Function({
+  final Future<void> Function({
     required String firstName,
     required String lastName,
     required String? email,
     required String? chapterKey,
   })
   onSave;
-  final VoidCallback? onRemove;
+  final Future<void> Function()? onRemove;
 
   @override
   State<ChildForm> createState() => _ChildFormState();
@@ -53,6 +53,8 @@ class _ChildFormState extends State<ChildForm> {
   );
   late String? _chapterKey =
       widget.initial?.chapterKey ?? widget.initialChapterKey;
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -60,6 +62,48 @@ class _ChildFormState extends State<ChildForm> {
     _lastNameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSave() async {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    try {
+      await widget.onSave(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        email: _emailController.text.isEmpty ? null : _emailController.text,
+        chapterKey: _chapterKey,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _handleRemove() async {
+    final onRemove = widget.onRemove;
+    if (onRemove == null) return;
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    try {
+      await onRemove();
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () =>
+              _errorMessage = 'Something went wrong. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -120,29 +164,32 @@ class _ChildFormState extends State<ChildForm> {
               ),
               const SizedBox(height: 16),
               Button(
-                label: 'Save',
+                label: _isSubmitting ? 'Saving…' : 'Save',
                 fullWidth: true,
-                disabled: _chapterKey == null,
-                onPressed: () => widget.onSave(
-                  firstName: _firstNameController.text,
-                  lastName: _lastNameController.text,
-                  email: _emailController.text.isEmpty
-                      ? null
-                      : _emailController.text,
-                  chapterKey: _chapterKey,
-                ),
+                disabled: _chapterKey == null || _isSubmitting,
+                onPressed: _handleSave,
               ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage!,
+                  style: FraternusTypography.small(
+                    color: FraternusColors.error,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         if (widget.onRemove != null) ...[
           const SizedBox(height: 16),
           Button(
-            label: 'Remove Child',
+            label: _isSubmitting ? 'Removing…' : 'Remove Child',
             variant: ButtonVariant.ghost,
             color: ButtonColor.danger,
             fullWidth: true,
-            onPressed: widget.onRemove,
+            disabled: _isSubmitting,
+            onPressed: _handleRemove,
           ),
         ],
       ],

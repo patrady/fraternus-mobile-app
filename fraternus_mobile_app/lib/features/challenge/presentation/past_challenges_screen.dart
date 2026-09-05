@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/ordinal_date_formatting.dart';
 import '../../../shared/providers/selected_household_member_provider.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../models/weekly_challenge.dart';
 import '../providers/challenge_providers.dart';
 
@@ -156,13 +157,22 @@ class _PastChallengeCard extends ConsumerWidget {
                 // or — if tapping inside the already-filled dots — the most
                 // recently completed one) so the doneCount-driven dot row
                 // always stays consistent with which index actually changed.
-                onToggle: (tappedIndex) {
+                onToggle: (tappedIndex) async {
                   final boundaryIndex = tappedIndex < progress.repsDone
                       ? progress.repsDone - 1
                       : progress.repsDone;
-                  ref
-                      .read(challengeProgressProvider(challenge.id).notifier)
-                      .toggleRep(personKey, boundaryIndex);
+                  try {
+                    await ref
+                        .read(challengeProgressProvider(challenge.id).notifier)
+                        .toggleRep(personKey, boundaryIndex);
+                  } catch (_) {
+                    if (context.mounted) {
+                      showErrorSnackBar(
+                        context,
+                        'Something went wrong. Please try again.',
+                      );
+                    }
+                  }
                 },
               ),
               if (!progress.isCompleted) ...[
