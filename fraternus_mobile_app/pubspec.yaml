@@ -60,6 +60,7 @@ dev_dependencies:
   riverpod_generator: ^3.0.0
   build_runner: ^2.15.1
   flutter_launcher_icons: ^0.14.4
+  mocktail: ^1.0.4
 
 # Launcher icon generation: run `dart run flutter_launcher_icons` after
 # dropping a source icon at the paths below. See
