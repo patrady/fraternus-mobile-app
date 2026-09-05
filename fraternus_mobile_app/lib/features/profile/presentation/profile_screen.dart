@@ -19,14 +19,20 @@ class ProfileScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
 
     return ScreenShell(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: userAsync.when(
-          data: (user) => _ProfileContent(user: user),
-          loading: () => const SizedBox.shrink(),
-          error: (error, stackTrace) =>
-              const BodyText('Something went wrong loading your profile.'),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ScreenHeader(title: 'Profile', onBack: () => context.pop()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: userAsync.when(
+              data: (user) => _ProfileContent(user: user),
+              loading: () => const SizedBox.shrink(),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading your profile.'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -50,31 +56,6 @@ class _ProfileContent extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            PressableBuilder(
-              onTap: () => context.pop(),
-              semanticLabel: 'Back',
-              builder: (context, isPressed) {
-                return Opacity(
-                  opacity: isPressed ? 0.75 : 1,
-                  child: const SizedBox(
-                    height: 44,
-                    width: 32,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FraternusIcon(name: 'chevron-left', size: 22),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 4),
-            const Heading('PROFILE', level: HeadingLevel.h2),
-          ],
-        ),
-        const SizedBox(height: 20),
         ListRow(
           leading: Avatar(initials: user.initials, size: AvatarSize.small),
           label: user.fullName,

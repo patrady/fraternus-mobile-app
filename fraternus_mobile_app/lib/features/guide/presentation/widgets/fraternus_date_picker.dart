@@ -27,8 +27,9 @@ Future<DateTime?> showFraternusDatePicker({
 ThemeData _datePickerTheme(BuildContext context) {
   final base = Theme.of(context);
   final selectedDayColor = WidgetStateProperty.resolveWith<Color?>((states) {
-    if (states.contains(WidgetState.selected))
+    if (states.contains(WidgetState.selected)) {
       return FraternusColors.terracotta;
+    }
     return null;
   });
   // Applies to BOTH the plain day-of-month text and "today"'s text — today
@@ -37,8 +38,9 @@ ThemeData _datePickerTheme(BuildContext context) {
   // (invisible) instead of falling back to this white-when-selected logic.
   final selectedTextColor = WidgetStateProperty.resolveWith<Color?>((states) {
     if (states.contains(WidgetState.selected)) return FraternusColors.white;
-    if (states.contains(WidgetState.disabled))
+    if (states.contains(WidgetState.disabled)) {
       return FraternusColors.textOnLightMuted;
+    }
     return FraternusColors.ink;
   });
   // "Today, not selected" gets terracotta text (matching its border ring)

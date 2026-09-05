@@ -466,13 +466,12 @@ class SupabaseGuideRepository implements GuideRepository {
         .upsert({
           'daily_devotional_id': dailyDevotionalId,
           'member_id': memberId,
-          if (sword != null) 'sword': sword,
-          if (spade != null) 'spade': spade,
+          'sword': ?sword,
+          'spade': ?spade,
           if (completed != null)
             'completed_date': completed ? _isoDate(DateTime.now()) : null,
-          if (isIdentityFavorite != null)
-            'is_identity_favorite': isIdentityFavorite,
-          if (isWisdomFavorite != null) 'is_wisdom_favorite': isWisdomFavorite,
+          'is_identity_favorite': ?isIdentityFavorite,
+          'is_wisdom_favorite': ?isWisdomFavorite,
         }, onConflict: 'daily_devotional_id,member_id')
         .select()
         .single();

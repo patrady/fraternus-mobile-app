@@ -45,8 +45,9 @@ Future<ChallengeFeed> _challengeFeed(Ref ref) async {
   final repository = ref.watch(challengeRepositoryProvider);
   final members = await ref.watch(householdMembersProvider.future);
   final chapterKey = _householdChapterKey(members);
-  if (chapterKey == null)
+  if (chapterKey == null) {
     return const ChallengeFeed(challenges: [], currentChallengeId: null);
+  }
   return repository.fetchChallenges(
     asOf: ref.watch(nowProvider),
     chapterKey: chapterKey,

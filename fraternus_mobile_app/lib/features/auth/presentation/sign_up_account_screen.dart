@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:flutter/material.dart' show InputBorder, InputDecoration, TextField;
+import 'package:flutter/material.dart'
+    show InputBorder, InputDecoration, TextField;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +21,12 @@ import '../validation.dart';
 /// until the whole wizard completes, same as the rest of this screen's
 /// fields.
 class _ChildDraft {
-  const _ChildDraft({required this.firstName, required this.lastName, this.email, this.chapterKey});
+  const _ChildDraft({
+    required this.firstName,
+    required this.lastName,
+    this.email,
+    this.chapterKey,
+  });
 
   final String firstName;
   final String lastName;
@@ -71,7 +77,8 @@ class SignUpAccountScreen extends ConsumerStatefulWidget {
   const SignUpAccountScreen({super.key});
 
   @override
-  ConsumerState<SignUpAccountScreen> createState() => _SignUpAccountScreenState();
+  ConsumerState<SignUpAccountScreen> createState() =>
+      _SignUpAccountScreenState();
 }
 
 /// Static per-step config — one entry per wizard step, in step order, so
@@ -129,7 +136,10 @@ class _EmailStepConfig extends _WizardStepConfig {
 
   @override
   Widget buildStep(_SignUpAccountScreenState state) {
-    return _EmailStep(controller: state._emailController, errorMessage: state._errorMessage);
+    return _EmailStep(
+      controller: state._emailController,
+      errorMessage: state._errorMessage,
+    );
   }
 
   @override
@@ -173,7 +183,10 @@ class _PasswordStepConfig extends _WizardStepConfig {
 
   @override
   Widget buildStep(_SignUpAccountScreenState state) {
-    return _PasswordStep(controller: state._passwordController, errorMessage: state._errorMessage);
+    return _PasswordStep(
+      controller: state._passwordController,
+      errorMessage: state._errorMessage,
+    );
   }
 
   @override
@@ -202,7 +215,11 @@ class _NameStepConfig extends _WizardStepConfig {
 
   @override
   Widget buildFooter(_SignUpAccountScreenState state) {
-    return Button(label: 'Continue', fullWidth: true, onPressed: state._submitName);
+    return Button(
+      label: 'Continue',
+      fullWidth: true,
+      onPressed: state._submitName,
+    );
   }
 }
 
@@ -222,7 +239,11 @@ class _AttendanceStepConfig extends _WizardStepConfig {
 
   @override
   Widget buildFooter(_SignUpAccountScreenState state) {
-    return Button(label: 'Continue', fullWidth: true, onPressed: state._submitAttendance);
+    return Button(
+      label: 'Continue',
+      fullWidth: true,
+      onPressed: state._submitAttendance,
+    );
   }
 }
 
@@ -248,7 +269,12 @@ class _KidsStepConfig extends _WizardStepConfig {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Button(label: 'Continue', fullWidth: true, disabled: state._isSubmitting, onPressed: state._finish),
+        Button(
+          label: 'Continue',
+          fullWidth: true,
+          disabled: state._isSubmitting,
+          onPressed: state._finish,
+        ),
         const SizedBox(height: 12),
         Button(
           label: "I Don't Have Any Kids",
@@ -268,7 +294,8 @@ class _FinishedStepConfig extends _WizardStepConfig {
   @override
   Widget buildStep(_SignUpAccountScreenState state) {
     return _FinishedStep(
-      fullName: '${state._firstNameController.text.trim()} ${state._lastNameController.text.trim()}',
+      fullName:
+          '${state._firstNameController.text.trim()} ${state._lastNameController.text.trim()}',
       email: state._emailController.text.trim(),
       attends: state._attends,
       chapterKey: state._chapterKey,
@@ -355,11 +382,22 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       _errorMessage = null;
     });
     try {
-      await ref.read(authRepositoryProvider).sendEmailOtp(_emailController.text.trim());
+      await ref
+          .read(authRepositoryProvider)
+          .sendEmailOtp(_emailController.text.trim());
       if (mounted) setState(() => _step = 1);
     } catch (e, stackTrace) {
-      developer.log('sendEmailOtp failed', name: 'SignUpAccountScreen', error: e, stackTrace: stackTrace);
-      if (mounted) setState(() => _errorMessage = 'Could not send a code. Try again in a moment.');
+      developer.log(
+        'sendEmailOtp failed',
+        name: 'SignUpAccountScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        setState(
+          () => _errorMessage = 'Could not send a code. Try again in a moment.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -373,12 +411,19 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     if (_resendCooldownSeconds > 0) return;
     _startResendCooldown();
     try {
-      await ref.read(authRepositoryProvider).sendEmailOtp(_emailController.text.trim());
+      await ref
+          .read(authRepositoryProvider)
+          .sendEmailOtp(_emailController.text.trim());
     } catch (e, stackTrace) {
       // Resend failures surface the next time the user submits the code —
       // no separate error UI for a background resend tap — but still worth
       // logging so a silent resend failure isn't invisible.
-      developer.log('resendCode failed', name: 'SignUpAccountScreen', error: e, stackTrace: stackTrace);
+      developer.log(
+        'resendCode failed',
+        name: 'SignUpAccountScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -412,10 +457,15 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     try {
       await ref
           .read(authRepositoryProvider)
-          .verifyEmailOtp(email: _emailController.text.trim(), token: _codeController.text.trim());
+          .verifyEmailOtp(
+            email: _emailController.text.trim(),
+            token: _codeController.text.trim(),
+          );
       if (mounted) setState(() => _step = 2);
     } catch (_) {
-      if (mounted) setState(() => _errorMessage = 'That code is incorrect or expired.');
+      if (mounted) {
+        setState(() => _errorMessage = 'That code is incorrect or expired.');
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -423,7 +473,10 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
 
   Future<void> _submitPassword() async {
     if (!isValidPassword(_passwordController.text)) {
-      setState(() => _errorMessage = 'Your password must be at least 12 characters long.');
+      setState(
+        () => _errorMessage =
+            'Your password must be at least 12 characters long.',
+      );
       return;
     }
     setState(() {
@@ -431,10 +484,17 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       _errorMessage = null;
     });
     try {
-      await ref.read(authRepositoryProvider).setPassword(_passwordController.text);
+      await ref
+          .read(authRepositoryProvider)
+          .setPassword(_passwordController.text);
       if (mounted) setState(() => _step = 3);
     } catch (_) {
-      if (mounted) setState(() => _errorMessage = 'Could not set your password. Try again in a moment.');
+      if (mounted) {
+        setState(
+          () => _errorMessage =
+              'Could not set your password. Try again in a moment.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -445,7 +505,9 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
     final lastNameValid = isValidName(_lastNameController.text);
     if (!firstNameValid || !lastNameValid) {
       setState(() {
-        _firstNameError = firstNameValid ? null : 'Must be at least 2 characters';
+        _firstNameError = firstNameValid
+            ? null
+            : 'Must be at least 2 characters';
         _lastNameError = lastNameValid ? null : 'Must be at least 2 characters';
       });
       return;
@@ -492,9 +554,15 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ScreenHeader(title: 'Create Account', onBack: _canGoBack ? _goBack : null),
+          ScreenHeader(
+            title: 'Create Account',
+            onBack: _canGoBack ? _goBack : null,
+          ),
           StepProgress(step: _step + 1, total: _totalSteps),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _buildStep()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildStep(),
+          ),
         ],
       ),
     );
@@ -532,10 +600,16 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       // place; Today/Profile will fetch fresh once actually navigated to.
       final profileRepository = ref.read(profileRepositoryProvider);
       final currentUser = await profileRepository.fetchCurrentUser();
-      await profileRepository.updateProfile(currentUser.copyWith(firstName: firstName, lastName: lastName));
+      await profileRepository.updateProfile(
+        currentUser.copyWith(firstName: firstName, lastName: lastName),
+      );
 
       if (_attends) {
-        await profileRepository.completeCaptainSignup(chapterKey: _chapterKey!, firstName: firstName, lastName: lastName);
+        await profileRepository.completeCaptainSignup(
+          chapterKey: _chapterKey!,
+          firstName: firstName,
+          lastName: lastName,
+        );
       }
       for (final kid in _kids) {
         await profileRepository.createChildMember(
@@ -552,7 +626,10 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       if (mounted) context.go(RoutePaths.today);
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'Could not finish setting up your account. Try again in a moment.');
+        setState(
+          () => _errorMessage =
+              'Could not finish setting up your account. Try again in a moment.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -583,7 +660,10 @@ class _ErrorText extends StatelessWidget {
     if (message == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Text(message!, style: FraternusTypography.small(color: FraternusColors.error)),
+      child: Text(
+        message!,
+        style: FraternusTypography.small(color: FraternusColors.error),
+      ),
     );
   }
 }
@@ -603,9 +683,15 @@ class _EmailStep extends StatelessWidget {
         const Heading("WHAT'S YOUR EMAIL?", level: HeadingLevel.h3),
         const SizedBox(height: 16),
         const FieldLabel(label: 'Email'),
-        FormTextField(controller: controller, keyboardType: TextInputType.emailAddress),
+        FormTextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+        ),
         const SizedBox(height: 8),
-        const BodyText("We'll send you a code to verify it's really you.", size: BodyTextSize.small),
+        const BodyText(
+          "We'll send you a code to verify it's really you.",
+          size: BodyTextSize.small,
+        ),
         _ErrorText(errorMessage),
       ],
     );
@@ -639,13 +725,18 @@ class _CodeStep extends StatelessWidget {
         const SizedBox(height: 8),
         const Heading('CHECK YOUR EMAIL', level: HeadingLevel.h3),
         const SizedBox(height: 8),
-        BodyText('Enter the 6-digit code we sent to $email.', size: BodyTextSize.small),
+        BodyText(
+          'Enter the 6-digit code we sent to $email.',
+          size: BodyTextSize.small,
+        ),
         const SizedBox(height: 16),
         const FieldLabel(label: 'Verification Code'),
         _CodeInput(controller: controller),
         const SizedBox(height: 8),
         Button(
-          label: onCooldown ? 'Resend Code (${resendCooldownSeconds}s)' : 'Resend Code',
+          label: onCooldown
+              ? 'Resend Code (${resendCooldownSeconds}s)'
+              : 'Resend Code',
           variant: ButtonVariant.underlined,
           size: ButtonSize.small,
           disabled: onCooldown,
@@ -673,7 +764,10 @@ class _CodeInput extends StatefulWidget {
 class _CodeInputState extends State<_CodeInput> {
   static const _length = 6;
 
-  final _digitControllers = List.generate(_length, (_) => TextEditingController());
+  final _digitControllers = List.generate(
+    _length,
+    (_) => TextEditingController(),
+  );
   final _focusNodes = List.generate(_length, (_) => FocusNode());
 
   @override
@@ -701,7 +795,9 @@ class _CodeInputState extends State<_CodeInput> {
   }
 
   void _syncCode() {
-    widget.controller.text = _digitControllers.map((controller) => controller.text).join();
+    widget.controller.text = _digitControllers
+        .map((controller) => controller.text)
+        .join();
   }
 
   // TextField has no separate paste callback — a paste (or autofill) just
@@ -715,7 +811,8 @@ class _CodeInputState extends State<_CodeInput> {
       _applyDigits(digits);
       _syncCode();
       final filledCount = digits.length > _length ? _length : digits.length;
-      _focusNodes[filledCount >= _length ? _length - 1 : filledCount].requestFocus();
+      _focusNodes[filledCount >= _length ? _length - 1 : filledCount]
+          .requestFocus();
       return;
     }
 
@@ -754,7 +851,10 @@ class _CodeInputState extends State<_CodeInput> {
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         maxLength: _length,
-        style: FraternusTypography.body().copyWith(fontSize: 20, fontWeight: FontWeight.w600),
+        style: FraternusTypography.body().copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           counterText: '',
@@ -784,7 +884,10 @@ class _PasswordStep extends StatelessWidget {
         const FieldLabel(label: 'Password'),
         FormTextField(controller: controller, obscureText: true),
         const SizedBox(height: 8),
-        const BodyText('Must be at least 12 characters.', size: BodyTextSize.small),
+        const BodyText(
+          'Must be at least 12 characters.',
+          size: BodyTextSize.small,
+        ),
         _ErrorText(errorMessage),
       ],
     );
@@ -847,7 +950,10 @@ class _AttendanceStep extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        const Heading('WILL YOU BE ATTENDING WEEKLY FRAT NIGHTS?', level: HeadingLevel.h3),
+        const Heading(
+          'WILL YOU BE ATTENDING WEEKLY FRAT NIGHTS?',
+          level: HeadingLevel.h3,
+        ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -858,9 +964,17 @@ class _AttendanceStep extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _RadioRow(label: 'Yes', selected: attends, onTap: () => onAttendsChanged(true)),
+              _RadioRow(
+                label: 'Yes',
+                selected: attends,
+                onTap: () => onAttendsChanged(true),
+              ),
               const HairlineDivider(),
-              _RadioRow(label: 'No', selected: !attends, onTap: () => onAttendsChanged(false)),
+              _RadioRow(
+                label: 'No',
+                selected: !attends,
+                onTap: () => onAttendsChanged(false),
+              ),
             ],
           ),
         ),
@@ -869,7 +983,9 @@ class _AttendanceStep extends ConsumerWidget {
           const FieldLabel(label: 'Chapter'),
           SelectField(
             value: chapterKey,
-            options: {for (final chapter in chapters) chapter.key: chapter.displayName},
+            options: {
+              for (final chapter in chapters) chapter.key: chapter.displayName,
+            },
             placeholder: 'Select a chapter',
             onChanged: onChapterChanged,
           ),
@@ -886,7 +1002,11 @@ class _AttendanceStep extends ConsumerWidget {
 /// it's kept private here rather than promoted to the design system for a
 /// single caller.
 class _RadioRow extends StatelessWidget {
-  const _RadioRow({required this.label, required this.selected, required this.onTap});
+  const _RadioRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
@@ -910,7 +1030,9 @@ class _RadioRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: selected ? FraternusColors.accentPrimary : FraternusColors.borderSubtle,
+                      color: selected
+                          ? FraternusColors.accentPrimary
+                          : FraternusColors.borderSubtle,
                       width: 2,
                     ),
                   ),
@@ -927,7 +1049,10 @@ class _RadioRow extends StatelessWidget {
                       : null,
                 ),
                 const SizedBox(width: 12),
-                Text(label, style: FraternusTypography.body().copyWith(fontSize: 15)),
+                Text(
+                  label,
+                  style: FraternusTypography.body().copyWith(fontSize: 15),
+                ),
               ],
             ),
           ),
@@ -977,9 +1102,18 @@ class _KidsStep extends ConsumerWidget {
           InfoCard(
             initials: kids[i].fullName.isEmpty
                 ? null
-                : kids[i].fullName.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase(),
+                : kids[i].fullName
+                      .trim()
+                      .split(RegExp(r'\s+'))
+                      .map((p) => p[0])
+                      .take(2)
+                      .join()
+                      .toUpperCase(),
             title: kids[i].fullName,
-            subtitle: _chapterDisplayName(kids[i].chapterKey ?? defaultChapterKey, chapters),
+            subtitle: _chapterDisplayName(
+              kids[i].chapterKey ?? defaultChapterKey,
+              chapters,
+            ),
             onRemove: () => onRemoveChild(i),
           ),
         if (addingChild)
@@ -1025,7 +1159,10 @@ class _AddChildButton extends StatelessWidget {
               children: [
                 const FraternusIcon(name: 'plus', size: 16),
                 const SizedBox(width: 8),
-                Text('ADD CHILD', style: FraternusTypography.button(fontSize: 13)),
+                Text(
+                  'ADD CHILD',
+                  style: FraternusTypography.button(fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -1066,7 +1203,9 @@ class _InlineChildFormState extends State<_InlineChildForm> {
     super.dispose();
   }
 
-  bool get _canAdd => isValidName(_firstNameController.text) && isValidName(_lastNameController.text);
+  bool get _canAdd =>
+      isValidName(_firstNameController.text) &&
+      isValidName(_lastNameController.text);
 
   @override
   Widget build(BuildContext context) {
@@ -1082,10 +1221,18 @@ class _InlineChildFormState extends State<_InlineChildForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const FieldLabel(label: 'First Name'),
-          FormTextField(controller: _firstNameController, placeholder: 'First name'),
+          FormTextField(
+            controller: _firstNameController,
+            placeholder: 'First name',
+            onChanged: (_) => setState(() {}),
+          ),
           const SizedBox(height: 16),
           const FieldLabel(label: 'Last Name'),
-          FormTextField(controller: _lastNameController, placeholder: 'Last name'),
+          FormTextField(
+            controller: _lastNameController,
+            placeholder: 'Last name',
+            onChanged: (_) => setState(() {}),
+          ),
           const SizedBox(height: 16),
           const FieldLabel(label: 'Email (Optional)'),
           FormTextField(
@@ -1097,7 +1244,10 @@ class _InlineChildFormState extends State<_InlineChildForm> {
           const FieldLabel(label: 'Chapter'),
           SelectField(
             value: _chapterKey,
-            options: {for (final chapter in widget.chapters) chapter.key: chapter.displayName},
+            options: {
+              for (final chapter in widget.chapters)
+                chapter.key: chapter.displayName,
+            },
             placeholder: 'Select a chapter',
             onChanged: (value) => setState(() => _chapterKey = value),
           ),
@@ -1122,7 +1272,9 @@ class _InlineChildFormState extends State<_InlineChildForm> {
                     _ChildDraft(
                       firstName: _firstNameController.text.trim(),
                       lastName: _lastNameController.text.trim(),
-                      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+                      email: _emailController.text.trim().isEmpty
+                          ? null
+                          : _emailController.text.trim(),
                       chapterKey: _chapterKey,
                     ),
                   ),
@@ -1163,13 +1315,21 @@ class _FinishedStep extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 24),
-        const IconBadgeCircle(icon: 'sparkles', size: IconBadgeCircleSize.large),
+        const IconBadgeCircle(
+          icon: 'sparkles',
+          size: IconBadgeCircleSize.large,
+        ),
         const SizedBox(height: 16),
         const Heading("YOU'RE ALL SET", level: HeadingLevel.h3),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerLeft,
-          child: Text('YOU', style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary)),
+          child: Text(
+            'YOU',
+            style: FraternusTypography.eyebrow(
+              color: FraternusColors.accentPrimary,
+            ),
+          ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -1189,7 +1349,12 @@ class _FinishedStep extends ConsumerWidget {
                   color: FraternusColors.ink,
                 ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
               ),
-              Text(email, style: FraternusTypography.small(color: FraternusColors.textOnLightMuted)),
+              Text(
+                email,
+                style: FraternusTypography.small(
+                  color: FraternusColors.textOnLightMuted,
+                ),
+              ),
               if (isCaptain) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -1214,7 +1379,9 @@ class _FinishedStep extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               'YOUR KIDS',
-              style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+              style: FraternusTypography.eyebrow(
+                color: FraternusColors.accentPrimary,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -1222,9 +1389,18 @@ class _FinishedStep extends ConsumerWidget {
             InfoCard(
               initials: kid.fullName.isEmpty
                   ? null
-                  : kid.fullName.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase(),
+                  : kid.fullName
+                        .trim()
+                        .split(RegExp(r'\s+'))
+                        .map((p) => p[0])
+                        .take(2)
+                        .join()
+                        .toUpperCase(),
               title: kid.fullName,
-              subtitle: _chapterDisplayName(kid.chapterKey ?? chapterKey, chapters),
+              subtitle: _chapterDisplayName(
+                kid.chapterKey ?? chapterKey,
+                chapters,
+              ),
             ),
         ],
         _ErrorText(errorMessage),

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +36,7 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
   /// selection by its label rather than by index.
   final Map<int, String> _answers = {};
   TemperamentResult? _result;
+  bool _isSaving = false;
 
   Future<void> _confirmExit() async {
     final confirmed = await showFraternusConfirmDialog(
@@ -57,7 +56,7 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
     }
   }
 
-  void _goNext(List<TemperamentQuizQuestion> questions) {
+  Future<void> _goNext(List<TemperamentQuizQuestion> questions) async {
     if (_questionIndex < questions.length - 1) {
       setState(() => _questionIndex += 1);
       return;
@@ -76,14 +75,15 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
     }
 
     final result = scoreTemperamentQuiz(selectedKeys);
-    // Fire-and-forget: the results screen below reflects [result]
-    // immediately regardless of the save's round trip — see
-    // GuideTemperamentResult.save's own optimistic-update comment.
-    unawaited(
-      ref
+    setState(() => _isSaving = true);
+    try {
+      await ref
           .read(guideTemperamentResultProvider(widget.personKey).notifier)
-          .save(result, answers),
-    );
+          .save(result, answers);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+    if (!mounted) return;
     setState(() {
       _result = result;
       _phase = _QuizPhase.results;
@@ -104,6 +104,7 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
           index: _questionIndex,
           total: questions.length,
           selected: _answers[_questionIndex],
+          isSaving: _isSaving,
           onSelect: (text) => setState(() => _answers[_questionIndex] = text),
           onExit: _confirmExit,
           onBack: _goBack,
@@ -181,6 +182,7 @@ class _QuestionScreen extends StatelessWidget {
     required this.index,
     required this.total,
     required this.selected,
+    required this.isSaving,
     required this.onSelect,
     required this.onExit,
     required this.onBack,
@@ -191,6 +193,7 @@ class _QuestionScreen extends StatelessWidget {
   final int index;
   final int total;
   final String? selected;
+  final bool isSaving;
   final ValueChanged<String> onSelect;
   final VoidCallback onExit;
   final VoidCallback onBack;
@@ -207,13 +210,18 @@ class _QuestionScreen extends StatelessWidget {
             label: 'Back',
             variant: ButtonVariant.ghost,
             icon: 'chevron-left',
+            disabled: isSaving,
             onPressed: onBack,
           ),
           Button(
-            label: isLastQuestion ? 'Finish' : 'Next',
+            label: isLastQuestion && isSaving
+                ? 'Saving…'
+                : isLastQuestion
+                ? 'Finish'
+                : 'Next',
             icon: 'chevron-right',
             iconPosition: ButtonIconPosition.right,
-            disabled: selected == null,
+            disabled: selected == null || isSaving,
             onPressed: onNext,
           ),
         ],

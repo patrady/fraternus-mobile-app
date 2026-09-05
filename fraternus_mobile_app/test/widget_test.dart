@@ -1090,7 +1090,9 @@ void main() {
       await tester.enterText(childFields.at(1), 'Doe');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Add'));
+      await tester.ensureVisible(find.text('ADD'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ADD'));
       await tester.pumpAndSettle();
 
       expect(find.text('Jack Doe'), findsOneWidget);

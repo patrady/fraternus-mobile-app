@@ -35,8 +35,9 @@ class EditChildScreen extends ConsumerWidget {
                     break;
                   }
                 }
-                if (member == null)
+                if (member == null) {
                   return const BodyText('This child could not be found.');
+                }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

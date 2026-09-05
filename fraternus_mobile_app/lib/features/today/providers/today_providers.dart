@@ -92,7 +92,6 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
   final now = ref.watch(nowProvider);
   final today = _dateOnly(now);
 
-  final user = await ref.watch(currentUserProvider.future);
   final members = await ref.watch(householdMembersProvider.future);
   final week = await ref.watch(guideWeekForDateProvider(today).future);
   final currentChallenge = await ref.watch(currentChallengeProvider.future);
@@ -125,7 +124,6 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
 
   return TodayDashboard(
     date: today,
-    greetingName: user.firstName,
     weeklyFocus: hasTodaysReading ? WeeklyFocus(virtue: week!.virtue) : null,
     people: [
       for (final member in members)

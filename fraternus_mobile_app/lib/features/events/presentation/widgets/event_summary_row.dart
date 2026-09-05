@@ -6,7 +6,6 @@ import '../../../../app/clock_provider.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../shared/formatting/event_date_formatting.dart';
 import '../../models/event.dart';
-import 'open_in_maps_dialog.dart';
 
 /// One event's card in the Events list — title (struck through when
 /// cancelled), a clock/date line, a location line, and a trailing status

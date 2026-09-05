@@ -55,16 +55,19 @@ class _EventDetailContent extends ConsumerWidget {
 
   String get _scopeLabel {
     final roles = event.attendeesChapter.map((a) => a.role).toSet();
-    if (roles.contains(EventAttendeeChapterRole.chapter))
+    if (roles.contains(EventAttendeeChapterRole.chapter)) {
       return 'Entire Chapter';
+    }
     if (roles.contains(EventAttendeeChapterRole.captains) &&
         roles.contains(EventAttendeeChapterRole.brothers)) {
       return 'Entire Chapter';
     }
-    if (roles.contains(EventAttendeeChapterRole.captains))
+    if (roles.contains(EventAttendeeChapterRole.captains)) {
       return 'Captains Only';
-    if (roles.contains(EventAttendeeChapterRole.brothers))
+    }
+    if (roles.contains(EventAttendeeChapterRole.brothers)) {
       return 'Brothers Only';
+    }
     if (event.attendeesSpecific.isNotEmpty) return 'Invited';
     return 'Entire Chapter';
   }

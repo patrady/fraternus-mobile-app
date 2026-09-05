@@ -33,12 +33,10 @@ class TodayHeader extends ConsumerStatefulWidget {
   const TodayHeader({
     super.key,
     required this.date,
-    required this.greetingName,
     this.onProfileTap,
   });
 
   final DateTime date;
-  final String greetingName;
   final VoidCallback? onProfileTap;
 
   @override
@@ -97,7 +95,7 @@ class _TodayHeaderState extends ConsumerState<TodayHeader> {
               Heading(_monthDayLabel, level: HeadingLevel.h3),
               const SizedBox(height: 4),
               Text(
-                '$greeting, ${widget.greetingName}',
+                '$greeting!',
                 style: FraternusTypography.h4(
                   color: FraternusColors.accentPrimary,
                 ),

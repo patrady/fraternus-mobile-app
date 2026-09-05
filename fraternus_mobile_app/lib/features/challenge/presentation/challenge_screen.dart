@@ -211,8 +211,9 @@ class _ChallengeStateCardState extends ConsumerState<_ChallengeStateCard> {
           null,
         );
         for (final rep in progress.reps) {
-          if (rep.number >= 1 && rep.number <= completions.length)
+          if (rep.number >= 1 && rep.number <= completions.length) {
             completions[rep.number - 1] = rep.createdAt;
+          }
         }
         final nextIncompleteIndex = completions.indexWhere(
           (date) => date == null,

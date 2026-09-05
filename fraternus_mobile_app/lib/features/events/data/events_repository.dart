@@ -371,8 +371,9 @@ class SupabaseEventsRepository implements EventsRepository {
     );
     if (result == null) return null;
     final row = result as Map<String, dynamic>;
-    if (row['id'] == null)
+    if (row['id'] == null) {
       return null; // un-toggled — the RPC returns an all-null row, not absent
+    }
     return HouseholdRsvp.fromJson(row);
   }
 }

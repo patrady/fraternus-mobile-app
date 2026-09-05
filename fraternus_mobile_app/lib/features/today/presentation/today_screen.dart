@@ -66,7 +66,6 @@ class _TodayContent extends ConsumerWidget {
         const SizedBox(height: 4),
         TodayHeader(
           date: dashboard.date,
-          greetingName: dashboard.greetingName,
           onProfileTap: () => context.push(RoutePaths.todayProfile),
         ),
         if (dashboard.weeklyFocus != null) ...[

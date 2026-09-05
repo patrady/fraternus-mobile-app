@@ -6,14 +6,12 @@ import 'weekly_focus.dart';
 class TodayDashboard {
   const TodayDashboard({
     required this.date,
-    required this.greetingName,
     required this.weeklyFocus,
     required this.people,
     required this.upcomingEvents,
   });
 
   final DateTime date;
-  final String greetingName;
 
   /// Null when today itself has no Field Guide reading (no resolved week,
   /// or a week that doesn't cover today) — the Today screen's "This Week's

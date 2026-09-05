@@ -68,14 +68,16 @@ class _SignUpRoleScreenState extends ConsumerState<SignUpRoleScreen> {
                   title: 'Parent or Captain',
                   description: "Adult (18+)",
                   selected: _selected == _SignUpRole.parentOrVolunteer,
-                  onPressed: () => setState(() => _selected = _SignUpRole.parentOrVolunteer),
+                  onPressed: () =>
+                      setState(() => _selected = _SignUpRole.parentOrVolunteer),
                 ),
                 SelectableCard(
                   icon: 'circle-user',
                   title: 'Brother',
                   description: "Young Man",
                   selected: _selected == _SignUpRole.brother,
-                  onPressed: () => setState(() => _selected = _SignUpRole.brother),
+                  onPressed: () =>
+                      setState(() => _selected = _SignUpRole.brother),
                 ),
               ],
             ),
