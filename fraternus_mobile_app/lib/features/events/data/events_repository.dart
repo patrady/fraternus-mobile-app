@@ -172,8 +172,7 @@ class StaticEventsRepository implements EventsRepository {
         attendeesChapter: _entireChapterFor('hawc-night'),
         attendeesSpecific: const [],
         eligibleHouseholdMembers: _wholeHousehold,
-        // No one has responded yet — no Event RSVP rows exist.
-        householdRsvps: const [],
+        householdRsvps: _rsvpsFor('hawc-night', asOf),
         othersAttending: _othersA,
       ),
       Event(
@@ -199,7 +198,7 @@ class StaticEventsRepository implements EventsRepository {
           chapterKey: _chapterKey,
         ),
         eligibleHouseholdMembers: _wholeHousehold,
-        householdRsvps: const [],
+        householdRsvps: _rsvpsFor('frat-night', asOf),
         othersAttending: _othersA,
       ),
       Event(
@@ -251,7 +250,7 @@ class StaticEventsRepository implements EventsRepository {
           registrationUrl: 'https://example.com/register/ranch',
         ),
         eligibleHouseholdMembers: _wholeHousehold,
-        householdRsvps: const [],
+        householdRsvps: _rsvpsFor('ranch', asOf),
         othersAttending: _othersB,
       ),
     ];
