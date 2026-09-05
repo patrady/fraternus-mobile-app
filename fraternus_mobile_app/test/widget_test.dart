@@ -309,8 +309,11 @@ void main() {
     await tester.tap(find.text('MORE ABOUT HUMILITY'));
     await tester.pumpAndSettle();
 
-    // "GUIDE" renders twice: the bottom-tab label and the "< GUIDE" breadcrumb.
-    expect(find.text('GUIDE'), findsNWidgets(2));
+    // The header shows this week's virtue instead of "Guide" — "GUIDE" is
+    // just the bottom-tab label now, and the content no longer repeats the
+    // virtue as its own heading (redundant with the header's "< HUMILITY").
+    expect(find.text('GUIDE'), findsOneWidget);
+    expect(find.text('HUMILITY'), findsOneWidget);
     expect(find.text('THE TEMPERAMENTS'), findsOneWidget);
     expect(find.text('PRIMARY'), findsOneWidget);
     expect(find.text('SECONDARY'), findsOneWidget);
@@ -399,8 +402,11 @@ void main() {
       await tester.tap(find.text('HUMILITY'));
       await tester.pumpAndSettle();
 
-      // "GUIDE" renders twice: the bottom-tab label and the "< GUIDE" breadcrumb.
-      expect(find.text('GUIDE'), findsNWidgets(2));
+      // The header shows this week's virtue instead of "Guide" — "GUIDE" is
+      // just the bottom-tab label now, and the content no longer repeats the
+      // virtue as its own heading (redundant with the header's "< HUMILITY").
+      expect(find.text('GUIDE'), findsOneWidget);
+      expect(find.text('HUMILITY'), findsOneWidget);
       expect(find.text('THE TEMPERAMENTS'), findsOneWidget);
 
       await tester.tap(find.text('TODAY'));
@@ -673,21 +679,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('GUIDE'));
-      await tester.pumpAndSettle();
-
-      // Jack has no temperament result yet, so his virtue detail screen shows
-      // the CTA (unlike the default "You" tab, which is pre-seeded).
+      // Jack has no temperament result yet, so his Today list shows the
+      // recurring "Find Your Temperament" task (unlike the default "You"
+      // tab, which is pre-seeded and has no such task).
       await tester.tap(find.text('JACK'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('MORE ABOUT HUMILITY'));
+      await tester.ensureVisible(find.text('Find Your Temperament'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('MORE ABOUT HUMILITY'));
-      await tester.pumpAndSettle();
-
-      await tester.ensureVisible(find.text('FIND YOUR TEMPERAMENT'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('FIND YOUR TEMPERAMENT'));
+      await tester.tap(find.text('Find Your Temperament'));
       await tester.pumpAndSettle();
 
       expect(find.text('THE FOUR TEMPERAMENTS'), findsOneWidget);
@@ -732,9 +731,17 @@ void main() {
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      // Back on the virtue detail screen, Jack's saved result now shows
-      // Primary/Secondary tags instead of the CTA.
-      expect(find.text('FIND YOUR TEMPERAMENT'), findsNothing);
+      // Back on Today, Jack's task list no longer shows the quiz task now
+      // that he has a saved result.
+      expect(find.text('Find Your Temperament'), findsNothing);
+
+      // His virtue detail screen now shows Primary/Secondary tags too.
+      await tester.tap(find.text('GUIDE'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('MORE ABOUT HUMILITY'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('MORE ABOUT HUMILITY'));
+      await tester.pumpAndSettle();
       expect(find.text('PRIMARY'), findsOneWidget);
     },
   );

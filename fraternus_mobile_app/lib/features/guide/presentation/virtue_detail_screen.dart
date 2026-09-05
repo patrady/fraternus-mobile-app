@@ -25,23 +25,54 @@ class VirtueDetailScreen extends ConsumerWidget {
     final weekAsync = ref.watch(guideWeekForDateProvider(date));
 
     return ScreenShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ScreenHeader(title: 'Guide', onBack: () => context.pop()),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: weekAsync.when(
-              data: (week) => week == null
-                  ? const BodyText('Nothing to show for this date yet.')
-                  : _VirtueDetailContent(date: date, week: week),
-              loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) =>
-                  const BodyText('Something went wrong loading this virtue.'),
-            ),
-          ),
-        ],
+      child: weekAsync.when(
+        data: (week) => _VirtueDetailScaffold(
+          title: week?.virtue ?? 'Guide',
+          onBack: () => context.pop(),
+          child: week == null
+              ? const BodyText('Nothing to show for this date yet.')
+              : _VirtueDetailContent(date: date, week: week),
+        ),
+        loading: () => _VirtueDetailScaffold(
+          title: 'Guide',
+          onBack: () => context.pop(),
+          child: const SizedBox.shrink(),
+        ),
+        error: (error, stackTrace) => _VirtueDetailScaffold(
+          title: 'Guide',
+          onBack: () => context.pop(),
+          child: const BodyText('Something went wrong loading this virtue.'),
+        ),
       ),
+    );
+  }
+}
+
+/// Shared header + padded body shell for every [weekAsync] state — the
+/// header's title comes from the resolved week's virtue, so it has to live
+/// inside the `.when()` branches rather than wrapping them.
+class _VirtueDetailScaffold extends StatelessWidget {
+  const _VirtueDetailScaffold({
+    required this.title,
+    required this.onBack,
+    required this.child,
+  });
+
+  final String title;
+  final VoidCallback onBack;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ScreenHeader(title: title, onBack: onBack),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: child,
+        ),
+      ],
     );
   }
 }
@@ -67,8 +98,6 @@ class _VirtueDetailContent extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Heading(week.virtue.toUpperCase(), level: HeadingLevel.h2),
-        const SizedBox(height: 4),
         Text(
           'Vice: ${week.vice} | Extreme: ${week.extreme}',
           style: FraternusTypography.body(
@@ -106,16 +135,6 @@ class _VirtueDetailContent extends ConsumerWidget {
         const SizedBox(height: 8),
         const Heading('THE TEMPERAMENTS', level: HeadingLevel.h3),
         const SizedBox(height: 14),
-        if (temperamentResult == null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Button(
-              label: 'Find Your Temperament',
-              fullWidth: true,
-              onPressed: () =>
-                  context.push(RoutePaths.temperamentQuiz(selectedKey)),
-            ),
-          ),
         for (final key in temperamentOrder)
           TemperamentCard(
             name: temperamentDisplayNames[key]!,

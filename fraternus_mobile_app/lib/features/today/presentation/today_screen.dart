@@ -145,6 +145,13 @@ class _TodayTaskCard extends ConsumerWidget {
                 tone: FraternusIconTone.success,
               )
             : const FraternusIcon(name: 'circle', size: 22, opacity: 0.4),
+      // Only ever shown while incomplete — the task disappears for good
+      // once GuideTemperamentResult resolves, so there's no "done" state
+      // to render here (see today_providers.dart's _buildPerson).
+      TodayTaskKind.temperamentQuiz => const FraternusIcon(
+        name: 'compass',
+        size: 20,
+      ),
       TodayTaskKind.event => const FraternusIcon(name: 'calendar', size: 20),
     };
   }
@@ -197,6 +204,7 @@ class _TodayTaskCard extends ConsumerWidget {
               leading: _leadingFor(tasks[i].kind, switch (tasks[i].kind) {
                 TodayTaskKind.fieldGuideReading => isFieldGuideComplete,
                 TodayTaskKind.weeklyChallenge => isChallengeComplete,
+                TodayTaskKind.temperamentQuiz => false,
                 TodayTaskKind.event => false,
               }),
               label: tasks[i].label,
@@ -212,6 +220,9 @@ class _TodayTaskCard extends ConsumerWidget {
                 ),
                 TodayTaskKind.fieldGuideReading => () => context.push(
                   RoutePaths.guide,
+                ),
+                TodayTaskKind.temperamentQuiz => () => context.push(
+                  RoutePaths.temperamentQuiz(person.memberId),
                 ),
               },
             ),

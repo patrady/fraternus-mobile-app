@@ -207,6 +207,7 @@ class StaticGuideRepository implements GuideRepository {
 
     return FieldGuideWeek(
       id: 'humility-week',
+      startDate: weekStart,
       yearNumber: _authoredYearNumber,
       weekNumber: _authoredWeekNumber,
       virtue: 'Humility',
@@ -410,6 +411,7 @@ class SupabaseGuideRepository implements GuideRepository {
     final resolved = resolvedRows.first as Map<String, dynamic>;
     final fieldGuideWeekId = resolved['field_guide_week_id'] as String?;
     if (fieldGuideWeekId == null) return null;
+    final resolvedDevotionalId = resolved['daily_devotional_id'] as String;
 
     // Plain PostgREST nested embed for the rest of the shape — no logic
     // here, just a join.
@@ -422,13 +424,30 @@ class SupabaseGuideRepository implements GuideRepository {
         .eq('id', fieldGuideWeekId)
         .single();
 
+    // The RPC above is the one place that resolved [date]'s day_number
+    // against the actual Frat Night start date (a chapter's Frat Night can
+    // land on any weekday, not just Monday) — rather than re-deriving that
+    // math client-side, back-solve [date]'s week's own start date from the
+    // devotional the RPC already picked out, so FieldGuideWeek.devotionalForDate
+    // can resolve any date in this week the same way for the rest of the
+    // session without another round trip.
+    final devotionalsJson =
+        weekJson['field_guide_daily_devotionals'] as List<dynamic>;
+    final resolvedDayNumber =
+        devotionalsJson.cast<Map<String, dynamic>>().firstWhere(
+              (devotional) => devotional['id'] == resolvedDevotionalId,
+            )['day_number']
+            as int;
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final startDate = dateOnly.subtract(Duration(days: resolvedDayNumber - 1));
+
     // [memberIds] isn't applied as a client-side filter here — RLS on
     // field_guide_daily_devotional_members (see the field_guide migration)
     // already scopes the embedded rows to exactly the caller's own
     // household before they ever leave the database, so there's nothing
     // left to filter. [memberIds] exists on the interface because
     // StaticGuideRepository (no RLS to lean on) needs it explicitly.
-    return FieldGuideWeek.fromJson(weekJson);
+    return FieldGuideWeek.fromJson(weekJson, startDate: startDate);
   }
 
   @override

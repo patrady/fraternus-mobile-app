@@ -13,11 +13,11 @@ import 'widgets/sword_option_list.dart';
 
 enum _QuizPhase { intro, question, results }
 
-/// Pushed from "Find Your Temperament" (Guide's virtue detail screen, or
-/// Profile) / "Take Again" (Profile, once a result exists). Kept as one
-/// screen with internal phase/step state rather than three separate routes
-/// — nothing here needs to be deep-linkable mid-quiz, and it keeps
-/// exit/back semantics (see [_QuizPhase]) simple to reason about.
+/// Pushed from "Find Your Temperament" (a recurring Today task until the
+/// member has a result) or "Take Again" (Profile, once a result exists).
+/// Kept as one screen with internal phase/step state rather than three
+/// separate routes — nothing here needs to be deep-linkable mid-quiz, and it
+/// keeps exit/back semantics (see [_QuizPhase]) simple to reason about.
 class TemperamentQuizScreen extends ConsumerStatefulWidget {
   const TemperamentQuizScreen({super.key, required this.personKey});
 

@@ -31,6 +31,7 @@ HouseholdPerson _buildPerson({
   required WeeklyChallenge? currentChallenge,
   required Map<String, FieldGuideDailyDevotionalMember> guideProgress,
   required Map<String, PersonChallengeProgress> challengeProgress,
+  required bool hasTemperamentResult,
   required List<Event> todaysEvents,
 }) {
   final devotional = week?.devotionalForDate(today);
@@ -50,6 +51,16 @@ HouseholdPerson _buildPerson({
         id: 'weekly-challenge',
         label: 'Weekly Challenge',
         kind: TodayTaskKind.weeklyChallenge,
+      ),
+    // Recurs every day until this member takes the quiz once — unlike the
+    // two tasks above, it has no per-day state and simply disappears for
+    // good once GuideTemperamentResult resolves non-null (see
+    // profile_screen.dart, which used to be the only entry point for this).
+    if (!hasTemperamentResult)
+      const TodayTask(
+        id: 'temperament-quiz',
+        label: 'Find Your Temperament',
+        kind: TodayTaskKind.temperamentQuiz,
       ),
     // Only events this member is actually eligible for — a Brother
     // shouldn't see a Captains-only meeting on their own Today list.
@@ -102,6 +113,14 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
       ? const <String, PersonChallengeProgress>{}
       : await ref.watch(challengeProgressProvider(currentChallenge.id).future);
   final events = await ref.watch(visibleEventsProvider.future);
+  final temperamentResults = await Future.wait([
+    for (final member in members)
+      ref.watch(guideTemperamentResultProvider(member.id).future),
+  ]);
+  final hasTemperamentResultByMemberId = {
+    for (var i = 0; i < members.length; i++)
+      members[i].id: temperamentResults[i] != null,
+  };
 
   final todaysEvents = [
     for (final event in events)
@@ -134,6 +153,8 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
           currentChallenge: currentChallenge,
           guideProgress: guideProgress,
           challengeProgress: challengeProgress,
+          hasTemperamentResult:
+              hasTemperamentResultByMemberId[member.id] ?? false,
           todaysEvents: todaysEvents,
         ),
     ],

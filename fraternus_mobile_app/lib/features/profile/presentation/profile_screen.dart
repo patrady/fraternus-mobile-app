@@ -72,23 +72,18 @@ class _ProfileContent extends ConsumerWidget {
           onPressed: () => context.push(RoutePaths.todayProfileReminders),
         ),
         const SizedBox(height: 8),
-        if (selfMember != null) ...[
-          if (temperamentResult != null)
-            DarkFeatureCard(
-              icon: 'compass',
-              eyebrow: 'Your Temperament',
-              value: temperamentDisplayNames[temperamentResult.primaryKey],
-              ctaLabel: 'Take Again',
-              onCta: () =>
-                  context.push(RoutePaths.temperamentQuiz(selfMember.id)),
-            )
-          else
-            Button(
-              label: 'Find Your Temperament',
-              fullWidth: true,
-              onPressed: () =>
-                  context.push(RoutePaths.temperamentQuiz(selfMember.id)),
-            ),
+        // Only the already-completed state shows here — taking the quiz for
+        // the first time is now a recurring Today task (see
+        // today_providers.dart) instead of a button on this screen.
+        if (selfMember != null && temperamentResult != null) ...[
+          DarkFeatureCard(
+            icon: 'compass',
+            eyebrow: 'Your Temperament',
+            value: temperamentDisplayNames[temperamentResult.primaryKey],
+            ctaLabel: 'Take Again',
+            onCta: () =>
+                context.push(RoutePaths.temperamentQuiz(selfMember.id)),
+          ),
           const SizedBox(height: 20),
         ],
         Button(

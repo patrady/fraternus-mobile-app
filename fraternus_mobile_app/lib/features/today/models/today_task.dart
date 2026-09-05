@@ -1,7 +1,12 @@
 /// What kind of thing a [TodayTask] is — a domain concept only. Mapping a
 /// kind to a leading icon (checkbox glyph vs. calendar) is a presentation
 /// decision made in the Today screen, not here.
-enum TodayTaskKind { fieldGuideReading, weeklyChallenge, event }
+enum TodayTaskKind {
+  fieldGuideReading,
+  weeklyChallenge,
+  temperamentQuiz,
+  event,
+}
 
 /// A single row in a household member's "Today" list — either something
 /// actionable (field guide reading, weekly challenge) or an informational
