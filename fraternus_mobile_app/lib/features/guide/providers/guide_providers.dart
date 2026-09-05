@@ -9,6 +9,7 @@ import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
 import '../models/guide_household_member.dart';
 import '../models/temperament.dart';
+import 'temperament_quiz_providers.dart';
 
 part 'guide_providers.g.dart';
 
@@ -62,26 +63,15 @@ Future<FieldGuideWeek?> guideWeekForDate(Ref ref, DateTime date) async {
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
 /// The single shared date for the whole Guide screen — switching it
-/// applies to every household member, unlike [GuideSelectedPerson] which
-/// stays independent per feature (matching TodaySelectedPerson/
-/// ChallengeSelectedPerson).
+/// applies to every household member, unlike the selected household member
+/// (SelectedHouseholdMember, in shared/providers) which is a per-person
+/// choice.
 @riverpod
 class GuideSelectedDate extends _$GuideSelectedDate {
   @override
   DateTime build() => _dateOnly(ref.watch(nowProvider));
 
   void select(DateTime date) => state = _dateOnly(date);
-}
-
-/// Which household member's tab is active on the Guide tab — same shape
-/// as TodaySelectedPerson/ChallengeSelectedPerson, kept independent per
-/// feature by established convention.
-@riverpod
-class GuideSelectedPerson extends _$GuideSelectedPerson {
-  @override
-  String build() => 'you';
-
-  void select(String key) => state = key;
 }
 
 /// Per-person completion rows for one date. Seeded once from
@@ -282,25 +272,38 @@ Future<int> guideBaseStreak(Ref ref, String personKey) async {
   );
 }
 
-/// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-/// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-/// Temperament button instead of Primary/Secondary tags, until [save] is
-/// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-/// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+/// [personKey]'s saved Temperament Quiz result — null means they haven't
+/// taken the quiz yet, in which case the UI renders the Find Your
+/// Temperament button instead of Primary/Secondary tags. Backed by
+/// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+/// domain section and supabase/migrations/20260821000000_temperaments.sql).
 @riverpod
 class GuideTemperamentResult extends _$GuideTemperamentResult {
   @override
-  TemperamentResult? build(String personKey) {
-    return switch (personKey) {
-      'you' => const TemperamentResult(
-        primaryKey: 'choleric',
-        secondaryKey: 'melancholic',
-      ),
-      _ => null,
-    };
+  Future<TemperamentResult?> build(String personKey) {
+    return ref.watch(temperamentQuizRepositoryProvider).fetchResult(personKey);
   }
 
-  void save(TemperamentResult result) => state = result;
+  /// [answers] maps each answered question's id to the selected option's
+  /// id — see [TemperamentQuizRepository.saveResult]. Applies [result]
+  /// optimistically (same shape as GuideQuoteFavorites.toggle) so the
+  /// results screen reflects it immediately, rather than waiting on the
+  /// round trip.
+  Future<void> save(
+    TemperamentResult result,
+    Map<String, String> answers,
+  ) async {
+    final previous = state;
+    state = AsyncData(result);
+    try {
+      await ref
+          .read(temperamentQuizRepositoryProvider)
+          .saveResult(memberId: personKey, result: result, answers: answers);
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
+  }
 }
 
 /// Per-quote favorite state for every household member on [date]'s week,

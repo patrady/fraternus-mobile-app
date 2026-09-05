@@ -81,8 +81,15 @@ class ReminderGroup {
   final List<ReminderSetting> reminders;
 
   static const groupedTypes = {
-    'Field Guide': [ReminderType.fieldGuideMorning, ReminderType.fieldGuideEvening],
-    'Weekly Challenges': [ReminderType.newChallenge, ReminderType.challengeMidWeek, ReminderType.challengeLastDay],
+    'Field Guide': [
+      ReminderType.fieldGuideMorning,
+      ReminderType.fieldGuideEvening,
+    ],
+    'Weekly Challenges': [
+      ReminderType.newChallenge,
+      ReminderType.challengeMidWeek,
+      ReminderType.challengeLastDay,
+    ],
     'Events': [ReminderType.event24hr, ReminderType.event1hr],
   };
 }

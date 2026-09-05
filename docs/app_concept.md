@@ -55,6 +55,14 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - There is no bound on how far back a user can retroactively complete a missed day to correct their streak
 - A field guide streak resets naturally whenever there's a gap in authored content to complete — e.g. a stretch of Rush Nights with no Field Guide Week, or a summer break between school years where the chapter has no Frat Nights at all
 
+### Temperaments
+
+- A Member can take a quiz to determine their primary and secondary classic temperament (choleric, sanguine, melancholic, phlegmatic), used to personalize Field Guide weekly application/vice copy.
+- The quiz consists of a fixed, seeded set of questions, each with one option per temperament. Content is seeded directly into the database, same as Frat Night Templates and Field Guide entries — no admin UI.
+- A Guardian or Captain can complete the quiz on behalf of a child Member, the same way they can for Field Guide, Challenges, and Event RSVPs. The User submitting must have a User Member Association row (Self or Guardian) with that Member.
+- Scoring: tally the temperament with the most selected options as Primary; the next-highest as Secondary. Ties broken alphabetically by temperament key (choleric > melancholic > phlegmatic > sanguine).
+- Retaking the quiz overwrites the Member's existing result (Primary/Secondary/answers) — only the most recent attempt is kept.
+
 ### Challenges
 
 - A challenge is something that is assigned at Frat Night
@@ -250,6 +258,38 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Is Wisdom Favorite
     - Created Date
     - Last Modified Date
+- Temperament Quiz Question
+    - Id
+    - Question
+    - Order Number
+    - Created Date
+    - Last Modified Date
+- Temperament Quiz Option
+    - Id
+    - Temperament Quiz Question Id
+    - Text
+    - Temperament Key (choleric, sanguine, melancholic, phlegmatic)
+    - Order Number
+    - Created Date
+    - Last Modified Date
+- Member Temperament Result
+    - Id
+    - Member Id
+    - Submitted By User Id
+    - Primary Temperament Key (choleric, sanguine, melancholic, phlegmatic)
+    - Secondary Temperament Key (choleric, sanguine, melancholic, phlegmatic)
+    - Created Date
+    - Last Modified Date
+    - Constraints:
+        - Unique constraint on Member Id (one current result per Member; retaking overwrites this row)
+- Member Temperament Result Answer
+    - Id
+    - Member Temperament Result Id
+    - Temperament Quiz Question Id
+    - Temperament Quiz Option Id
+    - Created Date
+    - Constraints:
+        - Unique constraint on (Member Temperament Result Id, Temperament Quiz Question Id)
 - Event
     - Id
     - Type (any one of the following)

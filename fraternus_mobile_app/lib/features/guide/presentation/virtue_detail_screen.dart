@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
+import '../../../shared/providers/selected_household_member_provider.dart';
 import '../models/field_guide_week.dart';
 import '../models/temperament.dart';
 import '../providers/guide_providers.dart';
@@ -52,15 +53,15 @@ class _VirtueDetailContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedKey = ref.watch(guideSelectedPersonProvider);
+    final selectedKey = ref.watch(selectedHouseholdMemberProvider);
     final quoteFavorites =
         ref.watch(guideQuoteFavoritesProvider(date)).value ?? const {};
     final quoteFavoritesNotifier = ref.read(
       guideQuoteFavoritesProvider(date).notifier,
     );
-    final temperamentResult = ref.watch(
-      guideTemperamentResultProvider(selectedKey),
-    );
+    final temperamentResult = ref
+        .watch(guideTemperamentResultProvider(selectedKey))
+        .value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

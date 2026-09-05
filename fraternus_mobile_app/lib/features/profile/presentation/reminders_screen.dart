@@ -31,20 +31,28 @@ class RemindersScreen extends ConsumerWidget {
                       bordered: false,
                       trailing: FraternusSwitch(
                         value: user.isRemindersEnabled,
-                        onChanged: (_) => ref.read(currentUserProvider.notifier).toggleRemindersEnabled(),
+                        onChanged: (_) => ref
+                            .read(currentUserProvider.notifier)
+                            .toggleRemindersEnabled(),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   remindersAsync.when(
-                    data: (groups) => _RemindersList(groups: groups, enabled: user.isRemindersEnabled),
+                    data: (groups) => _RemindersList(
+                      groups: groups,
+                      enabled: user.isRemindersEnabled,
+                    ),
                     loading: () => const SizedBox.shrink(),
-                    error: (error, stackTrace) => const BodyText('Something went wrong loading reminders.'),
+                    error: (error, stackTrace) => const BodyText(
+                      'Something went wrong loading reminders.',
+                    ),
                   ),
                 ],
               ),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading reminders.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading reminders.'),
             ),
           ),
         ],
@@ -73,7 +81,9 @@ class _RemindersList extends ConsumerWidget {
           for (final group in groups) ...[
             Text(
               group.title.toUpperCase(),
-              style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+              style: FraternusTypography.eyebrow(
+                color: FraternusColors.accentPrimary,
+              ),
             ),
             const SizedBox(height: 8),
             Box(
@@ -87,11 +97,14 @@ class _RemindersList extends ConsumerWidget {
                       trailing: FraternusSwitch(
                         value: group.reminders[i].enabled,
                         onChanged: enabled
-                            ? (_) => ref.read(profileRemindersProvider.notifier).toggle(group.reminders[i].type)
+                            ? (_) => ref
+                                  .read(profileRemindersProvider.notifier)
+                                  .toggle(group.reminders[i].type)
                             : (_) {},
                       ),
                     ),
-                    if (i != group.reminders.length - 1) const HairlineDivider(),
+                    if (i != group.reminders.length - 1)
+                      const HairlineDivider(),
                   ],
                 ],
               ),

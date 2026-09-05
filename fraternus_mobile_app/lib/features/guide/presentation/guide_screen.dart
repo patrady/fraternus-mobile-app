@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
+import '../../../shared/providers/selected_household_member_provider.dart';
 import '../models/field_guide_daily_devotional.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
@@ -87,12 +88,12 @@ class _GuideContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedKey = ref.watch(guideSelectedPersonProvider);
+    final selectedKey = ref.watch(selectedHouseholdMemberProvider);
     final householdAsync = ref.watch(guideHouseholdProvider);
     final progressAsync = ref.watch(guideDevotionalProgressProvider(date));
     final household = householdAsync.value ?? const [];
     // selectedKey defaults to the placeholder 'you' (see
-    // GuideSelectedPerson), which won't match a real household member's
+    // SelectedHouseholdMember), which won't match a real household member's
     // id — same reconciliation Challenge/Today do, so Sword/Spade/Mark
     // Complete don't try to write an invalid member id.
     final activeKey =
@@ -118,8 +119,9 @@ class _GuideContent extends ConsumerWidget {
                   ),
               ],
               activeKey: activeKey,
-              onChanged: (key) =>
-                  ref.read(guideSelectedPersonProvider.notifier).select(key),
+              onChanged: (key) => ref
+                  .read(selectedHouseholdMemberProvider.notifier)
+                  .select(key),
             ),
             loading: () => const SizedBox.shrink(),
             error: (error, stackTrace) => const SizedBox.shrink(),

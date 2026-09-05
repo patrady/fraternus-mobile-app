@@ -51,7 +51,8 @@ class _ChildFormState extends State<ChildForm> {
   late final _emailController = TextEditingController(
     text: widget.initial?.email,
   );
-  late String? _chapterKey = widget.initial?.chapterKey ?? widget.initialChapterKey;
+  late String? _chapterKey =
+      widget.initial?.chapterKey ?? widget.initialChapterKey;
 
   @override
   void dispose() {
@@ -111,7 +112,8 @@ class _ChildFormState extends State<ChildForm> {
               SelectField(
                 value: _chapterKey,
                 options: {
-                  for (final chapter in widget.chapters) chapter.key: chapter.name,
+                  for (final chapter in widget.chapters)
+                    chapter.key: chapter.name,
                 },
                 placeholder: 'Select a chapter',
                 onChanged: (value) => setState(() => _chapterKey = value),

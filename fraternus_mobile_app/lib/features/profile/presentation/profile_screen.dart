@@ -8,6 +8,7 @@ import '../../auth/providers/auth_providers.dart';
 import '../../guide/models/temperament.dart';
 import '../../guide/providers/guide_providers.dart';
 import '../models/app_user.dart';
+import '../models/member.dart';
 import '../providers/profile_providers.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -23,7 +24,8 @@ class ProfileScreen extends ConsumerWidget {
         child: userAsync.when(
           data: (user) => _ProfileContent(user: user),
           loading: () => const SizedBox.shrink(),
-          error: (error, stackTrace) => const BodyText('Something went wrong loading your profile.'),
+          error: (error, stackTrace) =>
+              const BodyText('Something went wrong loading your profile.'),
         ),
       ),
     );
@@ -37,7 +39,13 @@ class _ProfileContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final temperamentResult = ref.watch(guideTemperamentResultProvider('you'));
+    // No Member record (a Guardian who has never attended as a Captain) —
+    // there's nothing to take the quiz as, so the temperament section below
+    // is skipped entirely rather than keying off a nonexistent Member id.
+    final Member? selfMember = ref.watch(selfMemberProvider).value;
+    final temperamentResult = selfMember == null
+        ? null
+        : ref.watch(guideTemperamentResultProvider(selfMember.id)).value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +62,10 @@ class _ProfileContent extends ConsumerWidget {
                   child: const SizedBox(
                     height: 44,
                     width: 32,
-                    child: Align(alignment: Alignment.centerLeft, child: FraternusIcon(name: 'chevron-left', size: 22)),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FraternusIcon(name: 'chevron-left', size: 22),
+                    ),
                   ),
                 );
               },
@@ -80,21 +91,25 @@ class _ProfileContent extends ConsumerWidget {
           onPressed: () => context.push(RoutePaths.todayProfileReminders),
         ),
         const SizedBox(height: 8),
-        if (temperamentResult != null)
-          DarkFeatureCard(
-            icon: 'compass',
-            eyebrow: 'Your Temperament',
-            value: temperamentDisplayNames[temperamentResult.primaryKey],
-            ctaLabel: 'Take Again',
-            onCta: () => context.push(RoutePaths.temperamentQuiz('you')),
-          )
-        else
-          Button(
-            label: 'Find Your Temperament',
-            fullWidth: true,
-            onPressed: () => context.push(RoutePaths.temperamentQuiz('you')),
-          ),
-        const SizedBox(height: 20),
+        if (selfMember != null) ...[
+          if (temperamentResult != null)
+            DarkFeatureCard(
+              icon: 'compass',
+              eyebrow: 'Your Temperament',
+              value: temperamentDisplayNames[temperamentResult.primaryKey],
+              ctaLabel: 'Take Again',
+              onCta: () =>
+                  context.push(RoutePaths.temperamentQuiz(selfMember.id)),
+            )
+          else
+            Button(
+              label: 'Find Your Temperament',
+              fullWidth: true,
+              onPressed: () =>
+                  context.push(RoutePaths.temperamentQuiz(selfMember.id)),
+            ),
+          const SizedBox(height: 20),
+        ],
         Button(
           label: 'Log Out',
           variant: ButtonVariant.ghost,

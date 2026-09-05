@@ -35,7 +35,8 @@ class EditChildScreen extends ConsumerWidget {
                     break;
                   }
                 }
-                if (member == null) return const BodyText('This child could not be found.');
+                if (member == null)
+                  return const BodyText('This child could not be found.');
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,20 +44,26 @@ class EditChildScreen extends ConsumerWidget {
                     ChildForm(
                       initial: member,
                       chapters: chapters,
-                      onSave: ({required firstName, required lastName, required email, required chapterKey}) async {
-                        await ref
-                            .read(householdMembersProvider.notifier)
-                            .updateMember(
-                              member!.copyWith(
-                                firstName: firstName,
-                                lastName: lastName,
-                                email: email,
-                                clearEmail: email == null,
-                                chapterKey: chapterKey,
-                              ),
-                            );
-                        if (context.mounted) context.pop();
-                      },
+                      onSave:
+                          ({
+                            required firstName,
+                            required lastName,
+                            required email,
+                            required chapterKey,
+                          }) async {
+                            await ref
+                                .read(householdMembersProvider.notifier)
+                                .updateMember(
+                                  member!.copyWith(
+                                    firstName: firstName,
+                                    lastName: lastName,
+                                    email: email,
+                                    clearEmail: email == null,
+                                    chapterKey: chapterKey,
+                                  ),
+                                );
+                            if (context.mounted) context.pop();
+                          },
                       onRemove: () async {
                         // docs/adrs/003_coppa_child_data_deletion.md — this
                         // is a full, permanent COPPA data-deletion request,
@@ -71,7 +78,9 @@ class EditChildScreen extends ConsumerWidget {
                           confirmLabel: 'Delete',
                         );
                         if (!confirmed || !context.mounted) return;
-                        await ref.read(householdMembersProvider.notifier).remove(memberId);
+                        await ref
+                            .read(householdMembersProvider.notifier)
+                            .remove(memberId);
                         if (context.mounted) context.pop();
                       },
                     ),
@@ -79,7 +88,8 @@ class EditChildScreen extends ConsumerWidget {
                 );
               },
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading this child.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading this child.'),
             ),
           ),
           const SizedBox(height: 24),

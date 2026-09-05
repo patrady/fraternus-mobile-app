@@ -35,7 +35,9 @@ class CurrentUser extends _$CurrentUser {
   Future<void> toggleRemindersEnabled() async {
     final current = state.value;
     if (current == null) return;
-    await ref.read(profileRepositoryProvider).setRemindersEnabled(!current.isRemindersEnabled);
+    await ref
+        .read(profileRepositoryProvider)
+        .setRemindersEnabled(!current.isRemindersEnabled);
     ref.invalidateSelf();
   }
 }
@@ -141,7 +143,9 @@ class ProfileReminders extends _$ProfileReminders {
       }
     }
     if (existing == null) return;
-    await ref.read(profileRepositoryProvider).setReminderEnabled(type, !existing.enabled);
+    await ref
+        .read(profileRepositoryProvider)
+        .setReminderEnabled(type, !existing.enabled);
     ref.invalidateSelf();
   }
 }

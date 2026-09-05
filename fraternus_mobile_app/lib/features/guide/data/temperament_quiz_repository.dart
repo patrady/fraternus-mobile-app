@@ -1,30 +1,88 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/temperament.dart';
 import '../models/temperament_quiz_question.dart';
 
 abstract class TemperamentQuizRepository {
   Future<List<TemperamentQuizQuestion>> fetchQuestions();
+
+  /// [memberId]'s saved result, or null if they haven't taken the quiz yet.
+  Future<TemperamentResult?> fetchResult(String memberId);
+
+  /// Persists [memberId]'s result — retaking the quiz overwrites whatever
+  /// was there before (see `Member Temperament Result`'s unique constraint
+  /// on Member Id in docs/app_concept.md). [answers] maps each answered
+  /// question's id to the option id selected for it, so it can be recorded
+  /// alongside the Primary/Secondary result.
+  Future<TemperamentResult> saveResult({
+    required String memberId,
+    required TemperamentResult result,
+    required Map<String, String> answers,
+  });
 }
 
-/// Hardcoded stand-in for a future Temperament Quiz API — built to the
-/// same [TemperamentQuizQuestion] shape an API response would deserialize
-/// into, so swapping this for a real HTTP repository later is a
-/// drop-in change. Transcribed verbatim from
+/// Hardcoded stand-in for the seeded Temperament Quiz content (see
+/// supabase/migrations/20260821000500_seed_temperament_quiz.sql) — built to
+/// the same [TemperamentQuizQuestion] shape a Supabase response
+/// deserializes into, so swapping this for [SupabaseTemperamentQuizRepository]
+/// is a drop-in change. Transcribed verbatim from
 /// docs/data/temperaments_quiz_questions.md (option lettering dropped —
 /// order alone reproduces it — but wording and temperament tags kept exact).
+///
+/// Also a genuine mutable fake for results, same reasoning as
+/// StaticChallengeRepository — [saveResult] has to actually be visible on
+/// the next [fetchResult] for GuideTemperamentResult's optimistic-then-reconcile
+/// pattern to have anything to reconcile with. "You" is pre-seeded with a
+/// result so Profile/virtue-detail screens have something to show without
+/// taking the quiz first; used as the default in tests (see
+/// test/widget_test.dart) since there's no live Supabase connection there.
 class StaticTemperamentQuizRepository implements TemperamentQuizRepository {
-  const StaticTemperamentQuizRepository();
+  final Map<String, TemperamentResult> _results = {
+    'you': const TemperamentResult(
+      primaryKey: 'choleric',
+      secondaryKey: 'melancholic',
+    ),
+  };
 
   @override
   Future<List<TemperamentQuizQuestion>> fetchQuestions() async => _questions;
+
+  @override
+  Future<TemperamentResult?> fetchResult(String memberId) async =>
+      _results[memberId];
+
+  @override
+  Future<TemperamentResult> saveResult({
+    required String memberId,
+    required TemperamentResult result,
+    required Map<String, String> answers,
+  }) async {
+    _results[memberId] = result;
+    return result;
+  }
 }
 
-TemperamentQuizQuestion _q(String prompt, List<String> options) {
+/// Assigns each question/option a stable id as the list below is built —
+/// order alone determines the id ('q1', 'q2', ...), same simplification the
+/// seed migration's order_number makes. Not meant to line up with the real
+/// Supabase-generated uuids; this fake only needs internal consistency
+/// between a question/option and the answers map [StaticTemperamentQuizRepository.saveResult]
+/// is handed.
+int _questionCounter = 0;
+
+TemperamentQuizQuestion _q(String question, List<String> options) {
   const keys = ['choleric', 'sanguine', 'melancholic', 'phlegmatic'];
+  final questionId = 'q${++_questionCounter}';
   return TemperamentQuizQuestion(
-    prompt: prompt,
+    id: questionId,
+    question: question,
     options: [
       for (var i = 0; i < options.length; i++)
-        TemperamentQuizOption(text: options[i], temperamentKey: keys[i]),
+        TemperamentQuizOption(
+          id: '$questionId-${keys[i]}',
+          text: options[i],
+          temperamentKey: keys[i],
+        ),
     ],
   );
 }
@@ -196,4 +254,66 @@ TemperamentResult scoreTemperamentQuiz(List<String> selectedTemperamentKeys) {
     primaryKey: rankedKeys[0],
     secondaryKey: rankedKeys[1],
   );
+}
+
+/// Supabase-backed implementation. RLS (see supabase/migrations) enforces
+/// that the caller can only read/write a result for a Member they have a
+/// Self or Guardian association with — this repository doesn't re-check
+/// that client-side, it just makes the calls and lets the database reject
+/// anything out of scope.
+class SupabaseTemperamentQuizRepository implements TemperamentQuizRepository {
+  SupabaseTemperamentQuizRepository(this._client);
+
+  final SupabaseClient _client;
+
+  @override
+  Future<List<TemperamentQuizQuestion>> fetchQuestions() async {
+    final rows = await _client
+        .from('temperament_quiz_questions')
+        .select('*, temperament_quiz_options(*)');
+    // Postgres doesn't guarantee row order without an explicit ORDER BY on
+    // the query itself, so the fixed Q1-Q24 sequence is applied here rather
+    // than relied upon from the response.
+    final sorted = List<Map<String, dynamic>>.from(rows)
+      ..sort(
+        (a, b) =>
+            (a['order_number'] as int).compareTo(b['order_number'] as int),
+      );
+    return [for (final row in sorted) TemperamentQuizQuestion.fromJson(row)];
+  }
+
+  @override
+  Future<TemperamentResult?> fetchResult(String memberId) async {
+    final row = await _client
+        .from('member_temperament_results')
+        .select('primary_temperament_key, secondary_temperament_key')
+        .eq('member_id', memberId)
+        .maybeSingle();
+    if (row == null) return null;
+    return TemperamentResult(
+      primaryKey: row['primary_temperament_key'] as String,
+      secondaryKey: row['secondary_temperament_key'] as String,
+    );
+  }
+
+  @override
+  Future<TemperamentResult> saveResult({
+    required String memberId,
+    required TemperamentResult result,
+    required Map<String, String> answers,
+  }) async {
+    await _client.rpc(
+      'save_temperament_quiz_result',
+      params: {
+        'p_member_id': memberId,
+        'p_primary_key': result.primaryKey,
+        'p_secondary_key': result.secondaryKey,
+        'p_answers': [
+          for (final entry in answers.entries)
+            {'question_id': entry.key, 'option_id': entry.value},
+        ],
+      },
+    );
+    return result;
+  }
 }

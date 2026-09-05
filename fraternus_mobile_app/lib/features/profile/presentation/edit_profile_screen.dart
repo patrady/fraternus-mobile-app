@@ -59,7 +59,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final selfMember = _selfMember;
     await ref
         .read(currentUserProvider.notifier)
-        .save(user.copyWith(firstName: _firstNameController!.text, lastName: _lastNameController!.text));
+        .save(
+          user.copyWith(
+            firstName: _firstNameController!.text,
+            lastName: _lastNameController!.text,
+          ),
+        );
     if (selfMember != null && _chapterKey != null) {
       await ref
           .read(householdMembersProvider.notifier)
@@ -87,10 +92,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           return (_buildFields(selfMember, chapters), _buildFooter(selfMember));
         },
         loading: () => (const SizedBox.shrink(), null),
-        error: (error, stackTrace) => (const BodyText('Something went wrong loading your profile.'), null),
+        error: (error, stackTrace) => (
+          const BodyText('Something went wrong loading your profile.'),
+          null,
+        ),
       ),
       loading: () => (const SizedBox.shrink(), null),
-      error: (error, stackTrace) => (const BodyText('Something went wrong loading your profile.'), null),
+      error: (error, stackTrace) =>
+          (const BodyText('Something went wrong loading your profile.'), null),
     );
 
     return ScreenShell(
@@ -99,7 +108,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ScreenHeader(title: 'My Profile', onBack: () => context.pop()),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: body),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: body,
+          ),
         ],
       ),
     );
@@ -115,7 +127,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (selfMember != null)
           Text(
             selfMember.role.name.toUpperCase(),
-            style: FraternusTypography.eyebrow(color: FraternusColors.accentPrimary),
+            style: FraternusTypography.eyebrow(
+              color: FraternusColors.accentPrimary,
+            ),
           ),
         const SizedBox(height: 24),
         Row(
@@ -143,14 +157,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Email')),
-        FormTextField(controller: _emailController, keyboardType: TextInputType.emailAddress, readOnly: true),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: FieldLabel(label: 'Email'),
+        ),
+        FormTextField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          readOnly: true,
+        ),
         if (selfMember != null) ...[
           const SizedBox(height: 16),
-          const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Chapter')),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: FieldLabel(label: 'Chapter'),
+          ),
           SelectField(
             value: _chapterKey,
-            options: {for (final chapter in chapters) chapter.key: chapter.name},
+            options: {
+              for (final chapter in chapters) chapter.key: chapter.name,
+            },
             placeholder: 'Select a chapter',
             onChanged: (value) => setState(() => _chapterKey = value),
           ),

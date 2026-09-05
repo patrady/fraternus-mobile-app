@@ -155,7 +155,8 @@ class StaticProfileRepository implements ProfileRepository {
   Future<List<Member>> fetchMembers() async => List.unmodifiable(_members);
 
   @override
-  Future<List<UserMemberAssociation>> fetchAssociations() async => List.unmodifiable(_associations);
+  Future<List<UserMemberAssociation>> fetchAssociations() async =>
+      List.unmodifiable(_associations);
 
   @override
   Future<List<ReminderGroup>> fetchReminders() async {
@@ -164,7 +165,11 @@ class StaticProfileRepository implements ProfileRepository {
         ReminderGroup(
           title: entry.key,
           reminders: [
-            for (final type in entry.value) ReminderSetting(type: type, enabled: _reminderOverrides[type] ?? true),
+            for (final type in entry.value)
+              ReminderSetting(
+                type: type,
+                enabled: _reminderOverrides[type] ?? true,
+              ),
           ],
         ),
     ];
@@ -279,34 +284,52 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<AppUser> fetchCurrentUser() async {
-    final json = await _client.from('users').select().eq('id', _userId).single();
+    final json = await _client
+        .from('users')
+        .select()
+        .eq('id', _userId)
+        .single();
     return AppUser.fromJson(json);
   }
 
   @override
   Future<List<Member>> fetchMembers() async {
-    final rows = await _client.from('user_member_associations').select('members(*)').eq('user_id', _userId);
-    return [for (final row in rows) Member.fromJson(row['members'] as Map<String, dynamic>)];
+    final rows = await _client
+        .from('user_member_associations')
+        .select('members(*)')
+        .eq('user_id', _userId);
+    return [
+      for (final row in rows)
+        Member.fromJson(row['members'] as Map<String, dynamic>),
+    ];
   }
 
   @override
   Future<List<UserMemberAssociation>> fetchAssociations() async {
-    final rows = await _client.from('user_member_associations').select().eq('user_id', _userId);
+    final rows = await _client
+        .from('user_member_associations')
+        .select()
+        .eq('user_id', _userId);
     return [for (final row in rows) UserMemberAssociation.fromJson(row)];
   }
 
   @override
   Future<List<ReminderGroup>> fetchReminders() async {
-    final rows = await _client.from('user_reminders').select('type, is_enabled').eq('user_id', _userId);
+    final rows = await _client
+        .from('user_reminders')
+        .select('type, is_enabled')
+        .eq('user_id', _userId);
     final overrides = {
-      for (final row in rows) ReminderType.fromJson(row['type'] as String): row['is_enabled'] as bool,
+      for (final row in rows)
+        ReminderType.fromJson(row['type'] as String): row['is_enabled'] as bool,
     };
     return [
       for (final entry in ReminderGroup.groupedTypes.entries)
         ReminderGroup(
           title: entry.key,
           reminders: [
-            for (final type in entry.value) ReminderSetting(type: type, enabled: overrides[type] ?? true),
+            for (final type in entry.value)
+              ReminderSetting(type: type, enabled: overrides[type] ?? true),
           ],
         ),
     ];
@@ -316,7 +339,11 @@ class SupabaseProfileRepository implements ProfileRepository {
   Future<void> updateProfile(AppUser user) async {
     await _client
         .from('users')
-        .update({'first_name': user.firstName, 'last_name': user.lastName, 'email': user.email})
+        .update({
+          'first_name': user.firstName,
+          'last_name': user.lastName,
+          'email': user.email,
+        })
         .eq('id', _userId);
   }
 
@@ -342,7 +369,12 @@ class SupabaseProfileRepository implements ProfileRepository {
   }) async {
     final result = await _client.rpc(
       'create_child_member',
-      params: {'p_first_name': firstName, 'p_last_name': lastName, 'p_chapter_key': chapterKey, 'p_email': email},
+      params: {
+        'p_first_name': firstName,
+        'p_last_name': lastName,
+        'p_chapter_key': chapterKey,
+        'p_email': email,
+      },
     );
     return result as String;
   }
@@ -355,14 +387,21 @@ class SupabaseProfileRepository implements ProfileRepository {
   }) async {
     final result = await _client.rpc(
       'complete_captain_signup',
-      params: {'p_chapter_key': chapterKey, 'p_first_name': firstName, 'p_last_name': lastName},
+      params: {
+        'p_chapter_key': chapterKey,
+        'p_first_name': firstName,
+        'p_last_name': lastName,
+      },
     );
     return result as String;
   }
 
   @override
   Future<void> deleteMember(String memberId) async {
-    await _client.rpc('delete_member_data', params: {'target_member_id': memberId});
+    await _client.rpc(
+      'delete_member_data',
+      params: {'target_member_id': memberId},
+    );
   }
 
   @override
@@ -375,6 +414,9 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<void> setRemindersEnabled(bool enabled) async {
-    await _client.from('users').update({'is_reminders_enabled': enabled}).eq('id', _userId);
+    await _client
+        .from('users')
+        .update({'is_reminders_enabled': enabled})
+        .eq('id', _userId);
   }
 }

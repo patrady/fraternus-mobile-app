@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/clock_provider.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
+import '../../../shared/providers/selected_household_member_provider.dart';
 import '../../challenge/providers/challenge_providers.dart';
 import '../../guide/providers/guide_providers.dart';
 import '../models/household_person.dart';
@@ -21,7 +22,7 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(todayDashboardProvider);
-    final selectedKey = ref.watch(todaySelectedPersonProvider);
+    final selectedKey = ref.watch(selectedHouseholdMemberProvider);
 
     return ScreenShell(
       child: Padding(
@@ -49,8 +50,9 @@ class _TodayContent extends ConsumerWidget {
     // dashboard.people can be genuinely empty — a Guardian with no Member
     // record of their own (see selfMemberProvider's doc) who hasn't added
     // a child yet — and selectedKey's 'you' default (see
-    // TodaySelectedPerson) won't match any real Member id, so this can't
-    // be a bare firstWhere the way the original static-data version was.
+    // SelectedHouseholdMember) won't match any real Member id, so this
+    // can't be a bare firstWhere the way the original static-data version
+    // was.
     final selectedPerson = dashboard.people.isEmpty
         ? null
         : dashboard.people.firstWhere(
@@ -84,6 +86,8 @@ class _TodayContent extends ConsumerWidget {
             ),
           )
         else ...[
+          const Subheading('Today'),
+          const SizedBox(height: 12),
           PersonTabs(
             people: dashboard.people
                 .map(
@@ -96,7 +100,7 @@ class _TodayContent extends ConsumerWidget {
                 .toList(),
             activeKey: selectedPerson.memberId,
             onChanged: (key) =>
-                ref.read(todaySelectedPersonProvider.notifier).select(key),
+                ref.read(selectedHouseholdMemberProvider.notifier).select(key),
           ),
           const SizedBox(height: 16),
           _TodayTaskCard(person: selectedPerson),

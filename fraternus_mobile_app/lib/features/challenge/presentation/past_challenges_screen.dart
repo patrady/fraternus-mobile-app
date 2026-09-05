@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/ordinal_date_formatting.dart';
+import '../../../shared/providers/selected_household_member_provider.dart';
 import '../models/weekly_challenge.dart';
 import '../providers/challenge_providers.dart';
 
@@ -12,10 +13,10 @@ class PastChallengesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedKey = ref.watch(challengeSelectedPersonProvider);
+    final selectedKey = ref.watch(selectedHouseholdMemberProvider);
     final household = ref.watch(challengeHouseholdProvider).value ?? const [];
     // selectedKey defaults to the placeholder 'you' (see
-    // ChallengeSelectedPerson), which won't match a real household member's
+    // SelectedHouseholdMember), which won't match a real household member's
     // id — same reconciliation ChallengeScreen's activeKey does.
     final personKey =
         household.isEmpty || household.any((m) => m.memberId == selectedKey)

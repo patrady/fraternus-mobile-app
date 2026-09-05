@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -62,18 +64,26 @@ class _TemperamentQuizScreenState extends ConsumerState<TemperamentQuizScreen> {
     }
 
     final selectedKeys = <String>[];
+    final answers = <String, String>{}; // question id -> selected option id
     for (var i = 0; i < questions.length; i++) {
       final selectedText = _answers[i];
       for (final option in questions[i].options) {
-        if (option.text == selectedText)
+        if (option.text == selectedText) {
           selectedKeys.add(option.temperamentKey);
+          answers[questions[i].id] = option.id;
+        }
       }
     }
 
     final result = scoreTemperamentQuiz(selectedKeys);
-    ref
-        .read(guideTemperamentResultProvider(widget.personKey).notifier)
-        .save(result);
+    // Fire-and-forget: the results screen below reflects [result]
+    // immediately regardless of the save's round trip — see
+    // GuideTemperamentResult.save's own optimistic-update comment.
+    unawaited(
+      ref
+          .read(guideTemperamentResultProvider(widget.personKey).notifier)
+          .save(result, answers),
+    );
     setState(() {
       _result = result;
       _phase = _QuizPhase.results;
@@ -244,7 +254,7 @@ class _QuestionScreen extends StatelessWidget {
             const SizedBox(height: 12),
             ContinuousProgressBar(index: index, total: total),
             const SizedBox(height: 20),
-            Heading(question.prompt, level: HeadingLevel.h4),
+            Heading(question.question, level: HeadingLevel.h4),
             const SizedBox(height: 16),
             SwordOptionList(
               options: [for (final option in question.options) option.text],

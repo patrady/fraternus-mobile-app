@@ -32,7 +32,12 @@ class AppUser {
 
   String get initials => '${firstName[0]}${lastName[0]}'.toUpperCase();
 
-  AppUser copyWith({String? firstName, String? lastName, String? email, bool? isRemindersEnabled}) {
+  AppUser copyWith({
+    String? firstName,
+    String? lastName,
+    String? email,
+    bool? isRemindersEnabled,
+  }) {
     return AppUser(
       id: id,
       firstName: firstName ?? this.firstName,

@@ -18,8 +18,10 @@ import 'package:fraternus_mobile_app/features/challenge/providers/challenge_prov
 import 'package:fraternus_mobile_app/features/events/data/events_repository.dart';
 import 'package:fraternus_mobile_app/features/events/providers/events_providers.dart';
 import 'package:fraternus_mobile_app/features/guide/data/guide_repository.dart';
+import 'package:fraternus_mobile_app/features/guide/data/temperament_quiz_repository.dart';
 import 'package:fraternus_mobile_app/features/guide/presentation/widgets/sword_option_list.dart';
 import 'package:fraternus_mobile_app/features/guide/providers/guide_providers.dart';
+import 'package:fraternus_mobile_app/features/guide/providers/temperament_quiz_providers.dart';
 import 'package:fraternus_mobile_app/features/profile/data/profile_repository.dart';
 import 'package:fraternus_mobile_app/features/profile/providers/profile_providers.dart';
 import 'package:fraternus_mobile_app/shared/data/chapter_repository.dart';
@@ -130,6 +132,9 @@ List<Override> _testOverrides({
     authRepository ?? _FakeAuthRepository(signedIn: signedIn),
   ),
   guideRepositoryProvider.overrideWithValue(StaticGuideRepository()),
+  temperamentQuizRepositoryProvider.overrideWithValue(
+    StaticTemperamentQuizRepository(),
+  ),
   challengeRepositoryProvider.overrideWithValue(StaticChallengeRepository()),
   profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
   eventsRepositoryProvider.overrideWithValue(StaticEventsRepository()),
@@ -467,53 +472,54 @@ void main() {
     expect(find.text('HUMILITY'), findsOneWidget);
   });
 
-  testWidgets('My Kids lists both children and Edit -> Remove Child removes one', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(overrides: _testOverrides(), child: const FraternusApp()),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'My Kids lists both children and Edit -> Remove Child removes one',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(overrides: _testOverrides(), child: const FraternusApp()),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.bySemanticsLabel('Profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Kids'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('My Kids'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('MY KIDS'), findsOneWidget);
-    expect(find.text('Jack Smith'), findsOneWidget);
-    expect(find.text('Thomas Smith'), findsOneWidget);
-    expect(find.text('EDIT'), findsNWidgets(2));
+      expect(find.text('MY KIDS'), findsOneWidget);
+      expect(find.text('Jack Smith'), findsOneWidget);
+      expect(find.text('Thomas Smith'), findsOneWidget);
+      expect(find.text('EDIT'), findsNWidgets(2));
 
-    await tester.tap(find.text('EDIT').first);
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('EDIT').first);
+      await tester.pumpAndSettle();
 
-    expect(find.text('EDIT CHILD'), findsOneWidget);
-    expect(find.text('Jack'), findsOneWidget);
-    expect(find.text('Smith'), findsOneWidget);
+      expect(find.text('EDIT CHILD'), findsOneWidget);
+      expect(find.text('Jack'), findsOneWidget);
+      expect(find.text('Smith'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('REMOVE CHILD'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('REMOVE CHILD'));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('REMOVE CHILD'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('REMOVE CHILD'));
+      await tester.pumpAndSettle();
 
-    // docs/adrs/003_coppa_child_data_deletion.md — the confirmation spells
-    // out that this is a real data-deletion request, not just a list edit.
-    expect(
-      find.text(
-        "This will permanently delete Jack Smith's data — every reading, "
-        'challenge, and RSVP recorded for them. This cannot be undone.',
-      ),
-      findsOneWidget,
-    );
+      // docs/adrs/003_coppa_child_data_deletion.md — the confirmation spells
+      // out that this is a real data-deletion request, not just a list edit.
+      expect(
+        find.text(
+          "This will permanently delete Jack Smith's data — every reading, "
+          'challenge, and RSVP recorded for them. This cannot be undone.',
+        ),
+        findsOneWidget,
+      );
 
-    await tester.tap(find.text('DELETE'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('DELETE'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('MY KIDS'), findsOneWidget);
-    expect(find.text('Jack Smith'), findsNothing);
-    expect(find.text('Thomas Smith'), findsOneWidget);
-  });
+      expect(find.text('MY KIDS'), findsOneWidget);
+      expect(find.text('Jack Smith'), findsNothing);
+      expect(find.text('Thomas Smith'), findsOneWidget);
+    },
+  );
 
   testWidgets('Add Child opens the Add Child form', (
     WidgetTester tester,

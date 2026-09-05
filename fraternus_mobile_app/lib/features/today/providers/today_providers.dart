@@ -149,15 +149,3 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
     ],
   );
 }
-
-/// Which household member (You/Jack/Thomas) is active in the [PersonTabs]
-/// switcher. Lives in a provider rather than local widget state so it
-/// composes with [todayDashboardProvider] via `ref.watch` and stays
-/// reusable if a future nested route needs the same selection.
-@riverpod
-class TodaySelectedPerson extends _$TodaySelectedPerson {
-  @override
-  String build() => 'you';
-
-  void select(String key) => state = key;
-}

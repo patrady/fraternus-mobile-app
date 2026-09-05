@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
+import '../../../shared/providers/selected_household_member_provider.dart';
 import '../models/person_challenge_progress.dart';
 import '../models/weekly_challenge.dart';
 import '../providers/challenge_providers.dart';
@@ -65,10 +66,10 @@ class _ChallengeContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(challengeProgressProvider(challenge.id));
     final householdAsync = ref.watch(challengeHouseholdProvider);
-    final selectedKey = ref.watch(challengeSelectedPersonProvider);
+    final selectedKey = ref.watch(selectedHouseholdMemberProvider);
     final household = householdAsync.value ?? const [];
     // selectedKey defaults to the placeholder 'you' (see
-    // ChallengeSelectedPerson), which won't match a real household member's
+    // SelectedHouseholdMember), which won't match a real household member's
     // id — same reconciliation TodayScreen's selectedPerson does, so
     // "Accept Challenge" doesn't try to insert an invalid member id.
     final activeKey =
@@ -116,7 +117,7 @@ class _ChallengeContent extends ConsumerWidget {
               ],
               activeKey: activeKey,
               onChanged: (key) => ref
-                  .read(challengeSelectedPersonProvider.notifier)
+                  .read(selectedHouseholdMemberProvider.notifier)
                   .select(key),
             ),
             loading: () => const SizedBox.shrink(),

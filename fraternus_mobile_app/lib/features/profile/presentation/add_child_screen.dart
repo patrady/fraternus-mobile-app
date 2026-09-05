@@ -18,9 +18,11 @@ class AddChildScreen extends ConsumerWidget {
     // attended as a Captain) — fall back to an existing kid's chapter so
     // the common "second child, same chapter" case still prefills.
     final selfMember = ref.watch(selfMemberProvider).value;
-    final existingChildren = ref.watch(guardianMembersProvider).value ?? const [];
+    final existingChildren =
+        ref.watch(guardianMembersProvider).value ?? const [];
     final initialChapterKey =
-        selfMember?.chapterKey ?? (existingChildren.isEmpty ? null : existingChildren.first.chapterKey);
+        selfMember?.chapterKey ??
+        (existingChildren.isEmpty ? null : existingChildren.first.chapterKey);
 
     return ScreenShell(
       child: Column(
@@ -32,17 +34,28 @@ class AddChildScreen extends ConsumerWidget {
             child: ChildForm(
               chapters: chapters,
               initialChapterKey: initialChapterKey,
-              onSave: ({required firstName, required lastName, required email, required chapterKey}) async {
-                // create_child_member (see ProfileRepository) atomically
-                // creates the Member + Guardian association — no separate
-                // association step here.
-                await ref
-                    .read(profileRepositoryProvider)
-                    .createChildMember(firstName: firstName, lastName: lastName, chapterKey: chapterKey ?? '', email: email);
-                ref.invalidate(householdMembersProvider);
-                ref.invalidate(householdAssociationsProvider);
-                if (context.mounted) context.pop();
-              },
+              onSave:
+                  ({
+                    required firstName,
+                    required lastName,
+                    required email,
+                    required chapterKey,
+                  }) async {
+                    // create_child_member (see ProfileRepository) atomically
+                    // creates the Member + Guardian association — no separate
+                    // association step here.
+                    await ref
+                        .read(profileRepositoryProvider)
+                        .createChildMember(
+                          firstName: firstName,
+                          lastName: lastName,
+                          chapterKey: chapterKey ?? '',
+                          email: email,
+                        );
+                    ref.invalidate(householdMembersProvider);
+                    ref.invalidate(householdAssociationsProvider);
+                    if (context.mounted) context.pop();
+                  },
             ),
           ),
           const SizedBox(height: 24),

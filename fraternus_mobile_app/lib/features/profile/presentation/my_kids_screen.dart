@@ -25,9 +25,11 @@ class MyKidsScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: childrenAsync.when(
-              data: (children) => _MyKidsList(children: children, chapters: chapters),
+              data: (children) =>
+                  _MyKidsList(children: children, chapters: chapters),
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const BodyText('Something went wrong loading your kids.'),
+              error: (error, stackTrace) =>
+                  const BodyText('Something went wrong loading your kids.'),
             ),
           ),
         ],
@@ -63,7 +65,8 @@ class _MyKidsList extends StatelessWidget {
               label: 'Edit',
               variant: ButtonVariant.ghost,
               size: ButtonSize.small,
-              onPressed: () => context.push(RoutePaths.todayProfileKidsEdit(child.id)),
+              onPressed: () =>
+                  context.push(RoutePaths.todayProfileKidsEdit(child.id)),
             ),
           ),
         _AddChildRow(onTap: () => context.push(RoutePaths.todayProfileKidsAdd)),
@@ -93,7 +96,9 @@ class _AddChildRow extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            constraints: const BoxConstraints(minHeight: FraternusSpacing.tapTargetMin),
+            constraints: const BoxConstraints(
+              minHeight: FraternusSpacing.tapTargetMin,
+            ),
             decoration: BoxDecoration(
               color: FraternusColors.white,
               border: Border.all(color: FraternusColors.borderSubtle),
@@ -107,9 +112,10 @@ class _AddChildRow extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'ADD CHILD',
-                  style: FraternusTypography.button(fontSize: 14, color: FraternusColors.ink).copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: FraternusTypography.button(
+                    fontSize: 14,
+                    color: FraternusColors.ink,
+                  ).copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),

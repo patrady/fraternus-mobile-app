@@ -24,7 +24,9 @@ class UserMemberAssociation {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       memberId: json['member_id'] as String,
-      relationship: AssociationRelationship.values.byName(json['relationship'] as String),
+      relationship: AssociationRelationship.values.byName(
+        json['relationship'] as String,
+      ),
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),
     );

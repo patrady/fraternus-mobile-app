@@ -118,17 +118,6 @@ Future<int> challengeStreak(Ref ref, String personKey) async {
   return streak;
 }
 
-/// Which household member's tab is active on the Challenge tab — same
-/// shape as TodaySelectedPerson, kept separate since Today and Challenge
-/// select independently.
-@riverpod
-class ChallengeSelectedPerson extends _$ChallengeSelectedPerson {
-  @override
-  String build() => 'you';
-
-  void select(String key) => state = key;
-}
-
 /// Per-person progress for one challenge, read straight through from
 /// [ChallengeRepository] — no local edit buffer. Every mutation calls the
 /// repository and invalidates the shared challenge feed (which this

@@ -61,7 +61,7 @@ class _SignUpRoleScreenState extends ConsumerState<SignUpRoleScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const BodyText('Which describes you?'),
+                const BodyText('Which best describes you?'),
                 const SizedBox(height: 20),
                 SelectableCard(
                   icon: 'circle-user',

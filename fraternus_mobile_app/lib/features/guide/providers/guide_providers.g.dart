@@ -195,23 +195,23 @@ final class GuideWeekForDateFamily extends $Family
 }
 
 /// The single shared date for the whole Guide screen — switching it
-/// applies to every household member, unlike [GuideSelectedPerson] which
-/// stays independent per feature (matching TodaySelectedPerson/
-/// ChallengeSelectedPerson).
+/// applies to every household member, unlike the selected household member
+/// (SelectedHouseholdMember, in shared/providers) which is a per-person
+/// choice.
 
 @ProviderFor(GuideSelectedDate)
 const guideSelectedDateProvider = GuideSelectedDateProvider._();
 
 /// The single shared date for the whole Guide screen — switching it
-/// applies to every household member, unlike [GuideSelectedPerson] which
-/// stays independent per feature (matching TodaySelectedPerson/
-/// ChallengeSelectedPerson).
+/// applies to every household member, unlike the selected household member
+/// (SelectedHouseholdMember, in shared/providers) which is a per-person
+/// choice.
 final class GuideSelectedDateProvider
     extends $NotifierProvider<GuideSelectedDate, DateTime> {
   /// The single shared date for the whole Guide screen — switching it
-  /// applies to every household member, unlike [GuideSelectedPerson] which
-  /// stays independent per feature (matching TodaySelectedPerson/
-  /// ChallengeSelectedPerson).
+  /// applies to every household member, unlike the selected household member
+  /// (SelectedHouseholdMember, in shared/providers) which is a per-person
+  /// choice.
   const GuideSelectedDateProvider._()
     : super(
         from: null,
@@ -242,9 +242,9 @@ final class GuideSelectedDateProvider
 String _$guideSelectedDateHash() => r'5669ac4353594cdd2f16133cf10f53a7ec3a4fa9';
 
 /// The single shared date for the whole Guide screen — switching it
-/// applies to every household member, unlike [GuideSelectedPerson] which
-/// stays independent per feature (matching TodaySelectedPerson/
-/// ChallengeSelectedPerson).
+/// applies to every household member, unlike the selected household member
+/// (SelectedHouseholdMember, in shared/providers) which is a per-person
+/// choice.
 
 abstract class _$GuideSelectedDate extends $Notifier<DateTime> {
   DateTime build();
@@ -258,74 +258,6 @@ abstract class _$GuideSelectedDate extends $Notifier<DateTime> {
             as $ClassProviderElement<
               AnyNotifier<DateTime, DateTime>,
               DateTime,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
-/// Which household member's tab is active on the Guide tab — same shape
-/// as TodaySelectedPerson/ChallengeSelectedPerson, kept independent per
-/// feature by established convention.
-
-@ProviderFor(GuideSelectedPerson)
-const guideSelectedPersonProvider = GuideSelectedPersonProvider._();
-
-/// Which household member's tab is active on the Guide tab — same shape
-/// as TodaySelectedPerson/ChallengeSelectedPerson, kept independent per
-/// feature by established convention.
-final class GuideSelectedPersonProvider
-    extends $NotifierProvider<GuideSelectedPerson, String> {
-  /// Which household member's tab is active on the Guide tab — same shape
-  /// as TodaySelectedPerson/ChallengeSelectedPerson, kept independent per
-  /// feature by established convention.
-  const GuideSelectedPersonProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'guideSelectedPersonProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$guideSelectedPersonHash();
-
-  @$internal
-  @override
-  GuideSelectedPerson create() => GuideSelectedPerson();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String>(value),
-    );
-  }
-}
-
-String _$guideSelectedPersonHash() =>
-    r'31542a4898aaa7bfae8062c27ea1d32c671e8252';
-
-/// Which household member's tab is active on the Guide tab — same shape
-/// as TodaySelectedPerson/ChallengeSelectedPerson, kept independent per
-/// feature by established convention.
-
-abstract class _$GuideSelectedPerson extends $Notifier<String> {
-  String build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<String, String>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String, String>,
-              String,
               Object?,
               Object?
             >;
@@ -596,27 +528,27 @@ final class GuideBaseStreakFamily extends $Family
   String toString() => r'guideBaseStreakProvider';
 }
 
-/// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-/// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-/// Temperament button instead of Primary/Secondary tags, until [save] is
-/// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-/// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+/// [personKey]'s saved Temperament Quiz result — null means they haven't
+/// taken the quiz yet, in which case the UI renders the Find Your
+/// Temperament button instead of Primary/Secondary tags. Backed by
+/// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+/// domain section and supabase/migrations/20260821000000_temperaments.sql).
 
 @ProviderFor(GuideTemperamentResult)
 const guideTemperamentResultProvider = GuideTemperamentResultFamily._();
 
-/// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-/// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-/// Temperament button instead of Primary/Secondary tags, until [save] is
-/// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-/// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+/// [personKey]'s saved Temperament Quiz result — null means they haven't
+/// taken the quiz yet, in which case the UI renders the Find Your
+/// Temperament button instead of Primary/Secondary tags. Backed by
+/// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+/// domain section and supabase/migrations/20260821000000_temperaments.sql).
 final class GuideTemperamentResultProvider
-    extends $NotifierProvider<GuideTemperamentResult, TemperamentResult?> {
-  /// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-  /// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-  /// Temperament button instead of Primary/Secondary tags, until [save] is
-  /// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-  /// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+    extends $AsyncNotifierProvider<GuideTemperamentResult, TemperamentResult?> {
+  /// [personKey]'s saved Temperament Quiz result — null means they haven't
+  /// taken the quiz yet, in which case the UI renders the Find Your
+  /// Temperament button instead of Primary/Secondary tags. Backed by
+  /// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+  /// domain section and supabase/migrations/20260821000000_temperaments.sql).
   const GuideTemperamentResultProvider._({
     required GuideTemperamentResultFamily super.from,
     required String super.argument,
@@ -642,14 +574,6 @@ final class GuideTemperamentResultProvider
   @override
   GuideTemperamentResult create() => GuideTemperamentResult();
 
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(TemperamentResult? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<TemperamentResult?>(value),
-    );
-  }
-
   @override
   bool operator ==(Object other) {
     return other is GuideTemperamentResultProvider &&
@@ -663,21 +587,21 @@ final class GuideTemperamentResultProvider
 }
 
 String _$guideTemperamentResultHash() =>
-    r'0ae6bc2acb223e3ad5eb52382d274cdaba0e85b7';
+    r'dc20c518a3edf369f674f741ce7c35a1ab14b1f5';
 
-/// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-/// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-/// Temperament button instead of Primary/Secondary tags, until [save] is
-/// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-/// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+/// [personKey]'s saved Temperament Quiz result — null means they haven't
+/// taken the quiz yet, in which case the UI renders the Find Your
+/// Temperament button instead of Primary/Secondary tags. Backed by
+/// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+/// domain section and supabase/migrations/20260821000000_temperaments.sql).
 
 final class GuideTemperamentResultFamily extends $Family
     with
         $ClassFamilyOverride<
           GuideTemperamentResult,
+          AsyncValue<TemperamentResult?>,
           TemperamentResult?,
-          TemperamentResult?,
-          TemperamentResult?,
+          FutureOr<TemperamentResult?>,
           String
         > {
   const GuideTemperamentResultFamily._()
@@ -689,11 +613,11 @@ final class GuideTemperamentResultFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-  /// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-  /// Temperament button instead of Primary/Secondary tags, until [save] is
-  /// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-  /// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+  /// [personKey]'s saved Temperament Quiz result — null means they haven't
+  /// taken the quiz yet, in which case the UI renders the Find Your
+  /// Temperament button instead of Primary/Secondary tags. Backed by
+  /// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+  /// domain section and supabase/migrations/20260821000000_temperaments.sql).
 
   GuideTemperamentResultProvider call(String personKey) =>
       GuideTemperamentResultProvider._(argument: personKey, from: this);
@@ -702,27 +626,29 @@ final class GuideTemperamentResultFamily extends $Family
   String toString() => r'guideTemperamentResultProvider';
 }
 
-/// Fake temperament-quiz-result seed — see models/temperament.dart. Only
-/// 'you' has "taken the quiz" for now; everyone else renders the Find Your
-/// Temperament button instead of Primary/Secondary tags, until [save] is
-/// called with a freshly-scored result from TemperamentQuizScreen. In-memory
-/// only, same as ChallengeProgress/EventRsvp — resets on app restart.
+/// [personKey]'s saved Temperament Quiz result — null means they haven't
+/// taken the quiz yet, in which case the UI renders the Find Your
+/// Temperament button instead of Primary/Secondary tags. Backed by
+/// `Member Temperament Result` (see docs/app_concept.md's Temperaments
+/// domain section and supabase/migrations/20260821000000_temperaments.sql).
 
-abstract class _$GuideTemperamentResult extends $Notifier<TemperamentResult?> {
+abstract class _$GuideTemperamentResult
+    extends $AsyncNotifier<TemperamentResult?> {
   late final _$args = ref.$arg as String;
   String get personKey => _$args;
 
-  TemperamentResult? build(String personKey);
+  FutureOr<TemperamentResult?> build(String personKey);
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build(_$args);
-    final ref = this.ref as $Ref<TemperamentResult?, TemperamentResult?>;
+    final ref =
+        this.ref as $Ref<AsyncValue<TemperamentResult?>, TemperamentResult?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<TemperamentResult?, TemperamentResult?>,
-              TemperamentResult?,
+              AnyNotifier<AsyncValue<TemperamentResult?>, TemperamentResult?>,
+              AsyncValue<TemperamentResult?>,
               Object?,
               Object?
             >;
