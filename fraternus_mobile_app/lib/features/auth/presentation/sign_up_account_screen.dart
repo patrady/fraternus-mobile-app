@@ -11,8 +11,6 @@ import '../../../app/router/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
 import '../../../shared/providers/chapter_providers.dart';
-import '../../guide/presentation/widgets/fraternus_date_picker.dart';
-import '../../profile/presentation/widgets/birthday_field.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/auth_providers.dart';
 import '../validation.dart';
@@ -22,21 +20,21 @@ import '../validation.dart';
 /// until the whole wizard completes, same as the rest of this screen's
 /// fields.
 class _ChildDraft {
-  const _ChildDraft({
-    required this.firstName,
-    required this.lastName,
-    required this.birthday,
-    this.email,
-    this.chapterKey,
-  });
+  const _ChildDraft({required this.firstName, required this.lastName, this.email, this.chapterKey});
 
   final String firstName;
   final String lastName;
-  final DateTime birthday;
   final String? email;
   final String? chapterKey;
 
   String get fullName => '$firstName $lastName';
+}
+
+String _chapterDisplayName(String? chapterKey, List<Chapter> chapters) {
+  for (final chapter in chapters) {
+    if (chapter.key == chapterKey) return chapter.displayName;
+  }
+  return '';
 }
 
 /// The account-creation wizard reached from SignUpRoleScreen's "Parent or
@@ -62,7 +60,7 @@ class _ChildDraft {
 /// screen is actually left — `_goBack`'s step-0 case and the finished
 /// step's "Let's Get Started" button below.
 ///
-/// First/last name, chapter/birthday, and any kids are all held in local
+/// First/last name, chapter, and any kids are all held in local
 /// state and only written to the backend once, from the Finished step's
 /// "Let's Get Started" button (`_finishWizard`) — profile completion isn't
 /// itself step-by-step the way the auth steps are, and deferring every
@@ -216,11 +214,9 @@ class _AttendanceStepConfig extends _WizardStepConfig {
     return _AttendanceStep(
       attends: state._attends,
       chapterKey: state._chapterKey,
-      birthday: state._birthday,
       errorMessage: state._errorMessage,
       onAttendsChanged: state._setAttends,
       onChapterChanged: state._setChapterKey,
-      onBirthdayChanged: state._setBirthday,
     );
   }
 
@@ -312,7 +308,6 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
 
   bool _attends = true;
   String? _chapterKey;
-  DateTime? _birthday;
 
   final List<_ChildDraft> _kids = [];
   bool _addingChild = false;
@@ -463,8 +458,8 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
   }
 
   void _submitAttendance() {
-    if (_attends && (_chapterKey == null || _birthday == null)) {
-      setState(() => _errorMessage = 'Select a chapter and birthday');
+    if (_attends && _chapterKey == null) {
+      setState(() => _errorMessage = 'Select a chapter');
       return;
     }
     setState(() {
@@ -474,8 +469,8 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
   }
 
   // Purely a local step transition — every field collected up to this point
-  // (name, attendance/chapter/birthday, kids) stays in memory only. Nothing
-  // is written to the backend until _finishWizard's "Let's Get Started" is
+  // (name, attendance/chapter, kids) stays in memory only. Nothing is
+  // written to the backend until _finishWizard's "Let's Get Started" is
   // actually pressed, so backing out of the wizard at any point along the
   // way (including Finished->Kids) never leaves behind a record for
   // something the user then changed their mind about.
@@ -540,19 +535,13 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
       await profileRepository.updateProfile(currentUser.copyWith(firstName: firstName, lastName: lastName));
 
       if (_attends) {
-        await profileRepository.completeCaptainSignup(
-          chapterKey: _chapterKey!,
-          firstName: firstName,
-          lastName: lastName,
-          birthday: _birthday!,
-        );
+        await profileRepository.completeCaptainSignup(chapterKey: _chapterKey!, firstName: firstName, lastName: lastName);
       }
       for (final kid in _kids) {
         await profileRepository.createChildMember(
           firstName: kid.firstName,
           lastName: kid.lastName,
           chapterKey: kid.chapterKey ?? _chapterKey ?? '',
-          birthday: kid.birthday,
           email: kid.email,
         );
       }
@@ -572,7 +561,6 @@ class _SignUpAccountScreenState extends ConsumerState<SignUpAccountScreen> {
 
   void _setAttends(bool value) => setState(() => _attends = value);
   void _setChapterKey(String? value) => setState(() => _chapterKey = value);
-  void _setBirthday(DateTime? value) => setState(() => _birthday = value);
 
   void _startAddingChild() => setState(() => _addingChild = true);
   void _cancelAddingChild() => setState(() => _addingChild = false);
@@ -840,31 +828,16 @@ class _AttendanceStep extends ConsumerWidget {
   const _AttendanceStep({
     required this.attends,
     required this.chapterKey,
-    required this.birthday,
     required this.errorMessage,
     required this.onAttendsChanged,
     required this.onChapterChanged,
-    required this.onBirthdayChanged,
   });
 
   final bool attends;
   final String? chapterKey;
-  final DateTime? birthday;
   final String? errorMessage;
   final ValueChanged<bool> onAttendsChanged;
   final ValueChanged<String?> onChapterChanged;
-  final ValueChanged<DateTime?> onBirthdayChanged;
-
-  Future<void> _pickBirthday(BuildContext context) async {
-    final now = DateTime.now();
-    final picked = await showFraternusDatePicker(
-      context: context,
-      initialDate: birthday ?? DateTime(now.year - 35, now.month, now.day),
-      firstDate: DateTime(now.year - 100),
-      lastDate: now,
-    );
-    if (picked != null) onBirthdayChanged(picked);
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -900,9 +873,6 @@ class _AttendanceStep extends ConsumerWidget {
             placeholder: 'Select a chapter',
             onChanged: onChapterChanged,
           ),
-          const SizedBox(height: 16),
-          const FieldLabel(label: 'Birthday'),
-          BirthdayField(date: birthday, onTap: () => _pickBirthday(context)),
         ],
         _ErrorText(errorMessage),
       ],
@@ -1009,7 +979,7 @@ class _KidsStep extends ConsumerWidget {
                 ? null
                 : kids[i].fullName.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase(),
             title: kids[i].fullName,
-            subtitle: 'Born ${kids[i].birthday.month}/${kids[i].birthday.day}/${kids[i].birthday.year}',
+            subtitle: _chapterDisplayName(kids[i].chapterKey ?? defaultChapterKey, chapters),
             onRemove: () => onRemoveChild(i),
           ),
         if (addingChild)
@@ -1086,7 +1056,6 @@ class _InlineChildFormState extends State<_InlineChildForm> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  DateTime? _birthday;
   late String? _chapterKey = widget.defaultChapterKey;
 
   @override
@@ -1097,19 +1066,7 @@ class _InlineChildFormState extends State<_InlineChildForm> {
     super.dispose();
   }
 
-  Future<void> _pickBirthday() async {
-    final now = DateTime.now();
-    final picked = await showFraternusDatePicker(
-      context: context,
-      initialDate: _birthday ?? DateTime(now.year - 10, now.month, now.day),
-      firstDate: DateTime(now.year - 25),
-      lastDate: now,
-    );
-    if (picked != null) setState(() => _birthday = picked);
-  }
-
-  bool get _canAdd =>
-      isValidName(_firstNameController.text) && isValidName(_lastNameController.text) && _birthday != null;
+  bool get _canAdd => isValidName(_firstNameController.text) && isValidName(_lastNameController.text);
 
   @override
   Widget build(BuildContext context) {
@@ -1129,9 +1086,6 @@ class _InlineChildFormState extends State<_InlineChildForm> {
           const SizedBox(height: 16),
           const FieldLabel(label: 'Last Name'),
           FormTextField(controller: _lastNameController, placeholder: 'Last name'),
-          const SizedBox(height: 16),
-          const FieldLabel(label: 'Birthday'),
-          BirthdayField(date: _birthday, onTap: _pickBirthday),
           const SizedBox(height: 16),
           const FieldLabel(label: 'Email (Optional)'),
           FormTextField(
@@ -1168,7 +1122,6 @@ class _InlineChildFormState extends State<_InlineChildForm> {
                     _ChildDraft(
                       firstName: _firstNameController.text.trim(),
                       lastName: _lastNameController.text.trim(),
-                      birthday: _birthday!,
                       email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
                       chapterKey: _chapterKey,
                     ),
@@ -1203,14 +1156,8 @@ class _FinishedStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chapters = ref.watch(chaptersProvider).value ?? const <Chapter>[];
-    String? chapterName;
-    for (final chapter in chapters) {
-      if (chapter.key == chapterKey) {
-        chapterName = chapter.displayName;
-        break;
-      }
-    }
-    final isCaptain = attends && chapterName != null;
+    final chapterName = _chapterDisplayName(chapterKey, chapters);
+    final isCaptain = attends && chapterName.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -1277,7 +1224,7 @@ class _FinishedStep extends ConsumerWidget {
                   ? null
                   : kid.fullName.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase(),
               title: kid.fullName,
-              subtitle: 'Born ${kid.birthday.month}/${kid.birthday.day}/${kid.birthday.year}',
+              subtitle: _chapterDisplayName(kid.chapterKey ?? chapterKey, chapters),
             ),
         ],
         _ErrorText(errorMessage),

@@ -18,19 +18,13 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - When creating an account, the user must choose between two options: Captain or Guardian. A captain is an adult that is involved with Fraternus (e.g. a mentor/leader). A guardian is an adult that is not personally involved with Fraternus but has a child (or children) in it.
 - A user is someone who has an account. A member is someone that is registered with Fraternus (a Brother, Captain, or Commander).
 - Brothers cannot sign up for their own account yet. A Guardian creates their Brother's Member record on the Brother's behalf. A future invite flow will let a Brother claim their own account against an existing Member record their Guardian created.
-- If it's a Captain signing up: their first name, last name, email, chapter, and birthday must be provided (birthday is required for every Member regardless of role — see the Member Data Model). This creates a User, a Member (Role = Captain), and a User Member Association (Relationship = Self).
-- If it's a Guardian signing up: their first name, last name, and email must be provided (creates a User only). If the Guardian is also going to Fraternus meetings themselves, a Member record (Role = Captain) is also created for them along with a chapter selection and birthday, and a User Member Association (Relationship = Self) is created. Otherwise, the Guardian has no Member record of their own.
-- During or after Guardian/Captain signup, Member records for each of their children can be created (Role = Brother). These fields are required for a member: first name, last name, chapter (prefilled based on the Guardian's), and birthday must be provided; email is optional since Brothers may not have one. Each child creation also creates a User Member Association (Relationship = Guardian) linking the Guardian's User Id to the new Member Id. Since these Member records are being created for the first time, there's no need to search for or link an existing Member.
+- If it's a Captain signing up: their first name, last name, email, and chapter must be provided. This creates a User, a Member (Role = Captain), and a User Member Association (Relationship = Self).
+- If it's a Guardian signing up: their first name, last name, and email must be provided (creates a User only). If the Guardian is also going to Fraternus meetings themselves, a Member record (Role = Captain) is also created for them along with a chapter selection, and a User Member Association (Relationship = Self) is created. Otherwise, the Guardian has no Member record of their own.
+- During or after Guardian/Captain signup, Member records for each of their children can be created (Role = Brother). These fields are required for a member: first name, last name, and chapter (prefilled based on the Guardian's); email is optional since Brothers may not have one. Each child creation also creates a User Member Association (Relationship = Guardian) linking the Guardian's User Id to the new Member Id. Since these Member records are being created for the first time, there's no need to search for or link an existing Member.
 - The chapter is a drop-down selection, sourced from the `Chapter` table via Supabase (readable by unauthenticated clients too, since chapter selection happens before signup completes — see the Chapter data model for more information).
 - A member can only belong to one chapter
 - A user can have a relationship to a member as either Self or Guardian
-
-#### COPPA / Consent
-
-- Any Brother Member under 13 years old (based on Birthday) requires verifiable guardian consent before the Member record is usable (readings, challenges, events, field guide).
-- Consent is tracked on the User Member Association row where Relationship = Guardian: Consent Status (Pending, Granted, Revoked), Consent Date, and Consent Method (e.g. email confirmation).
-- A Member under 13 with no Association row in Consent Status = Granted is treated as inactive/pending everywhere in the app (no notifications sent, no data entry accepted on their behalf) until consent is granted.
-- A Guardian can revoke consent at any time, which should be treated as a request to stop all further data collection for that Member.
+- This app only supports parents/guardians managing their own account and their children's Member records directly — there's no age-based gating on a Brother Member. A Guardian's ability to permanently delete their child's data (see [ADR 0003](adrs/003_coppa_child_data_deletion.md)) is retained as a general parent-initiated right, independent of any age/consent mechanism.
 
 ### Field Guide
 
@@ -135,7 +129,6 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Role (Brother, Captain, Commander)
     - First Name
     - Last Name
-    - Birthday
     - Created Date
     - Last Modified Date
 - User Member Association
@@ -143,9 +136,6 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - User Id
     - Member Id
     - Relationship (Self, Guardian)
-    - Consent Status (nullable — Pending, Granted, Revoked; applicable when Relationship = Guardian and the Member is under 13)
-    - Consent Date (nullable)
-    - Consent Method (nullable)
     - Created Date
     - Last Modified Date
     - Constraints:

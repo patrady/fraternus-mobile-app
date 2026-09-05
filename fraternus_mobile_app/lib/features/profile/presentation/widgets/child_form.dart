@@ -2,14 +2,11 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../shared/models/chapter.dart';
-import '../../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../../models/member.dart';
-import 'birthday_field.dart';
 
 /// Shared field layout for Add Child and Edit Child — both mockups use the
-/// identical First/Last Name, Birthday, Email (Optional), Chapter shape,
-/// differing only in starting values and whether a Remove Child button
-/// appears below.
+/// identical First/Last Name, Email (Optional), Chapter shape, differing
+/// only in starting values and whether a Remove Child button appears below.
 class ChildForm extends StatefulWidget {
   const ChildForm({
     super.key,
@@ -34,7 +31,6 @@ class ChildForm extends StatefulWidget {
   final void Function({
     required String firstName,
     required String lastName,
-    required DateTime birthday,
     required String? email,
     required String? chapterKey,
   })
@@ -55,7 +51,6 @@ class _ChildFormState extends State<ChildForm> {
   late final _emailController = TextEditingController(
     text: widget.initial?.email,
   );
-  late DateTime? _birthday = widget.initial?.birthday;
   late String? _chapterKey = widget.initial?.chapterKey ?? widget.initialChapterKey;
 
   @override
@@ -64,17 +59,6 @@ class _ChildFormState extends State<ChildForm> {
     _lastNameController.dispose();
     _emailController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickBirthday() async {
-    final now = DateTime.now();
-    final picked = await showFraternusDatePicker(
-      context: context,
-      initialDate: _birthday ?? DateTime(now.year - 10, now.month, now.day),
-      firstDate: DateTime(now.year - 25),
-      lastDate: now,
-    );
-    if (picked != null) setState(() => _birthday = picked);
   }
 
   @override
@@ -117,9 +101,6 @@ class _ChildFormState extends State<ChildForm> {
                 ],
               ),
               const SizedBox(height: 16),
-              const FieldLabel(label: 'Birthday'),
-              BirthdayField(date: _birthday, onTap: _pickBirthday),
-              const SizedBox(height: 16),
               const FieldLabel(label: 'Email (Optional)'),
               FormTextField(
                 controller: _emailController,
@@ -139,11 +120,10 @@ class _ChildFormState extends State<ChildForm> {
               Button(
                 label: 'Save',
                 fullWidth: true,
-                disabled: _birthday == null,
+                disabled: _chapterKey == null,
                 onPressed: () => widget.onSave(
                   firstName: _firstNameController.text,
                   lastName: _lastNameController.text,
-                  birthday: _birthday!,
                   email: _emailController.text.isEmpty
                       ? null
                       : _emailController.text,

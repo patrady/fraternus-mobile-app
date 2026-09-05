@@ -492,31 +492,6 @@ void main() {
     expect(find.text('Jack'), findsOneWidget);
     expect(find.text('Smith'), findsOneWidget);
 
-    // Jack is under 13 and seeded with Granted consent — the consent
-    // section should show it and offer revocation.
-    expect(find.text('GRANTED'), findsOneWidget);
-    expect(find.text('REVOKE CONSENT'), findsOneWidget);
-
-    await tester.tap(find.text('REVOKE CONSENT'));
-    await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'This stops all further data collection for this child — no new readings, '
-        'challenges, or event data can be recorded on their behalf until consent is '
-        'granted again.',
-      ),
-      findsOneWidget,
-    );
-    await tester.tap(find.text('REVOKE'));
-    await tester.pumpAndSettle();
-
-    // Revocation calls through to the repository and the association is
-    // re-fetched — the tag flips and the revoke button disappears (it only
-    // shows for Granted).
-    expect(find.text('REVOKED'), findsOneWidget);
-    expect(find.text('GRANTED'), findsNothing);
-    expect(find.text('REVOKE CONSENT'), findsNothing);
-
     await tester.ensureVisible(find.text('REMOVE CHILD'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('REMOVE CHILD'));
@@ -560,7 +535,6 @@ void main() {
 
     expect(find.text('ADD CHILD'), findsOneWidget);
     expect(find.text('FIRST NAME'), findsOneWidget);
-    expect(find.text('BIRTHDAY'), findsOneWidget);
   });
 
   testWidgets('Reminders shows the master switch and all 7 grouped toggles', (
@@ -1100,10 +1074,7 @@ void main() {
       await tester.tap(find.text('CONTINUE'));
       await tester.pumpAndSettle();
 
-      // Kids step — add one child. The birthday picker opens on
-      // _InlineChildFormState._pickBirthday's own initialDate already
-      // selected, so tapping OK without touching the calendar grid confirms
-      // that date — no need to navigate the picker itself for this test.
+      // Kids step — add one child.
       expect(find.text('ADD YOUR KIDS'), findsOneWidget);
       await tester.tap(find.text('ADD CHILD'));
       await tester.pumpAndSettle();
@@ -1111,10 +1082,6 @@ void main() {
       final childFields = find.byType(TextField);
       await tester.enterText(childFields.at(0), 'Jack');
       await tester.enterText(childFields.at(1), 'Doe');
-
-      await tester.tap(find.bySemanticsLabel('Birthday'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Add'));

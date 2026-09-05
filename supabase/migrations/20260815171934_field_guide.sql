@@ -165,19 +165,13 @@ create policy "select own household devotional completions"
 create policy "insert own household devotional completions"
   on public.field_guide_daily_devotional_members for insert
   to authenticated
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 create policy "update own household devotional completions"
   on public.field_guide_daily_devotional_members for update
   to authenticated
   using (public.has_member_association(member_id))
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 -- No delete policy: rows disappear only via cascade from delete_member_data.
 

@@ -12,7 +12,6 @@ class Member {
     required this.lastName,
     required this.role,
     required this.chapterKey,
-    required this.birthday,
     this.email,
     required this.createdAt,
     required this.lastModifiedAt,
@@ -25,10 +24,6 @@ class Member {
 
   /// A Member always belongs to exactly one chapter.
   final String chapterKey;
-
-  /// Required for every Member regardless of role — Brother, Captain, or
-  /// Commander all collect a birthday at creation time.
-  final DateTime birthday;
 
   /// Not present in app_concept.md's literal Member table, but its
   /// signup-flow prose explicitly says a Brother's creation captures an
@@ -46,7 +41,6 @@ class Member {
   Member copyWith({
     String? firstName,
     String? lastName,
-    DateTime? birthday,
     String? email,
     bool clearEmail = false,
     String? chapterKey,
@@ -57,7 +51,6 @@ class Member {
       lastName: lastName ?? this.lastName,
       role: role,
       chapterKey: chapterKey ?? this.chapterKey,
-      birthday: birthday ?? this.birthday,
       email: clearEmail ? null : (email ?? this.email),
       createdAt: createdAt,
       lastModifiedAt: lastModifiedAt,
@@ -71,7 +64,6 @@ class Member {
       lastName: json['last_name'] as String,
       role: MemberRole.values.byName(json['role'] as String),
       chapterKey: json['chapter_key'] as String,
-      birthday: DateTime.parse(json['birthday'] as String),
       email: json['email'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),

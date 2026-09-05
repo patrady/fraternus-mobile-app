@@ -75,10 +75,10 @@ class HouseholdMembers extends _$HouseholdMembers {
 
 /// This User's UserMemberAssociation rows. Read-only from the client's
 /// perspective now — creation is atomic (create_child_member /
-/// complete_captain_signup), consent revocation is its own repository
-/// method, and deletion only ever happens via HouseholdMembers.remove's
-/// cascade. A plain function provider rather than a Notifier class, since
-/// nothing here mutates local state directly anymore.
+/// complete_captain_signup), and deletion only ever happens via
+/// HouseholdMembers.remove's cascade. A plain function provider rather than
+/// a Notifier class, since nothing here mutates local state directly
+/// anymore.
 @riverpod
 Future<List<UserMemberAssociation>> householdAssociations(Ref ref) {
   return ref.watch(profileRepositoryProvider).fetchAssociations();

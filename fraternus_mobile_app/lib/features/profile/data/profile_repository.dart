@@ -17,15 +17,12 @@ abstract class ProfileRepository {
   Future<void> updateProfile(AppUser user);
   Future<void> updateMember(Member member);
 
-  /// Atomically creates a Brother Member + Guardian association (+
-  /// auto-Granted consent if under 13 — see create_child_member's migration
-  /// doc comment for why it isn't Pending) for the current Guardian.
-  /// Returns the new Member's id.
+  /// Atomically creates a Brother Member + Guardian association for the
+  /// current Guardian. Returns the new Member's id.
   Future<String> createChildMember({
     required String firstName,
     required String lastName,
     required String chapterKey,
-    required DateTime birthday,
     String? email,
   });
 
@@ -37,15 +34,7 @@ abstract class ProfileRepository {
     required String chapterKey,
     required String firstName,
     required String lastName,
-    required DateTime birthday,
   });
-
-  /// Revokes a Guardian's consent for [memberId] — app_concept.md: "treated
-  /// as a request to stop all further data collection for that Member."
-  /// Granting consent is a separate, not-yet-designed verification flow
-  /// (see docs/adrs/002_supabase_backend_poc.md §5) — this repository only
-  /// covers revocation.
-  Future<void> revokeConsent(String memberId);
 
   /// docs/adrs/003_coppa_child_data_deletion.md — deletes [memberId] and,
   /// via cascade, everything referencing them.
@@ -104,7 +93,6 @@ class StaticProfileRepository implements ProfileRepository {
         lastName: 'Smith',
         role: MemberRole.captain,
         chapterKey: 'st_philips_franklin_franklin_tn',
-        birthday: DateTime(now.year - 42, 3, 14),
         email: _selfEmail,
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
@@ -115,7 +103,6 @@ class StaticProfileRepository implements ProfileRepository {
         lastName: 'Smith',
         role: MemberRole.brother,
         chapterKey: 'st_philips_franklin_franklin_tn',
-        birthday: DateTime(now.year - 12, 5, 12),
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
       ),
@@ -125,7 +112,6 @@ class StaticProfileRepository implements ProfileRepository {
         lastName: 'Smith',
         role: MemberRole.brother,
         chapterKey: 'st_philips_franklin_franklin_tn',
-        birthday: DateTime(now.year - 9, 9, 3),
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
       ),
@@ -143,16 +129,11 @@ class StaticProfileRepository implements ProfileRepository {
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
       ),
-      // Jack (12) and Thomas (9) are both under 13 — COPPA consent applies
-      // and has already been granted in this seed.
       UserMemberAssociation(
         id: '$_userId-jack',
         userId: _userId,
         memberId: 'jack',
         relationship: AssociationRelationship.guardian,
-        consentStatus: ConsentStatus.granted,
-        consentDate: joinedAt,
-        consentMethod: 'email confirmation',
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
       ),
@@ -161,9 +142,6 @@ class StaticProfileRepository implements ProfileRepository {
         userId: _userId,
         memberId: 'thomas',
         relationship: AssociationRelationship.guardian,
-        consentStatus: ConsentStatus.granted,
-        consentDate: joinedAt,
-        consentMethod: 'email confirmation',
         createdAt: joinedAt,
         lastModifiedAt: joinedAt,
       ),
@@ -209,7 +187,6 @@ class StaticProfileRepository implements ProfileRepository {
     required String firstName,
     required String lastName,
     required String chapterKey,
-    required DateTime birthday,
     String? email,
   }) async {
     final now = DateTime.now();
@@ -221,29 +198,17 @@ class StaticProfileRepository implements ProfileRepository {
         lastName: lastName,
         role: MemberRole.brother,
         chapterKey: chapterKey,
-        birthday: birthday,
         email: email,
         createdAt: now,
         lastModifiedAt: now,
       ),
     );
-
-    final hadBirthdayThisYear =
-        now.month > birthday.month || (now.month == birthday.month && now.day >= birthday.day);
-    final age = now.year - birthday.year - (hadBirthdayThisYear ? 0 : 1);
-    final requiresConsent = age < 13;
-
-    // Auto-granted, matching create_child_member's RPC — see that
-    // migration's doc comment for why this isn't Pending.
     _associations.add(
       UserMemberAssociation(
         id: '$_userId-$id',
         userId: _userId,
         memberId: id,
         relationship: AssociationRelationship.guardian,
-        consentStatus: requiresConsent ? ConsentStatus.granted : null,
-        consentDate: requiresConsent ? now : null,
-        consentMethod: requiresConsent ? 'auto-granted at signup (verification flow not yet built)' : null,
         createdAt: now,
         lastModifiedAt: now,
       ),
@@ -256,7 +221,6 @@ class StaticProfileRepository implements ProfileRepository {
     required String chapterKey,
     required String firstName,
     required String lastName,
-    required DateTime birthday,
   }) async {
     final now = DateTime.now();
     final id = 'self-${now.microsecondsSinceEpoch}';
@@ -267,7 +231,6 @@ class StaticProfileRepository implements ProfileRepository {
         lastName: lastName,
         role: MemberRole.captain,
         chapterKey: chapterKey,
-        birthday: birthday,
         email: _user.email,
         createdAt: now,
         lastModifiedAt: now,
@@ -284,26 +247,6 @@ class StaticProfileRepository implements ProfileRepository {
       ),
     );
     return id;
-  }
-
-  @override
-  Future<void> revokeConsent(String memberId) async {
-    final index = _associations.indexWhere(
-      (a) => a.memberId == memberId && a.relationship == AssociationRelationship.guardian,
-    );
-    if (index == -1) return;
-    final existing = _associations[index];
-    _associations[index] = UserMemberAssociation(
-      id: existing.id,
-      userId: existing.userId,
-      memberId: existing.memberId,
-      relationship: existing.relationship,
-      consentStatus: ConsentStatus.revoked,
-      consentDate: existing.consentDate,
-      consentMethod: existing.consentMethod,
-      createdAt: existing.createdAt,
-      lastModifiedAt: DateTime.now(),
-    );
   }
 
   @override
@@ -384,7 +327,6 @@ class SupabaseProfileRepository implements ProfileRepository {
         .update({
           'first_name': member.firstName,
           'last_name': member.lastName,
-          'birthday': _isoDate(member.birthday),
           'email': member.email,
           'chapter_key': member.chapterKey,
         })
@@ -396,18 +338,11 @@ class SupabaseProfileRepository implements ProfileRepository {
     required String firstName,
     required String lastName,
     required String chapterKey,
-    required DateTime birthday,
     String? email,
   }) async {
     final result = await _client.rpc(
       'create_child_member',
-      params: {
-        'p_first_name': firstName,
-        'p_last_name': lastName,
-        'p_chapter_key': chapterKey,
-        'p_birthday': _isoDate(birthday),
-        'p_email': email,
-      },
+      params: {'p_first_name': firstName, 'p_last_name': lastName, 'p_chapter_key': chapterKey, 'p_email': email},
     );
     return result as String;
   }
@@ -417,27 +352,12 @@ class SupabaseProfileRepository implements ProfileRepository {
     required String chapterKey,
     required String firstName,
     required String lastName,
-    required DateTime birthday,
   }) async {
     final result = await _client.rpc(
       'complete_captain_signup',
-      params: {
-        'p_chapter_key': chapterKey,
-        'p_first_name': firstName,
-        'p_last_name': lastName,
-        'p_birthday': _isoDate(birthday),
-      },
+      params: {'p_chapter_key': chapterKey, 'p_first_name': firstName, 'p_last_name': lastName},
     );
     return result as String;
-  }
-
-  @override
-  Future<void> revokeConsent(String memberId) async {
-    await _client
-        .from('user_member_associations')
-        .update({'consent_status': 'revoked'})
-        .eq('member_id', memberId)
-        .eq('relationship', 'guardian');
   }
 
   @override
@@ -457,7 +377,4 @@ class SupabaseProfileRepository implements ProfileRepository {
   Future<void> setRemindersEnabled(bool enabled) async {
     await _client.from('users').update({'is_reminders_enabled': enabled}).eq('id', _userId);
   }
-
-  static String _isoDate(DateTime date) =>
-      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }

@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-08-12
 
+> **Update 2026-09-04:** Birthday and COPPA consent tracking (the "COPPA/Consent" section this ADR's Context refers to, and the `Birthday`/`Consent Status`/`Consent Date`/`Consent Method` fields in the Data Model table below) have been removed from the app — this app now only supports parents managing their own account and their children's Member records directly, with no age-based gating. The deletion mechanism this ADR describes is **retained** as a general parent-initiated data-deletion right, independent of COPPA/age — its rationale in `## Scope` (applying uniformly regardless of a Brother's age, to avoid age-gating complexity) already argued for exactly this, so nothing about the deletion mechanics changes. The `delete_member_data` RPC and cascade-delete design below are unaffected; only the since-removed fields it used to delete are gone.
+
 ## Context
 
 `app_concept.md`'s COPPA/Consent section already requires verifiable Guardian consent before a Brother under 13's Member record is usable, and lets a Guardian revoke consent at any time to stop *further* data collection. Revoking consent is not the same thing as deletion — it halts new writes but leaves everything already collected in place. COPPA separately requires that a parent be able to request deletion of a child's already-collected personal information, and this ADR defines what that means concretely against the data models in `app_concept.md`, and how it's implemented.

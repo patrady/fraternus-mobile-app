@@ -52,10 +52,7 @@ create policy "select own household challenge progress"
 create policy "accept challenge for own household member"
   on public.challenge_members for insert
   to authenticated
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 -- toggle_challenge_rep runs as the caller (not security definer — see the
 -- rpcs migration for why), so its own `update challenge_members` needs
@@ -64,10 +61,7 @@ create policy "update own household challenge progress"
   on public.challenge_members for update
   to authenticated
   using (public.has_member_association(member_id))
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 grant select, insert, update on public.challenge_members to authenticated;
 

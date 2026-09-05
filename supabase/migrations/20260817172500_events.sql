@@ -181,19 +181,13 @@ create policy "select own household rsvps"
 create policy "insert own household rsvps"
   on public.event_rsvps for insert
   to authenticated
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 create policy "update own household rsvps"
   on public.event_rsvps for update
   to authenticated
   using (public.has_member_association(member_id))
-  with check (
-    public.has_member_association(member_id)
-    and public.member_is_write_active(member_id)
-  );
+  with check (public.has_member_association(member_id));
 
 -- No delete policy: the "un-RSVP" flow is a toggle-to-delete RPC
 -- (submit_event_rsvp, Phase 7), which runs as the caller and is still

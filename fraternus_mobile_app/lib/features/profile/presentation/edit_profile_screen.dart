@@ -5,17 +5,15 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/models/chapter.dart';
 import '../../../shared/providers/chapter_providers.dart';
-import '../../guide/presentation/widgets/fraternus_date_picker.dart';
 import '../models/app_user.dart';
 import '../models/member.dart';
 import '../providers/profile_providers.dart';
-import 'widgets/birthday_field.dart';
 
 /// A ConsumerStatefulWidget (not the split ConsumerWidget+ConsumerStatefulWidget
 /// shape used before) so the Save button can live in [ScreenShell]'s pinned
 /// `footer` slot — that button needs the same field state (controllers,
-/// `_chapterKey`, `_birthday`) that builds the form body, and only this
-/// widget's State has both in scope at once.
+/// `_chapterKey`) that builds the form body, and only this widget's State
+/// has both in scope at once.
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -28,7 +26,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   TextEditingController? _lastNameController;
   TextEditingController? _emailController;
   String? _chapterKey;
-  DateTime? _birthday;
 
   AppUser? _user;
   Member? _selfMember;
@@ -47,7 +44,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _lastNameController = TextEditingController(text: user.lastName);
     _emailController = TextEditingController(text: user.email);
     _chapterKey = selfMember?.chapterKey;
-    _birthday = selfMember?.birthday;
   }
 
   @override
@@ -58,31 +54,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _pickBirthday() async {
-    final now = DateTime.now();
-    final picked = await showFraternusDatePicker(
-      context: context,
-      initialDate: _birthday ?? DateTime(now.year - 35, now.month, now.day),
-      firstDate: DateTime(now.year - 100),
-      lastDate: now,
-    );
-    if (picked != null) setState(() => _birthday = picked);
-  }
-
   Future<void> _save() async {
     final user = _user!;
     final selfMember = _selfMember;
     await ref
         .read(currentUserProvider.notifier)
         .save(user.copyWith(firstName: _firstNameController!.text, lastName: _lastNameController!.text));
-    if (selfMember != null && _chapterKey != null && _birthday != null) {
+    if (selfMember != null && _chapterKey != null) {
       await ref
           .read(householdMembersProvider.notifier)
           .updateMember(
             selfMember.copyWith(
               firstName: _firstNameController!.text,
               lastName: _lastNameController!.text,
-              birthday: _birthday,
               chapterKey: _chapterKey,
             ),
           );
@@ -163,9 +147,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         FormTextField(controller: _emailController, keyboardType: TextInputType.emailAddress, readOnly: true),
         if (selfMember != null) ...[
           const SizedBox(height: 16),
-          const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Birthday')),
-          BirthdayField(date: _birthday, onTap: _pickBirthday),
-          const SizedBox(height: 16),
           const Align(alignment: Alignment.centerLeft, child: FieldLabel(label: 'Chapter')),
           SelectField(
             value: _chapterKey,
@@ -183,7 +164,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Button(
       label: 'Save',
       fullWidth: true,
-      disabled: selfMember != null && _birthday == null,
+      disabled: selfMember != null && _chapterKey == null,
       onPressed: _save,
     );
   }
