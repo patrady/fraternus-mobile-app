@@ -170,6 +170,48 @@ class GuideDevotionalProgress extends _$GuideDevotionalProgress {
     );
   }
 
+  /// Favorites (or un-favorites) the Identity card, same undo-friendly
+  /// shape as [toggleComplete].
+  Future<void> toggleIdentityFavorite(String personKey) async {
+    final devotionalId = await _dailyDevotionalId();
+    if (devotionalId == null) return;
+    final wasFavorite =
+        (state.value ?? const {})[personKey]?.isIdentityFavorite ?? false;
+    await _optimisticUpsert(
+      personKey: personKey,
+      devotionalId: devotionalId,
+      apply: (member) => member.copyWith(isIdentityFavorite: !wasFavorite),
+      write: () => ref
+          .read(guideRepositoryProvider)
+          .upsertDevotionalMember(
+            dailyDevotionalId: devotionalId,
+            memberId: personKey,
+            isIdentityFavorite: !wasFavorite,
+          ),
+    );
+  }
+
+  /// Favorites (or un-favorites) the Wisdom for the Day card, same
+  /// undo-friendly shape as [toggleComplete].
+  Future<void> toggleWisdomFavorite(String personKey) async {
+    final devotionalId = await _dailyDevotionalId();
+    if (devotionalId == null) return;
+    final wasFavorite =
+        (state.value ?? const {})[personKey]?.isWisdomFavorite ?? false;
+    await _optimisticUpsert(
+      personKey: personKey,
+      devotionalId: devotionalId,
+      apply: (member) => member.copyWith(isWisdomFavorite: !wasFavorite),
+      write: () => ref
+          .read(guideRepositoryProvider)
+          .upsertDevotionalMember(
+            dailyDevotionalId: devotionalId,
+            memberId: personKey,
+            isWisdomFavorite: !wasFavorite,
+          ),
+    );
+  }
+
   /// Applies [apply] to [personKey]'s row immediately (creating a
   /// placeholder row first if none exists yet), then runs [write] in the
   /// background and reconciles [state] with its authoritative result —
@@ -261,20 +303,43 @@ class GuideTemperamentResult extends _$GuideTemperamentResult {
   void save(TemperamentResult result) => state = result;
 }
 
-/// In-memory-only liked/favorited items (Identity, Wisdom, and quote
-/// cards). Entries are composite '$personKey:$itemId' strings. Not
-/// persisted — no favorite field exists anywhere in the Field Guide
-/// schema, so this is a visual affordance only, resetting on restart.
+/// Per-quote favorite state for every household member on [date]'s week,
+/// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+/// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+/// then optimistically updated by [toggle] — same
+/// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+/// just without a placeholder-row step since a favorite always starts false.
 @riverpod
-class GuideLikedItems extends _$GuideLikedItems {
+class GuideQuoteFavorites extends _$GuideQuoteFavorites {
   @override
-  Set<String> build() => {};
-
-  void toggle(String personKey, String itemId) {
-    final key = '$personKey:$itemId';
-    state = state.contains(key) ? ({...state}..remove(key)) : {...state, key};
+  Future<Map<String, bool>> build(DateTime date) async {
+    final week = await ref.watch(guideWeekForDateProvider(date).future);
+    return {
+      for (final quote in week?.quotes ?? const [])
+        for (final member in quote.members)
+          '${quote.id}:${member.memberId}': member.isFavorite,
+    };
   }
 
-  bool isLiked(String personKey, String itemId) =>
-      state.contains('$personKey:$itemId');
+  bool isFavorite(String quoteId, String personKey) =>
+      (state.value ?? const {})['$quoteId:$personKey'] ?? false;
+
+  Future<void> toggle(String personKey, String quoteId) async {
+    final key = '$quoteId:$personKey';
+    final previous = state.value ?? const <String, bool>{};
+    final wasFavorite = previous[key] ?? false;
+    state = AsyncData({...previous, key: !wasFavorite});
+    try {
+      await ref
+          .read(guideRepositoryProvider)
+          .upsertQuoteMember(
+            quoteId: quoteId,
+            memberId: personKey,
+            isFavorite: !wasFavorite,
+          );
+    } catch (_) {
+      state = AsyncData(previous);
+      rethrow;
+    }
+  }
 }

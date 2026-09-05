@@ -414,7 +414,7 @@ final class GuideDevotionalProgressProvider
 }
 
 String _$guideDevotionalProgressHash() =>
-    r'54519101024de50c69040be18ba81b5fc1cc4237';
+    r'231ade34281b2483efda91fdeb0b4eeb00c63521';
 
 /// Per-person completion rows for one date. Seeded once from
 /// [GuideRepository], then every mutation applies an optimistic update to
@@ -730,70 +730,131 @@ abstract class _$GuideTemperamentResult extends $Notifier<TemperamentResult?> {
   }
 }
 
-/// In-memory-only liked/favorited items (Identity, Wisdom, and quote
-/// cards). Entries are composite '$personKey:$itemId' strings. Not
-/// persisted — no favorite field exists anywhere in the Field Guide
-/// schema, so this is a visual affordance only, resetting on restart.
+/// Per-quote favorite state for every household member on [date]'s week,
+/// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+/// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+/// then optimistically updated by [toggle] — same
+/// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+/// just without a placeholder-row step since a favorite always starts false.
 
-@ProviderFor(GuideLikedItems)
-const guideLikedItemsProvider = GuideLikedItemsProvider._();
+@ProviderFor(GuideQuoteFavorites)
+const guideQuoteFavoritesProvider = GuideQuoteFavoritesFamily._();
 
-/// In-memory-only liked/favorited items (Identity, Wisdom, and quote
-/// cards). Entries are composite '$personKey:$itemId' strings. Not
-/// persisted — no favorite field exists anywhere in the Field Guide
-/// schema, so this is a visual affordance only, resetting on restart.
-final class GuideLikedItemsProvider
-    extends $NotifierProvider<GuideLikedItems, Set<String>> {
-  /// In-memory-only liked/favorited items (Identity, Wisdom, and quote
-  /// cards). Entries are composite '$personKey:$itemId' strings. Not
-  /// persisted — no favorite field exists anywhere in the Field Guide
-  /// schema, so this is a visual affordance only, resetting on restart.
-  const GuideLikedItemsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'guideLikedItemsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+/// Per-quote favorite state for every household member on [date]'s week,
+/// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+/// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+/// then optimistically updated by [toggle] — same
+/// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+/// just without a placeholder-row step since a favorite always starts false.
+final class GuideQuoteFavoritesProvider
+    extends $AsyncNotifierProvider<GuideQuoteFavorites, Map<String, bool>> {
+  /// Per-quote favorite state for every household member on [date]'s week,
+  /// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+  /// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+  /// then optimistically updated by [toggle] — same
+  /// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+  /// just without a placeholder-row step since a favorite always starts false.
+  const GuideQuoteFavoritesProvider._({
+    required GuideQuoteFavoritesFamily super.from,
+    required DateTime super.argument,
+  }) : super(
+         retry: null,
+         name: r'guideQuoteFavoritesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  String debugGetCreateSourceHash() => _$guideLikedItemsHash();
+  String debugGetCreateSourceHash() => _$guideQuoteFavoritesHash();
+
+  @override
+  String toString() {
+    return r'guideQuoteFavoritesProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
-  GuideLikedItems create() => GuideLikedItems();
+  GuideQuoteFavorites create() => GuideQuoteFavorites();
 
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Set<String> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Set<String>>(value),
-    );
+  @override
+  bool operator ==(Object other) {
+    return other is GuideQuoteFavoritesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$guideLikedItemsHash() => r'02cc178503182cacdc21d23f6dc4d477316ab976';
+String _$guideQuoteFavoritesHash() =>
+    r'f1e3bb2dff00c7b8249e24088a0011f29d75a495';
 
-/// In-memory-only liked/favorited items (Identity, Wisdom, and quote
-/// cards). Entries are composite '$personKey:$itemId' strings. Not
-/// persisted — no favorite field exists anywhere in the Field Guide
-/// schema, so this is a visual affordance only, resetting on restart.
+/// Per-quote favorite state for every household member on [date]'s week,
+/// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+/// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+/// then optimistically updated by [toggle] — same
+/// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+/// just without a placeholder-row step since a favorite always starts false.
 
-abstract class _$GuideLikedItems extends $Notifier<Set<String>> {
-  Set<String> build();
+final class GuideQuoteFavoritesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          GuideQuoteFavorites,
+          AsyncValue<Map<String, bool>>,
+          Map<String, bool>,
+          FutureOr<Map<String, bool>>,
+          DateTime
+        > {
+  const GuideQuoteFavoritesFamily._()
+    : super(
+        retry: null,
+        name: r'guideQuoteFavoritesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Per-quote favorite state for every household member on [date]'s week,
+  /// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+  /// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+  /// then optimistically updated by [toggle] — same
+  /// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+  /// just without a placeholder-row step since a favorite always starts false.
+
+  GuideQuoteFavoritesProvider call(DateTime date) =>
+      GuideQuoteFavoritesProvider._(argument: date, from: this);
+
+  @override
+  String toString() => r'guideQuoteFavoritesProvider';
+}
+
+/// Per-quote favorite state for every household member on [date]'s week,
+/// keyed by '$quoteId:$personKey'. Seeded from the quotes' nested
+/// `field_guide_week_quotes_members` (see [FieldGuideWeekQuote.members]),
+/// then optimistically updated by [toggle] — same
+/// apply-immediately/rollback-on-failure shape as [GuideDevotionalProgress],
+/// just without a placeholder-row step since a favorite always starts false.
+
+abstract class _$GuideQuoteFavorites extends $AsyncNotifier<Map<String, bool>> {
+  late final _$args = ref.$arg as DateTime;
+  DateTime get date => _$args;
+
+  FutureOr<Map<String, bool>> build(DateTime date);
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final created = build(_$args);
+    final ref =
+        this.ref as $Ref<AsyncValue<Map<String, bool>>, Map<String, bool>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Set<String>, Set<String>>,
-              Set<String>,
+              AnyNotifier<AsyncValue<Map<String, bool>>, Map<String, bool>>,
+              AsyncValue<Map<String, bool>>,
               Object?,
               Object?
             >;

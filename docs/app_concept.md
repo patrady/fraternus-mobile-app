@@ -217,6 +217,13 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Author
     - Created Date
     - Last Modified Date
+- Field Guide Week Quotes Member
+    - Id
+    - Field Guide Week Quotes Id
+    - Member Id
+    - Is Favorite
+    - Created Date
+    - Last Modified Date
 - Field Guide Daily Devotional
     - Id
     - Field Guide Week Id
@@ -239,6 +246,8 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Sword (copied from the selected Sword Option 1 or 2)
     - Spade (free-form text reflection)
     - Completed Date
+    - Is Identity Favorite
+    - Is Wisdom Favorite
     - Created Date
     - Last Modified Date
 - Event

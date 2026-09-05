@@ -13,9 +13,6 @@ import 'widgets/fraternus_date_picker.dart';
 import 'widgets/guide_date_header.dart';
 import 'widgets/sword_option_list.dart';
 
-bool _isLiked(Set<String> likedItems, String personKey, String itemId) =>
-    likedItems.contains('$personKey:$itemId');
-
 class GuideScreen extends ConsumerWidget {
   const GuideScreen({super.key});
 
@@ -93,7 +90,6 @@ class _GuideContent extends ConsumerWidget {
     final selectedKey = ref.watch(guideSelectedPersonProvider);
     final householdAsync = ref.watch(guideHouseholdProvider);
     final progressAsync = ref.watch(guideDevotionalProgressProvider(date));
-    final likedItems = ref.watch(guideLikedItemsProvider);
     final household = householdAsync.value ?? const [];
     // selectedKey defaults to the placeholder 'you' (see
     // GuideSelectedPerson), which won't match a real household member's
@@ -139,7 +135,6 @@ class _GuideContent extends ConsumerWidget {
             personKey: activeKey,
             date: date,
             virtue: week.virtue,
-            likedItems: likedItems,
           ),
           loading: () => const SizedBox.shrink(),
           error: (error, stackTrace) => const SizedBox.shrink(),
@@ -157,7 +152,6 @@ class _DailyCards extends ConsumerStatefulWidget {
     required this.personKey,
     required this.date,
     required this.virtue,
-    required this.likedItems,
   });
 
   final FieldGuideDailyDevotional devotional;
@@ -165,7 +159,6 @@ class _DailyCards extends ConsumerStatefulWidget {
   final String personKey;
   final DateTime date;
   final String virtue;
-  final Set<String> likedItems;
 
   @override
   ConsumerState<_DailyCards> createState() => _DailyCardsState();
@@ -230,7 +223,6 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
     final notifier = ref.read(
       guideDevotionalProgressProvider(widget.date).notifier,
     );
-    final likedNotifier = ref.read(guideLikedItemsProvider.notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,13 +230,8 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
         StreakBannerRow(personKey: personKey, isCompletedToday: isCompleted),
         ContentCard(
           eyebrow: 'Identity',
-          onLike: () =>
-              likedNotifier.toggle(personKey, 'identity-${devotional.id}'),
-          liked: _isLiked(
-            widget.likedItems,
-            personKey,
-            'identity-${devotional.id}',
-          ),
+          onLike: () => notifier.toggleIdentityFavorite(personKey),
+          liked: member?.isIdentityFavorite ?? false,
           child: Text(
             devotional.identityReading,
             style: FraternusTypography.body(color: FraternusColors.ink),
@@ -252,13 +239,8 @@ class _DailyCardsState extends ConsumerState<_DailyCards> {
         ),
         ContentCard(
           eyebrow: 'Wisdom for the Day',
-          onLike: () =>
-              likedNotifier.toggle(personKey, 'wisdom-${devotional.id}'),
-          liked: _isLiked(
-            widget.likedItems,
-            personKey,
-            'wisdom-${devotional.id}',
-          ),
+          onLike: () => notifier.toggleWisdomFavorite(personKey),
+          liked: member?.isWisdomFavorite ?? false,
           subtitle: devotional.wisdomQuote,
           child: Text(
             '— ${devotional.wisdomAuthor}',

@@ -32,7 +32,7 @@ class VirtueDetailScreen extends ConsumerWidget {
             child: weekAsync.when(
               data: (week) => week == null
                   ? const BodyText('Nothing to show for this date yet.')
-                  : _VirtueDetailContent(week: week),
+                  : _VirtueDetailContent(date: date, week: week),
               loading: () => const SizedBox.shrink(),
               error: (error, stackTrace) =>
                   const BodyText('Something went wrong loading this virtue.'),
@@ -45,15 +45,19 @@ class VirtueDetailScreen extends ConsumerWidget {
 }
 
 class _VirtueDetailContent extends ConsumerWidget {
-  const _VirtueDetailContent({required this.week});
+  const _VirtueDetailContent({required this.date, required this.week});
 
+  final DateTime date;
   final FieldGuideWeek week;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedKey = ref.watch(guideSelectedPersonProvider);
-    final likedItems = ref.watch(guideLikedItemsProvider);
-    final likedNotifier = ref.read(guideLikedItemsProvider.notifier);
+    final quoteFavorites =
+        ref.watch(guideQuoteFavoritesProvider(date)).value ?? const {};
+    final quoteFavoritesNotifier = ref.read(
+      guideQuoteFavoritesProvider(date).notifier,
+    );
     final temperamentResult = ref.watch(
       guideTemperamentResultProvider(selectedKey),
     );
@@ -73,9 +77,8 @@ class _VirtueDetailContent extends ConsumerWidget {
         for (final quote in week.quotes)
           ContentCard(
             subtitle: quote.quote,
-            onLike: () =>
-                likedNotifier.toggle(selectedKey, 'quote-${quote.id}'),
-            liked: likedItems.contains('$selectedKey:quote-${quote.id}'),
+            onLike: () => quoteFavoritesNotifier.toggle(selectedKey, quote.id),
+            liked: quoteFavorites['${quote.id}:$selectedKey'] ?? false,
             child: Text(
               '— ${quote.author}',
               style: FraternusTypography.body(

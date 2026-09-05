@@ -123,6 +123,8 @@ create table public.field_guide_daily_devotional_members (
   sword text,
   spade text,
   completed_date date,
+  is_identity_favorite boolean not null default false,
+  is_wisdom_favorite boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (daily_devotional_id, member_id)
@@ -175,6 +177,48 @@ create policy "update own household devotional completions"
 
 -- No delete policy: rows disappear only via cascade from delete_member_data.
 
+-- User-generated: one row per (quote, member) favorite. ADR 0003 cascade
+-- target via member_id, same as field_guide_daily_devotional_members.
+create table public.field_guide_week_quotes_members (
+  id uuid primary key default gen_random_uuid(),
+  field_guide_week_quotes_id uuid not null references public.field_guide_week_quotes (id) on delete cascade,
+  member_id uuid not null references public.members (id) on delete cascade,
+  is_favorite boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (field_guide_week_quotes_id, member_id)
+);
+
+create trigger set_field_guide_week_quotes_members_updated_at
+  before update on public.field_guide_week_quotes_members
+  for each row
+  execute function public.set_updated_at();
+
+create index idx_fgwqm_quote_id
+  on public.field_guide_week_quotes_members (field_guide_week_quotes_id);
+create index idx_fgwqm_member_id
+  on public.field_guide_week_quotes_members (member_id);
+
+alter table public.field_guide_week_quotes_members enable row level security;
+
+create policy "select own household quote favorites"
+  on public.field_guide_week_quotes_members for select
+  to authenticated
+  using (public.has_member_association(member_id));
+
+create policy "insert own household quote favorites"
+  on public.field_guide_week_quotes_members for insert
+  to authenticated
+  with check (public.has_member_association(member_id));
+
+create policy "update own household quote favorites"
+  on public.field_guide_week_quotes_members for update
+  to authenticated
+  using (public.has_member_association(member_id))
+  with check (public.has_member_association(member_id));
+
+-- No delete policy: rows disappear only via cascade from delete_member_data.
+
 -- Base table-level grants — see the comment in the public_users migration
 -- for why these are necessary in addition to the RLS policies above. The
 -- two non-security-definer RPCs in the next migration
@@ -184,3 +228,4 @@ grant select on public.field_guide_weeks to authenticated;
 grant select on public.field_guide_week_quotes to authenticated;
 grant select on public.field_guide_daily_devotionals to authenticated;
 grant select, insert, update on public.field_guide_daily_devotional_members to authenticated;
+grant select, insert, update on public.field_guide_week_quotes_members to authenticated;

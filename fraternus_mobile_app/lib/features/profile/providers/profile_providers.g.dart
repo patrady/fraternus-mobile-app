@@ -169,20 +169,20 @@ abstract class _$HouseholdMembers extends $AsyncNotifier<List<Member>> {
 
 /// This User's UserMemberAssociation rows. Read-only from the client's
 /// perspective now — creation is atomic (create_child_member /
-/// complete_captain_signup), consent revocation is its own repository
-/// method, and deletion only ever happens via HouseholdMembers.remove's
-/// cascade. A plain function provider rather than a Notifier class, since
-/// nothing here mutates local state directly anymore.
+/// complete_captain_signup), and deletion only ever happens via
+/// HouseholdMembers.remove's cascade. A plain function provider rather than
+/// a Notifier class, since nothing here mutates local state directly
+/// anymore.
 
 @ProviderFor(householdAssociations)
 const householdAssociationsProvider = HouseholdAssociationsProvider._();
 
 /// This User's UserMemberAssociation rows. Read-only from the client's
 /// perspective now — creation is atomic (create_child_member /
-/// complete_captain_signup), consent revocation is its own repository
-/// method, and deletion only ever happens via HouseholdMembers.remove's
-/// cascade. A plain function provider rather than a Notifier class, since
-/// nothing here mutates local state directly anymore.
+/// complete_captain_signup), and deletion only ever happens via
+/// HouseholdMembers.remove's cascade. A plain function provider rather than
+/// a Notifier class, since nothing here mutates local state directly
+/// anymore.
 
 final class HouseholdAssociationsProvider
     extends
@@ -196,10 +196,10 @@ final class HouseholdAssociationsProvider
         $FutureProvider<List<UserMemberAssociation>> {
   /// This User's UserMemberAssociation rows. Read-only from the client's
   /// perspective now — creation is atomic (create_child_member /
-  /// complete_captain_signup), consent revocation is its own repository
-  /// method, and deletion only ever happens via HouseholdMembers.remove's
-  /// cascade. A plain function provider rather than a Notifier class, since
-  /// nothing here mutates local state directly anymore.
+  /// complete_captain_signup), and deletion only ever happens via
+  /// HouseholdMembers.remove's cascade. A plain function provider rather than
+  /// a Notifier class, since nothing here mutates local state directly
+  /// anymore.
   const HouseholdAssociationsProvider._()
     : super(
         from: null,

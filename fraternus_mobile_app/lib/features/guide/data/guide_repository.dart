@@ -4,6 +4,7 @@ import '../models/field_guide_daily_devotional.dart';
 import '../models/field_guide_daily_devotional_member.dart';
 import '../models/field_guide_week.dart';
 import '../models/field_guide_week_quote.dart';
+import '../models/field_guide_week_quote_member.dart';
 
 /// Source of the Guide tab's data. Same seam as ChallengeRepository/
 /// TodayDashboardRepository — swap the implementation later, nothing
@@ -35,16 +36,26 @@ abstract class GuideRepository {
   });
 
   /// Creates or updates [memberId]'s row for [dailyDevotionalId]. Each of
-  /// [sword]/[spade]/[completed] is applied only when non-null — passing
-  /// null for a field leaves it unchanged, matching how the Guide screen
-  /// calls this once per field as the user edits (sword pick, spade text,
-  /// complete toggle) rather than resubmitting the whole row every time.
+  /// [sword]/[spade]/[completed]/[isIdentityFavorite]/[isWisdomFavorite] is
+  /// applied only when non-null — passing null for a field leaves it
+  /// unchanged, matching how the Guide screen calls this once per field as
+  /// the user edits (sword pick, spade text, complete toggle, favorite
+  /// toggle) rather than resubmitting the whole row every time.
   Future<FieldGuideDailyDevotionalMember> upsertDevotionalMember({
     required String dailyDevotionalId,
     required String memberId,
     String? sword,
     String? spade,
     bool? completed,
+    bool? isIdentityFavorite,
+    bool? isWisdomFavorite,
+  });
+
+  /// Creates or updates [memberId]'s favorite flag for [quoteId].
+  Future<FieldGuideWeekQuoteMember> upsertQuoteMember({
+    required String quoteId,
+    required String memberId,
+    required bool isFavorite,
   });
 }
 
@@ -88,6 +99,11 @@ class StaticGuideRepository implements GuideRepository {
   /// with a believable demo state, then mutated by [upsertDevotionalMember]
   /// — this is what makes "mark complete" visible on the next fetch.
   final Map<String, FieldGuideDailyDevotionalMember> _completions;
+
+  /// Keyed by '$quoteId:$memberId'. Empty until [upsertQuoteMember] is
+  /// called — mirrors [_completions]'s mutate-then-reflect-on-next-fetch
+  /// shape, but for quote favorites instead of devotional completion.
+  final Map<String, FieldGuideWeekQuoteMember> _quoteFavorites = {};
 
   static DateTime _dateOnly(DateTime date) =>
       DateTime(date.year, date.month, date.day);
@@ -229,6 +245,10 @@ class StaticGuideRepository implements GuideRepository {
           fieldGuideWeekId: 'humility-week',
           quote: 'It is the humble man whom God protects and liberates',
           author: 'Thomas à Kempis',
+          members: [
+            for (final memberId in _memberIds)
+              ?_quoteFavorites['humility-quote-1:$memberId'],
+          ],
           createdAt: weekStart,
           lastModifiedAt: weekStart,
         ),
@@ -238,6 +258,10 @@ class StaticGuideRepository implements GuideRepository {
           quote:
               'Many people try to escape temptations, only to fall more deeply.',
           author: 'Thomas à Kempis',
+          members: [
+            for (final memberId in _memberIds)
+              ?_quoteFavorites['humility-quote-2:$memberId'],
+          ],
           createdAt: weekStart,
           lastModifiedAt: weekStart,
         ),
@@ -247,6 +271,10 @@ class StaticGuideRepository implements GuideRepository {
           quote:
               'Do not think that you have made any progress unless you esteem yourself the least of all.',
           author: 'Thomas à Kempis',
+          members: [
+            for (final memberId in _memberIds)
+              ?_quoteFavorites['humility-quote-3:$memberId'],
+          ],
           createdAt: weekStart,
           lastModifiedAt: weekStart,
         ),
@@ -255,6 +283,10 @@ class StaticGuideRepository implements GuideRepository {
           fieldGuideWeekId: 'humility-week',
           quote: 'Humility is the solid foundation of all the virtues.',
           author: 'Confucius',
+          members: [
+            for (final memberId in _memberIds)
+              ?_quoteFavorites['humility-quote-4:$memberId'],
+          ],
           createdAt: weekStart,
           lastModifiedAt: weekStart,
         ),
@@ -301,6 +333,8 @@ class StaticGuideRepository implements GuideRepository {
     String? sword,
     String? spade,
     bool? completed,
+    bool? isIdentityFavorite,
+    bool? isWisdomFavorite,
   }) async {
     final key = '$dailyDevotionalId:$memberId';
     final now = DateTime.now();
@@ -318,8 +352,30 @@ class StaticGuideRepository implements GuideRepository {
       spade: spade,
       completedDate: completed == true ? now : null,
       clearCompleted: completed == false,
+      isIdentityFavorite: isIdentityFavorite,
+      isWisdomFavorite: isWisdomFavorite,
     );
     _completions[key] = updated;
+    return updated;
+  }
+
+  @override
+  Future<FieldGuideWeekQuoteMember> upsertQuoteMember({
+    required String quoteId,
+    required String memberId,
+    required bool isFavorite,
+  }) async {
+    final key = '$quoteId:$memberId';
+    final now = DateTime.now();
+    final updated = FieldGuideWeekQuoteMember(
+      id: key,
+      fieldGuideWeekQuotesId: quoteId,
+      memberId: memberId,
+      isFavorite: isFavorite,
+      createdAt: _quoteFavorites[key]?.createdAt ?? now,
+      lastModifiedAt: now,
+    );
+    _quoteFavorites[key] = updated;
     return updated;
   }
 }
@@ -360,7 +416,7 @@ class SupabaseGuideRepository implements GuideRepository {
     final weekJson = await _client
         .from('field_guide_weeks')
         .select(
-          '*, field_guide_week_quotes(*), '
+          '*, field_guide_week_quotes(*, field_guide_week_quotes_members(*)), '
           'field_guide_daily_devotionals(*, field_guide_daily_devotional_members(*))',
         )
         .eq('id', fieldGuideWeekId)
@@ -399,6 +455,8 @@ class SupabaseGuideRepository implements GuideRepository {
     String? sword,
     String? spade,
     bool? completed,
+    bool? isIdentityFavorite,
+    bool? isWisdomFavorite,
   }) async {
     // submitted_by_user_id is deliberately absent — a database trigger sets
     // it from auth.uid() server-side (see the field_guide migration), so no
@@ -412,9 +470,30 @@ class SupabaseGuideRepository implements GuideRepository {
           if (spade != null) 'spade': spade,
           if (completed != null)
             'completed_date': completed ? _isoDate(DateTime.now()) : null,
+          if (isIdentityFavorite != null)
+            'is_identity_favorite': isIdentityFavorite,
+          if (isWisdomFavorite != null) 'is_wisdom_favorite': isWisdomFavorite,
         }, onConflict: 'daily_devotional_id,member_id')
         .select()
         .single();
     return FieldGuideDailyDevotionalMember.fromJson(row);
+  }
+
+  @override
+  Future<FieldGuideWeekQuoteMember> upsertQuoteMember({
+    required String quoteId,
+    required String memberId,
+    required bool isFavorite,
+  }) async {
+    final row = await _client
+        .from('field_guide_week_quotes_members')
+        .upsert({
+          'field_guide_week_quotes_id': quoteId,
+          'member_id': memberId,
+          'is_favorite': isFavorite,
+        }, onConflict: 'field_guide_week_quotes_id,member_id')
+        .select()
+        .single();
+    return FieldGuideWeekQuoteMember.fromJson(row);
   }
 }

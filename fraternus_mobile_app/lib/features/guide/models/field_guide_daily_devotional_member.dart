@@ -9,6 +9,8 @@ class FieldGuideDailyDevotionalMember {
     this.sword,
     this.spade,
     this.completedDate,
+    this.isIdentityFavorite = false,
+    this.isWisdomFavorite = false,
     required this.createdAt,
     required this.lastModifiedAt,
   });
@@ -28,6 +30,8 @@ class FieldGuideDailyDevotionalMember {
   /// This member's free-text answer to the day's Spade prompt.
   final String? spade;
   final DateTime? completedDate;
+  final bool isIdentityFavorite;
+  final bool isWisdomFavorite;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
 
@@ -39,6 +43,8 @@ class FieldGuideDailyDevotionalMember {
     String? spade,
     DateTime? completedDate,
     bool clearCompleted = false,
+    bool? isIdentityFavorite,
+    bool? isWisdomFavorite,
   }) {
     return FieldGuideDailyDevotionalMember(
       id: id,
@@ -50,6 +56,8 @@ class FieldGuideDailyDevotionalMember {
       completedDate: clearCompleted
           ? null
           : (completedDate ?? this.completedDate),
+      isIdentityFavorite: isIdentityFavorite ?? this.isIdentityFavorite,
+      isWisdomFavorite: isWisdomFavorite ?? this.isWisdomFavorite,
       createdAt: createdAt,
       lastModifiedAt: lastModifiedAt,
     );
@@ -66,6 +74,8 @@ class FieldGuideDailyDevotionalMember {
       completedDate: json['completed_date'] == null
           ? null
           : DateTime.parse(json['completed_date'] as String),
+      isIdentityFavorite: json['is_identity_favorite'] as bool? ?? false,
+      isWisdomFavorite: json['is_wisdom_favorite'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       lastModifiedAt: DateTime.parse(json['updated_at'] as String),
     );
