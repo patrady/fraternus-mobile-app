@@ -161,7 +161,7 @@ final class _ChallengeFeedProvider
   }
 }
 
-String _$_challengeFeedHash() => r'005d5528cb5d70e256e9c6383f17f51c9d5b4ffa';
+String _$_challengeFeedHash() => r'effe4ef48ab9b68acba938cea2215771249a9550';
 
 /// All challenges the chapter has ever had, by template date descending.
 

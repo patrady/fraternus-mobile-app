@@ -1,4 +1,6 @@
 {
   "SUPABASE_URL": "http://127.0.0.1:54321",
-  "SUPABASE_ANON_KEY": "run `supabase status` after `supabase start` and paste the Publishable key (sb_publishable_...) here — not the older JWT-style Anon key"
+  "SUPABASE_ANON_KEY": "run `supabase status` after `supabase start` and paste the Publishable key (sb_publishable_...) here — not the older JWT-style Anon key",
+  "STORE_ANDROID_PACKAGE_ID": "",
+  "STORE_IOS_APP_ID": ""
 }

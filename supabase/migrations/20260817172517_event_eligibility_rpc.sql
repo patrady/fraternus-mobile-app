@@ -23,7 +23,7 @@ as $$
   join public.event_attendees_chapter eac
     on eac.event_id = p_event_id and eac.chapter_key = m.chapter_key
   where eac.role = 'chapter'
-     or (eac.role = 'captains' and m.role in ('captain', 'commander'))
+     or (eac.role = 'captains' and m.role = 'captain')
      or (eac.role = 'brothers' and m.role = 'brother')
   union
   select member_id

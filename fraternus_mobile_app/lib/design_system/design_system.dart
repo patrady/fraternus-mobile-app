@@ -38,6 +38,7 @@ export 'cards/dark_feature_card.dart';
 export 'cards/dark_summary_card.dart';
 
 export 'avatar/avatar.dart';
+export 'avatar/avatar_with_badge.dart';
 
 export 'icons/icon_badge_circle.dart';
 

@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../shared/formatting/event_date_formatting.dart';
 import '../../../shared/widgets/error_snackbar.dart';
+import '../../profile/models/member.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../models/event_attendees_chapter.dart';
@@ -88,6 +90,14 @@ class _EventDetailContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cancelled = event.isCancelled;
     final rsvpAsync = ref.watch(eventRsvpProvider(eventId));
+    // Household Members carry officer-role data (see Member.topOfficerRole)
+    // that EventEligibleMember's plain memberId+label shape doesn't — look
+    // them up by id to badge each RSVP row's avatar.
+    final householdMembersById = {
+      for (final member
+          in ref.watch(householdMembersProvider).value ?? const [])
+        member.id: member,
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,6 +184,10 @@ class _EventDetailContent extends ConsumerWidget {
               ) ...[
                 _RsvpRow(
                   label: event.eligibleHouseholdMembers[i].label,
+                  member:
+                      householdMembersById[event
+                          .eligibleHouseholdMembers[i]
+                          .memberId],
                   status: statuses[event.eligibleHouseholdMembers[i].memberId],
                   onChanged: (status) async {
                     try {
@@ -259,11 +273,16 @@ class _DetailMetaLine extends StatelessWidget {
 class _RsvpRow extends StatelessWidget {
   const _RsvpRow({
     required this.label,
+    required this.member,
     required this.status,
     required this.onChanged,
   });
 
   final String label;
+
+  /// Null while household members are still loading — the row still shows
+  /// a name and toggle, just without an avatar/badge yet.
+  final Member? member;
   final RsvpStatus? status;
   final ValueChanged<RsvpStatus> onChanged;
 
@@ -271,6 +290,14 @@ class _RsvpRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (member case final member?) ...[
+          AvatarWithBadge(
+            initials: member.initials,
+            size: AvatarSize.small,
+            badgeLabel: member.topOfficerRole?.label,
+          ),
+          const SizedBox(width: 12),
+        ],
         Expanded(
           child: Text(
             label,
@@ -294,7 +321,11 @@ class _AttendeeRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Avatar(initials: attendee.initials, size: AvatarSize.small),
+          AvatarWithBadge(
+            initials: attendee.initials,
+            size: AvatarSize.small,
+            badgeLabel: attendee.topOfficerRole?.label,
+          ),
           const SizedBox(width: 12),
           Text(
             attendee.name,

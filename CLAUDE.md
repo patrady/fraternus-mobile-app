@@ -10,7 +10,7 @@ Backend is [Supabase](https://supabase.com) (Postgres + Auth + PostgREST + Edge 
 
 **The domain/data model is defined in [`docs/app_concept.md`](docs/app_concept.md) — read it before modeling any feature.** Model new features against its literal entities (User, Member, User Member Association, Chapter, etc.), not ad hoc guesses from mockups. Key concepts:
 
-- A **User** is anyone with a login; a **Member** is someone registered with Fraternus (Brother, Captain, or Commander).
+- A **User** is anyone with a login; a **Member** is someone registered with Fraternus (Brother or Captain). A Member can additionally hold one or more **Officer Roles** (Commander, HAWC Officer, Frat Night Officer, Excursion Officer).
 - A **User Member Association** links a User to a Member as either `Self` or `Guardian`.
 - Brothers under 13 require COPPA-compliant guardian consent before any data is recorded on their behalf (see ADR 0003 for the cascading-delete implementation).
 - Timezones are inferred from the member's chapter location.

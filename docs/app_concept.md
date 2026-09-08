@@ -16,7 +16,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 ### Profile
 
 - When creating an account, the user must choose between two options: Captain or Guardian. A captain is an adult that is involved with Fraternus (e.g. a mentor/leader). A guardian is an adult that is not personally involved with Fraternus but has a child (or children) in it.
-- A user is someone who has an account. A member is someone that is registered with Fraternus (a Brother, Captain, or Commander).
+- A user is someone who has an account. A member is someone that is registered with Fraternus (a Brother or Captain). A Member can additionally hold one or more Officer Roles (Commander, HAWC Officer, Frat Night Officer, Excursion Officer) — see the Officer Roles section below.
 - Brothers cannot sign up for their own account yet. A Guardian creates their Brother's Member record on the Brother's behalf. A future invite flow will let a Brother claim their own account against an existing Member record their Guardian created.
 - If it's a Captain signing up: their first name, last name, email, and chapter must be provided. This creates a User, a Member (Role = Captain), and a User Member Association (Relationship = Self).
 - If it's a Guardian signing up: their first name, last name, and email must be provided (creates a User only). If the Guardian is also going to Fraternus meetings themselves, a Member record (Role = Captain) is also created for them along with a chapter selection, and a User Member Association (Relationship = Self) is created. Otherwise, the Guardian has no Member record of their own.
@@ -96,7 +96,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - The User (via Submitted By User Id) and Member (via Member Id) must have an association of either Self or Guardian to prevent someone RSVPing for another person
 - Do not support recurring events
 - There isn't anything preventing a chapter from having the same frat night scheduled for different dates. This allows cancelled frat nights to stay on the calendar and get picked up at a different date.
-- The Commander role has no special privileges here
+- Holding the Commander (or any other) Officer Role has no special privileges here
 - It is ok that the data model has the Chapter Key on both the "Event Frat Night Details" and "Event Attendees Chapter" tables. Some logic should be written to ensure that these do not deviate.
 
 ## Logic
@@ -111,7 +111,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - Chapters
     - A chapter is open, nothing verifies that a user actually belongs to a specific chapter
 - Users and Members
-    - A user is anyone that has a login and could be an uninvolved Guardian, an adult Captain/Commander, or (in the future) a Brother
+    - A user is anyone that has a login and could be an uninvolved Guardian, an adult Captain, or (in the future) a Brother
     - A member can be a user, in this case the association would be "Self"; otherwise the association is "Guardian" for a child
 
 ## Layout
@@ -134,9 +134,10 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - Member
     - Id
     - Chapter Key (referenced by Key, not Id)
-    - Role (Brother, Captain, Commander)
+    - Role (Brother, Captain)
     - First Name
     - Last Name
+    - Is Hawc (participates in HAWC — distinct from holding the HAWC Officer Role, see Officer Role below)
     - Created Date
     - Last Modified Date
 - User Member Association
@@ -148,6 +149,25 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Last Modified Date
     - Constraints:
         - Unique constraint on (User Id, Member Id)
+- Officer Role
+    - Id
+    - Key (ex. "commander", "hawc_officer", "frat_night_officer", "excursion_officer")
+    - Label (ex. "Commander")
+    - Priority (lower is higher-priority; used when a Member holds several and the UI can only show one)
+    - Created Date
+    - Last Modified Date
+    - Constraints:
+        - Unique constraint on Key
+        - Unique constraint on Priority
+    - Note: a small, hand-seeded reference table (no admin UI yet), same as Chapter and Frat Night Template
+- Member Officer Role
+    - Id
+    - Member Id
+    - Officer Role Key (referenced by Key, not Id)
+    - Created Date
+    - Constraints:
+        - Unique constraint on (Member Id, Officer Role Key)
+    - Note: a Member can hold any number of Officer Roles at once (e.g. Commander and Frat Night Officer simultaneously); hand-assigned via Studio/SQL, same as Member Temperament Result
 - Chapter
     - Id
     - Key

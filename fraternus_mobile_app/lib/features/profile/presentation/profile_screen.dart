@@ -57,7 +57,11 @@ class _ProfileContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListRow(
-          leading: Avatar(initials: user.initials, size: AvatarSize.small),
+          leading: AvatarWithBadge(
+            initials: user.initials,
+            size: AvatarSize.small,
+            badgeLabel: selfMember?.topOfficerRole?.label,
+          ),
           label: user.fullName,
           onPressed: () => context.push(RoutePaths.todayProfileEdit),
         ),
@@ -71,6 +75,20 @@ class _ProfileContent extends ConsumerWidget {
           label: 'Reminders',
           onPressed: () => context.push(RoutePaths.todayProfileReminders),
         ),
+        // All Officer Roles this Member holds, not just the one badge shown
+        // on the avatar above — that badge only has room for the
+        // top-priority role (see Member.topOfficerRole).
+        if (selfMember != null && selfMember.officerRoles.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final officerRole in selfMember.officerRoles)
+                Tag(label: officerRole.label, size: TagSize.small),
+            ],
+          ),
+        ],
         const SizedBox(height: 8),
         // Only the already-completed state shows here — taking the quiz for
         // the first time is now a recurring Today task (see

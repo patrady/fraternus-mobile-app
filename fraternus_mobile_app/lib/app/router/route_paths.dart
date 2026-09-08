@@ -7,6 +7,7 @@
 /// `GoRoute.path` values reference them directly instead of re-typing the
 /// literal, so a rename here can't silently desync the two files.
 abstract final class RoutePaths {
+  static const updateRequired = '/update-required';
   static const welcome = '/welcome';
   static const signIn = '/sign-in';
   static const signUp = '/sign-up';
@@ -39,7 +40,10 @@ abstract final class RoutePaths {
   static const todayProfileReminders = '$todayProfile/$remindersSegment';
 
   static String eventDetail(String eventId) => '$events/$eventId';
-  static String guideTemperament(String key) => '$guideVirtue/$temperamentSegment/$key';
-  static String temperamentQuiz(String personKey) => '$guide/$temperamentQuizSegment/$personKey';
-  static String todayProfileKidsEdit(String memberId) => '$todayProfileKids/$memberId';
+  static String guideTemperament(String key) =>
+      '$guideVirtue/$temperamentSegment/$key';
+  static String temperamentQuiz(String personKey) =>
+      '$guide/$temperamentQuizSegment/$personKey';
+  static String todayProfileKidsEdit(String memberId) =>
+      '$todayProfileKids/$memberId';
 }

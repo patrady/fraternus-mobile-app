@@ -34,7 +34,7 @@ as $$
     and public.has_member_association(m.id)
     and (
       eac.role = 'chapter'
-      or (eac.role = 'captains' and m.role in ('captain', 'commander'))
+      or (eac.role = 'captains' and m.role = 'captain')
       or (eac.role = 'brothers' and m.role = 'brother')
     )
   union

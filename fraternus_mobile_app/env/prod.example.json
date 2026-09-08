@@ -1,4 +1,6 @@
 {
   "SUPABASE_URL": "paste the hosted project's URL here (Project Settings > API)",
-  "SUPABASE_ANON_KEY": "paste the hosted project's anon/public key here (Project Settings > API) — never the service_role key"
+  "SUPABASE_ANON_KEY": "paste the hosted project's anon/public key here (Project Settings > API) — never the service_role key",
+  "STORE_ANDROID_PACKAGE_ID": "the Play Store application ID once published, e.g. com.fraternus.app — leave blank until then",
+  "STORE_IOS_APP_ID": "the numeric App Store Connect app ID once published, e.g. 123456789 — leave blank until then"
 }

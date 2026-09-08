@@ -44,6 +44,45 @@ void main() {
     });
   });
 
+  group('Member officer roles', () {
+    test('isHawc and officerRoles default to false/empty when absent', () {
+      final member = Member.fromJson(_json());
+      expect(member.isHawc, isFalse);
+      expect(member.officerRoles, isEmpty);
+      expect(member.topOfficerRole, isNull);
+    });
+
+    test('parses is_hawc and sorts officerRoles by priority ascending', () {
+      final member = Member.fromJson({
+        ..._json(),
+        'is_hawc': true,
+        'member_officer_roles': [
+          {
+            'officer_roles': {
+              'key': 'frat_night_officer',
+              'label': 'Frat Night Officer',
+              'priority': 3,
+            },
+          },
+          {
+            'officer_roles': {
+              'key': 'commander',
+              'label': 'Commander',
+              'priority': 1,
+            },
+          },
+        ],
+      });
+
+      expect(member.isHawc, isTrue);
+      expect(member.officerRoles.map((r) => r.key), [
+        'commander',
+        'frat_night_officer',
+      ]);
+      expect(member.topOfficerRole?.key, 'commander');
+    });
+  });
+
   group('Member.copyWith', () {
     final base = Member.fromJson(_json(email: 'tommy@example.com'));
 

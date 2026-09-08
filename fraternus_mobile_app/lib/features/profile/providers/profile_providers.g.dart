@@ -87,7 +87,7 @@ final class CurrentUserProvider
   CurrentUser create() => CurrentUser();
 }
 
-String _$currentUserHash() => r'a652ee4743e16f4517fd4f368d42e6693cda0d77';
+String _$currentUserHash() => r'288ce95ea4f9b920effe4002d907e9f07c1153ae';
 
 abstract class _$CurrentUser extends $AsyncNotifier<AppUser> {
   FutureOr<AppUser> build();
@@ -341,7 +341,7 @@ final class ProfileRemindersProvider
   ProfileReminders create() => ProfileReminders();
 }
 
-String _$profileRemindersHash() => r'db3d8bf0f6cf44a3b33663ad4691776620d85111';
+String _$profileRemindersHash() => r'5f69c3b6c09a3f9fbd87b740f63984f290fe28e5';
 
 abstract class _$ProfileReminders extends $AsyncNotifier<List<ReminderGroup>> {
   FutureOr<List<ReminderGroup>> build();

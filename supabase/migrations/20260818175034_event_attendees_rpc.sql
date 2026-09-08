@@ -11,16 +11,42 @@
 -- via the RSVP section, not "Others Attending". Ordered alphabetically so
 -- the list reads predictably to a Captain scanning it, rather than
 -- whatever order Postgres happens to return the join in.
+-- is_hawc and officer_roles let the client show an officer-role badge
+-- (see supabase/migrations/20260818175033_officer_roles.sql) on attendees
+-- outside the caller's own household, the same way it already can for
+-- household members via the members(*, member_officer_roles(...)) embed —
+-- officer_roles is pre-sorted by priority here so the client can just take
+-- the first entry without needing to know the priority ordering itself.
 create or replace function public.get_event_attendees(p_event_id uuid)
-returns table (member_id uuid, first_name text, last_name text)
+returns table (
+  member_id uuid,
+  first_name text,
+  last_name text,
+  is_hawc boolean,
+  officer_roles jsonb
+)
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select m.id, m.first_name, m.last_name
+  select
+    m.id,
+    m.first_name,
+    m.last_name,
+    m.is_hawc,
+    coalesce(orl.officer_roles, '[]'::jsonb)
   from public.event_rsvps er
   join public.members m on m.id = er.member_id
+  left join lateral (
+    select jsonb_agg(
+      jsonb_build_object('key', ro.key, 'label', ro.label, 'priority', ro.priority)
+      order by ro.priority
+    ) as officer_roles
+    from public.member_officer_roles mor
+    join public.officer_roles ro on ro.key = mor.officer_role_key
+    where mor.member_id = m.id
+  ) orl on true
   where er.event_id = p_event_id
     and er.response = 'accepted'
     and not public.has_member_association(er.member_id)

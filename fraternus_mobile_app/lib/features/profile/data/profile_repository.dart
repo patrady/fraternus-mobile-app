@@ -296,7 +296,9 @@ class SupabaseProfileRepository implements ProfileRepository {
   Future<List<Member>> fetchMembers() async {
     final rows = await _client
         .from('user_member_associations')
-        .select('members(*)')
+        .select(
+          'members(*, member_officer_roles(officer_roles(key, label, priority)))',
+        )
         .eq('user_id', _userId);
     return [
       for (final row in rows)

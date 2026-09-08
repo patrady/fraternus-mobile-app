@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fraternus_mobile_app/app/shared_preferences_provider.dart';
+import 'package:fraternus_mobile_app/features/app_version/models/app_version_status.dart';
+import 'package:fraternus_mobile_app/features/app_version/providers/app_version_providers.dart';
 import 'package:fraternus_mobile_app/features/auth/data/auth_repository.dart';
 import 'package:fraternus_mobile_app/features/auth/providers/auth_providers.dart';
 import 'package:fraternus_mobile_app/features/challenge/data/challenge_repository.dart';
@@ -132,6 +134,7 @@ Future<void> resetSharedPreferences() async {
 List<Override> testOverrides({
   bool signedIn = true,
   AuthRepository? authRepository,
+  AppVersionStatus appVersionStatus = const AppVersionStatus.notBlocked(),
 }) => [
   authRepositoryProvider.overrideWithValue(
     authRepository ?? FakeAuthRepository(signedIn: signedIn),
@@ -145,4 +148,8 @@ List<Override> testOverrides({
   eventsRepositoryProvider.overrideWithValue(StaticEventsRepository()),
   chapterRepositoryProvider.overrideWithValue(const StaticChapterRepository()),
   sharedPreferencesProvider.overrideWithValue(_sharedPreferences),
+  // The router's redirect reads this synchronously (see app_router.dart) —
+  // resolved in real usage by main.dart before runApp, so it needs a
+  // value here too rather than triggering its "must be overridden" throw.
+  appVersionStatusProvider.overrideWithValue(appVersionStatus),
 ];

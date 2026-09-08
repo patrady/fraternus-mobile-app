@@ -62,4 +62,4 @@ final class TodayDashboardProvider
   }
 }
 
-String _$todayDashboardHash() => r'85e2b959604d47691c9621c6bd395142b079b546';
+String _$todayDashboardHash() => r'685ac4b7b05dee1188f87170776b29f7aabbd6d9';

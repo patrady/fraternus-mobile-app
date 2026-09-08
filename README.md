@@ -175,7 +175,7 @@ dart run build_runner build --delete-conflicting-outputs
 
 ### Key domain concepts
 
-- A **User** is anyone with a login. A **Member** is someone registered with Fraternus (Brother, Captain, or Commander).
+- A **User** is anyone with a login. A **Member** is someone registered with Fraternus (Brother or Captain). A Member can additionally hold one or more **Officer Roles** (Commander, HAWC Officer, Frat Night Officer, Excursion Officer).
 - A **User Member Association** links a User to a Member as either `Self` or `Guardian`.
 - Brothers under 13 require COPPA-compliant guardian consent before any data is recorded on their behalf.
 - Timezones are inferred from the member's chapter location.

@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/app_version/presentation/update_required_screen.dart';
+import '../../features/app_version/providers/app_version_providers.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_account_screen.dart';
@@ -73,8 +75,17 @@ GoRouter appRouter(Ref ref) {
     initialLocation: RoutePaths.today,
     refreshListenable: refreshStream,
     redirect: (context, state) {
-      final signedIn = authRepository.currentSession != null;
       final location = state.matchedLocation;
+      // Checked first, ahead of the auth guard below, so a device on a
+      // blocked version is force-updated regardless of sign-in state —
+      // resolved once at boot (see main.dart) and read synchronously here.
+      final versionStatus = ref.read(appVersionStatusProvider);
+      if (versionStatus.blocked) {
+        return location == RoutePaths.updateRequired
+            ? null
+            : RoutePaths.updateRequired;
+      }
+      final signedIn = authRepository.currentSession != null;
       final onAuthRoute = _authRoutePaths.any(
         (path) => location.startsWith(path),
       );
@@ -107,6 +118,10 @@ GoRouter appRouter(Ref ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: RoutePaths.updateRequired,
+        builder: (context, state) => const UpdateRequiredScreen(),
+      ),
       GoRoute(
         path: RoutePaths.welcome,
         builder: (context, state) => const SignUpWelcomeScreen(),
@@ -189,15 +204,17 @@ GoRouter appRouter(Ref ref) {
                     routes: [
                       GoRoute(
                         path: '${RoutePaths.temperamentSegment}/:key',
-                        builder: (context, state) =>
-                            TemperamentDetailScreen(temperamentKey: state.pathParameters['key']!),
+                        builder: (context, state) => TemperamentDetailScreen(
+                          temperamentKey: state.pathParameters['key']!,
+                        ),
                       ),
                     ],
                   ),
                   GoRoute(
                     path: '${RoutePaths.temperamentQuizSegment}/:personKey',
-                    builder: (context, state) =>
-                        TemperamentQuizScreen(personKey: state.pathParameters['personKey']!),
+                    builder: (context, state) => TemperamentQuizScreen(
+                      personKey: state.pathParameters['personKey']!,
+                    ),
                   ),
                 ],
               ),
