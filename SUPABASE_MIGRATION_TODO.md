@@ -39,18 +39,19 @@ Earlier real-stack bugs (Phases 5–6, for reference — keep testing every phas
 
 ## Blocking external setup (not something I can do autonomously)
 
-1. **Firebase project** — needed to actually deliver push notifications (Phase 4's cancellation pipeline is built and tested up to this point; Phase 9's remaining 6 reminder types need it too). Steps once you have one:
-   - Enable Cloud Messaging.
-   - Create a service account with the Firebase Cloud Messaging API role, download its JSON key.
-   - iOS: upload an APNs auth key (Firebase Console → Project Settings → Cloud Messaging → Apple app config) — without this, iOS can't receive pushes at all, regardless of app code.
-   - `supabase secrets set FCM_SERVICE_ACCOUNT_JSON='<json, one line>'`, `FCM_PROJECT_ID`, and `WEBHOOK_SECRET` (must match the value passed to `vault.create_secret('<value>', 'webhook_secret')` — see the events migration).
-   - Add `firebase_core`/`firebase_messaging` to the Flutter app, wire `Firebase.initializeApp()`, build a device-token repository that upserts into `user_devices`. Deliberately not started yet — adding the dependency without real config files (`GoogleService-Info.plist`/`google-services.json`) risks breaking the native build in ways that can't be verified without them.
-
-2. **Hosted Supabase project** — everything so far is local-only (`supabase start`). Before this ships:
+1. **Hosted Supabase project** — everything so far is local-only (`supabase start`). Before this ships:
    - Create the hosted project, `supabase link --project-ref <ref>`, `supabase db push`.
-   - Run the one-time `select vault.create_secret(...)` webhook-secret setup against the hosted DB too (separate from local's).
    - Fill in `fraternus_mobile_app/env/prod.json` from `env/prod.example.json` with the hosted project's URL/anon key.
-   - Deploy Edge Functions: `supabase functions deploy notify-event-cancellation`.
+
+**Push notifications (Firebase/FCM) deliberately removed for v1** (2026-09-19) — the
+`user_devices` table, the `notify_event_cancellation` trigger/function, the
+`private.app_config`/Vault webhook-secret plumbing, and the
+`notify-event-cancellation` Edge Function were all deleted rather than left
+dormant. First version doesn't need push delivery; re-adding this (Firebase
+project, `firebase_core`/`firebase_messaging`, device-token repository) is
+future work, not a blocker. `user_reminders` (the per-user reminder-type
+preference table + Profile toggle UI) stays — it's Firebase-independent
+preference storage, not delivery infrastructure.
 
 ## Remaining phases
 
@@ -60,7 +61,7 @@ Earlier real-stack bugs (Phases 5–6, for reference — keep testing every phas
 | ~~6~~ | ~~Challenges~~ — done | — |
 | ~~7~~ | ~~Events (full feature)~~ — done | — |
 | ~~8~~ | ~~Today dashboard composition~~ — done | — |
-| 9 | Remaining 6 reminder types via `pg_cron` | Firebase project; **also needs its own follow-up ADR** resolving how server-triggered reminders coexist with ADR 0001 §5's still-live on-device `flutter_local_notifications` scheduler — explicitly deferred by ADR 0002 §7, not something to improvise mid-phase |
+| 9 | Remaining 6 reminder types via `pg_cron` | Deferred post-v1 — depends on a Firebase project (removed from scope, see note above) and **its own follow-up ADR** resolving how server-triggered reminders coexist with ADR 0001 §5's still-live on-device `flutter_local_notifications` scheduler — explicitly deferred by ADR 0002 §7, not something to improvise mid-phase |
 | ~~10~~ | ~~Chapter dropdown off `seedChapters`~~ — done | — |
 
 ## Cross-cutting follow-ups (not tied to one phase)
