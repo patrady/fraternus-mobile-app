@@ -4,6 +4,7 @@ import 'package:widgetbook_annotation/widgetbook_annotation.dart' as widgetbook;
 
 import 'package:fraternus_mobile_app/design_system/avatar/avatar.dart';
 import 'package:fraternus_mobile_app/design_system/avatar/avatar_with_badge.dart';
+import 'package:fraternus_mobile_app/design_system/avatar/crown_badge.dart';
 
 @widgetbook.UseCase(name: 'Playground', type: AvatarWithBadge)
 Widget playgroundUseCase(BuildContext context) {
@@ -33,5 +34,12 @@ Widget noBadgeUseCase(BuildContext context) {
 Widget withBadgeUseCase(BuildContext context) {
   return const Center(
     child: AvatarWithBadge(initials: 'JT', badgeLabel: 'Commander'),
+  );
+}
+
+@widgetbook.UseCase(name: 'Kings Messenger (crown)', type: AvatarWithBadge)
+Widget crownBadgeUseCase(BuildContext context) {
+  return const Center(
+    child: AvatarWithBadge(initials: 'JT', badge: CrownBadge()),
   );
 }

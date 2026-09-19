@@ -12,6 +12,7 @@ import '../../profile/providers/profile_providers.dart';
 import '../models/event.dart';
 import '../models/event_attendee.dart';
 import '../models/event_attendees_chapter.dart';
+import '../models/event_kings_messenger.dart';
 import '../providers/events_providers.dart';
 import 'widgets/open_in_maps_dialog.dart';
 
@@ -90,9 +91,9 @@ class _EventDetailContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cancelled = event.isCancelled;
     final rsvpAsync = ref.watch(eventRsvpProvider(eventId));
-    // Household Members carry officer-role data (see Member.topOfficerRole)
-    // that EventEligibleMember's plain memberId+label shape doesn't — look
-    // them up by id to badge each RSVP row's avatar.
+    // Household Members carry initials that EventEligibleMember's plain
+    // memberId+label shape doesn't — look them up by id for each RSVP
+    // row's avatar.
     final householdMembersById = {
       for (final member
           in ref.watch(householdMembersProvider).value ?? const [])
@@ -171,6 +172,8 @@ class _EventDetailContent extends ConsumerWidget {
           const SizedBox(height: 16),
           BodyText(description),
         ],
+        if (event.fratNightDetails != null)
+          _KingsMessengerSection(event: event),
         const SizedBox(height: 24),
         const Subheading('RSVP'),
         const SizedBox(height: 12),
@@ -281,7 +284,7 @@ class _RsvpRow extends StatelessWidget {
   final String label;
 
   /// Null while household members are still loading — the row still shows
-  /// a name and toggle, just without an avatar/badge yet.
+  /// a name and toggle, just without an avatar yet.
   final Member? member;
   final RsvpStatus? status;
   final ValueChanged<RsvpStatus> onChanged;
@@ -291,11 +294,7 @@ class _RsvpRow extends StatelessWidget {
     return Row(
       children: [
         if (member case final member?) ...[
-          AvatarWithBadge(
-            initials: member.initials,
-            size: AvatarSize.small,
-            badgeLabel: member.topOfficerRole?.label,
-          ),
+          Avatar(initials: member.initials, size: AvatarSize.small),
           const SizedBox(width: 12),
         ],
         Expanded(
@@ -321,16 +320,166 @@ class _AttendeeRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          AvatarWithBadge(
-            initials: attendee.initials,
-            size: AvatarSize.small,
-            badgeLabel: attendee.topOfficerRole?.label,
-          ),
+          Avatar(initials: attendee.initials, size: AvatarSize.small),
           const SizedBox(width: 12),
           Text(
             attendee.name,
             style: FraternusTypography.body(color: FraternusColors.ink),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Frat Night only — sign up (or un-register) as the Kings Messenger, the
+/// Captain who gives a short reflection on the night's video clip. Only a
+/// Self Captain Member is eligible to sign up (see selfMemberProvider); the
+/// sign-up button only shows while nobody has signed up yet, matching the
+/// product decision that additional messengers beyond the first are a rare,
+/// hand-managed case rather than something the app's UI exposes.
+class _KingsMessengerSection extends ConsumerStatefulWidget {
+  const _KingsMessengerSection({required this.event});
+
+  final Event event;
+
+  @override
+  ConsumerState<_KingsMessengerSection> createState() =>
+      _KingsMessengerSectionState();
+}
+
+class _KingsMessengerSectionState
+    extends ConsumerState<_KingsMessengerSection> {
+  bool _isSubmitting = false;
+
+  Future<void> _toggleSignup(String detailsId, String memberId) async {
+    setState(() => _isSubmitting = true);
+    try {
+      await ref
+          .read(eventsRepositoryProvider)
+          .submitKingsMessengerSignup(
+            eventFratNightDetailsId: detailsId,
+            memberId: memberId,
+          );
+      ref.invalidate(visibleEventsProvider);
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _handleUnregister(String detailsId, String memberId) async {
+    final confirmed = await showFraternusConfirmDialog(
+      context: context,
+      title: 'Un-register as Kings Messenger?',
+      message:
+          "You'll no longer be signed up to give the Kings Message for this Frat Night.",
+      confirmLabel: 'Un-register',
+    );
+    if (!confirmed || !mounted) return;
+    await _toggleSignup(detailsId, memberId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detailsId = widget.event.fratNightDetails!.id;
+    final messengers = widget.event.kingsMessengers;
+    final selfMember = ref.watch(selfMemberProvider).value;
+    final isSelfSignedUp =
+        selfMember != null &&
+        messengers.any((m) => m.memberId == selfMember.id);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        const Subheading('Kings Message'),
+        const SizedBox(height: 12),
+        if (messengers.isEmpty)
+          const BodyText('No one has signed up yet.', size: BodyTextSize.small)
+        else
+          Column(
+            children: [
+              for (var i = 0; i < messengers.length; i++) ...[
+                _KingsMessengerRow(
+                  messenger: messengers[i],
+                  onRemove: messengers[i].memberId == selfMember?.id
+                      ? () => _handleUnregister(detailsId, selfMember!.id)
+                      : null,
+                  disabled: _isSubmitting,
+                ),
+                if (i != messengers.length - 1) const HairlineDivider(),
+              ],
+            ],
+          ),
+        if (!isSelfSignedUp && selfMember != null && messengers.isEmpty) ...[
+          const SizedBox(height: 12),
+          Button(
+            label: 'Sign Up as Kings Messenger',
+            fullWidth: true,
+            disabled: _isSubmitting,
+            onPressed: () => _toggleSignup(detailsId, selfMember.id),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _KingsMessengerRow extends StatelessWidget {
+  const _KingsMessengerRow({
+    required this.messenger,
+    this.onRemove,
+    this.disabled = false,
+  });
+
+  final EventKingsMessenger messenger;
+
+  /// Only set for the row matching the current self Member — un-registering
+  /// someone else isn't exposed in the UI.
+  final VoidCallback? onRemove;
+  final bool disabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          AvatarWithBadge(
+            initials: messenger.initials,
+            size: AvatarSize.small,
+            badge: const CrownBadge(),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              messenger.name,
+              style: FraternusTypography.body(color: FraternusColors.ink),
+            ),
+          ),
+          if (onRemove != null)
+            PressableBuilder(
+              onTap: onRemove,
+              disabled: disabled,
+              semanticLabel: 'Un-register as Kings Messenger',
+              builder: (context, isPressed) {
+                return Opacity(
+                  opacity: isPressed ? 0.75 : 1,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: FraternusIcon(name: 'x', size: 18),
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

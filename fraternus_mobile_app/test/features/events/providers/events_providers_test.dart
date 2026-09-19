@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fraternus_mobile_app/design_system/design_system.dart' show RsvpStatus;
+import 'package:fraternus_mobile_app/design_system/design_system.dart'
+    show RsvpStatus;
 import 'package:fraternus_mobile_app/features/events/data/events_repository.dart';
 import 'package:fraternus_mobile_app/features/events/models/event.dart';
+import 'package:fraternus_mobile_app/features/events/models/event_kings_messenger.dart';
 import 'package:fraternus_mobile_app/features/events/models/household_rsvp.dart';
 import 'package:fraternus_mobile_app/features/events/providers/events_providers.dart';
 import 'package:fraternus_mobile_app/features/profile/data/profile_repository.dart';
@@ -30,8 +32,21 @@ class _TestEventsRepository implements EventsRepository {
     required RsvpStatus status,
   }) async {
     if (shouldFailSubmit) throw StateError('submitRsvp failed');
-    return _inner.submitRsvp(eventId: eventId, memberId: memberId, status: status);
+    return _inner.submitRsvp(
+      eventId: eventId,
+      memberId: memberId,
+      status: status,
+    );
   }
+
+  @override
+  Future<EventKingsMessenger?> submitKingsMessengerSignup({
+    required String eventFratNightDetailsId,
+    required String memberId,
+  }) => _inner.submitKingsMessengerSignup(
+    eventFratNightDetailsId: eventFratNightDetailsId,
+    memberId: memberId,
+  );
 }
 
 void main() {
@@ -39,8 +54,12 @@ void main() {
     test('filters out events more than 12 hours past their end time', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -55,8 +74,12 @@ void main() {
     test('sorts by start date ascending', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -78,7 +101,10 @@ void main() {
       expect(container.read(eventTypeFilterProvider), {EventType.fratNight});
 
       notifier.toggle(EventType.excursion);
-      expect(container.read(eventTypeFilterProvider), {EventType.fratNight, EventType.excursion});
+      expect(container.read(eventTypeFilterProvider), {
+        EventType.fratNight,
+        EventType.excursion,
+      });
 
       notifier.toggle(EventType.fratNight);
       expect(container.read(eventTypeFilterProvider), {EventType.excursion});
@@ -92,13 +118,19 @@ void main() {
     test('resolves an event that is currently visible', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
 
-      final event = await container.read(eventByIdProvider('frat-night').future);
+      final event = await container.read(
+        eventByIdProvider('frat-night').future,
+      );
 
       expect(event?.id, 'frat-night');
     });
@@ -106,13 +138,19 @@ void main() {
     test('returns null for an id that does not exist', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
 
-      final event = await container.read(eventByIdProvider('does-not-exist').future);
+      final event = await container.read(
+        eventByIdProvider('does-not-exist').future,
+      );
 
       expect(event, isNull);
     });
@@ -122,13 +160,19 @@ void main() {
     test('build() reflects the event\'s existing household RSVPs', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
 
-      final rsvps = await container.read(eventRsvpProvider('captain-meeting').future);
+      final rsvps = await container.read(
+        eventRsvpProvider('captain-meeting').future,
+      );
 
       expect(rsvps['you'], RsvpStatus.yes);
     });
@@ -136,8 +180,12 @@ void main() {
     test('toggleStatus applies optimistically and persists', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -147,15 +195,21 @@ void main() {
           .read(eventRsvpProvider('excursion-buffalo-river').notifier)
           .toggleStatus('you', RsvpStatus.yes);
 
-      final state = container.read(eventRsvpProvider('excursion-buffalo-river')).value!;
+      final state = container
+          .read(eventRsvpProvider('excursion-buffalo-river'))
+          .value!;
       expect(state['you'], RsvpStatus.yes);
     });
 
     test('toggling the already-selected status clears it', () async {
       final container = ProviderContainer(
         overrides: [
-          eventsRepositoryProvider.overrideWithValue(_TestEventsRepository(StaticEventsRepository())),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
+          eventsRepositoryProvider.overrideWithValue(
+            _TestEventsRepository(StaticEventsRepository()),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            StaticProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -169,28 +223,37 @@ void main() {
       expect(state.containsKey('you'), isFalse);
     });
 
-    test('a failed write rolls the optimistic update back and rethrows', () async {
-      final repo = _TestEventsRepository(StaticEventsRepository());
-      final container = ProviderContainer(
-        overrides: [
-          eventsRepositoryProvider.overrideWithValue(repo),
-          profileRepositoryProvider.overrideWithValue(StaticProfileRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
+    test(
+      'a failed write rolls the optimistic update back and rethrows',
+      () async {
+        final repo = _TestEventsRepository(StaticEventsRepository());
+        final container = ProviderContainer(
+          overrides: [
+            eventsRepositoryProvider.overrideWithValue(repo),
+            profileRepositoryProvider.overrideWithValue(
+              StaticProfileRepository(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      final before = await container.read(eventRsvpProvider('excursion-buffalo-river').future);
-      repo.shouldFailSubmit = true;
+        final before = await container.read(
+          eventRsvpProvider('excursion-buffalo-river').future,
+        );
+        repo.shouldFailSubmit = true;
 
-      await expectLater(
-        container
-            .read(eventRsvpProvider('excursion-buffalo-river').notifier)
-            .toggleStatus('you', RsvpStatus.yes),
-        throwsA(isA<StateError>()),
-      );
+        await expectLater(
+          container
+              .read(eventRsvpProvider('excursion-buffalo-river').notifier)
+              .toggleStatus('you', RsvpStatus.yes),
+          throwsA(isA<StateError>()),
+        );
 
-      final after = container.read(eventRsvpProvider('excursion-buffalo-river')).value!;
-      expect(after, before);
-    });
+        final after = container
+            .read(eventRsvpProvider('excursion-buffalo-river'))
+            .value!;
+        expect(after, before);
+      },
+    );
   });
 }

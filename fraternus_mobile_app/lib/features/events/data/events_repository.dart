@@ -7,6 +7,7 @@ import '../models/event_attendees_chapter.dart';
 import '../models/event_eligible_member.dart';
 import '../models/event_excursion_details.dart';
 import '../models/event_frat_night_details.dart';
+import '../models/event_kings_messenger.dart';
 import '../models/event_location.dart';
 import '../models/event_ranch_details.dart';
 import '../models/household_rsvp.dart';
@@ -36,6 +37,15 @@ abstract class EventsRepository {
     required String memberId,
     required RsvpStatus status,
   });
+
+  /// Toggles [memberId]'s Kings Messenger sign-up for the Frat Night whose
+  /// `Event Frat Night Details` id is [eventFratNightDetailsId] — signs them
+  /// up if they aren't already, un-registers them if they are. Returns the
+  /// new row, or null if this call un-registered them.
+  Future<EventKingsMessenger?> submitKingsMessengerSignup({
+    required String eventFratNightDetailsId,
+    required String memberId,
+  });
 }
 
 /// Hardcoded stand-in for real content, matching
@@ -60,6 +70,28 @@ class StaticEventsRepository implements EventsRepository {
 
   /// Keyed by '$eventId:$memberId'.
   final Map<String, RsvpStatus> _rsvps;
+
+  /// Keyed by '$eventFratNightDetailsId:$memberId'. Empty by default, so a
+  /// fresh run of this fake shows the "no one has signed up" state rather
+  /// than a pre-filled one.
+  final Map<String, EventKingsMessenger> _kingsMessengers = {};
+
+  /// Matches the '$id -> (firstName, lastName)' identities
+  /// StaticProfileRepository seeds for the same member ids, since this
+  /// fake's household is the same John/Jack/Thomas trio.
+  static const _memberNames = {
+    'you': ('John', 'Smith'),
+    'jack': ('Jack', 'Smith'),
+    'thomas': ('Thomas', 'Smith'),
+  };
+
+  List<EventKingsMessenger> _kingsMessengersFor(String detailsId) {
+    return [
+      for (final entry in _kingsMessengers.entries)
+        if (entry.key.split(':') case [final dId, _] when dId == detailsId)
+          entry.value,
+    ];
+  }
 
   static Map<String, RsvpStatus> _seedRsvps() => {
     'captain-meeting:you': RsvpStatus.yes,
@@ -154,6 +186,7 @@ class StaticEventsRepository implements EventsRepository {
         eligibleHouseholdMembers: _captainsOnlyHousehold,
         householdRsvps: _rsvpsFor('captain-meeting', asOf),
         othersAttending: _othersA,
+        kingsMessengers: const [],
       ),
       Event(
         id: 'hawc-night',
@@ -174,6 +207,7 @@ class StaticEventsRepository implements EventsRepository {
         eligibleHouseholdMembers: _wholeHousehold,
         householdRsvps: _rsvpsFor('hawc-night', asOf),
         othersAttending: _othersA,
+        kingsMessengers: const [],
       ),
       Event(
         id: 'frat-night',
@@ -200,6 +234,7 @@ class StaticEventsRepository implements EventsRepository {
         eligibleHouseholdMembers: _wholeHousehold,
         householdRsvps: _rsvpsFor('frat-night', asOf),
         othersAttending: _othersA,
+        kingsMessengers: _kingsMessengersFor('frat-night-details'),
       ),
       Event(
         id: 'excursion-buffalo-river',
@@ -227,6 +262,7 @@ class StaticEventsRepository implements EventsRepository {
         // "You" hasn't responded yet — only Jack and Thomas have rows.
         householdRsvps: _rsvpsFor('excursion-buffalo-river', asOf),
         othersAttending: _othersB,
+        kingsMessengers: const [],
       ),
       Event(
         id: 'ranch',
@@ -252,6 +288,7 @@ class StaticEventsRepository implements EventsRepository {
         eligibleHouseholdMembers: _wholeHousehold,
         householdRsvps: _rsvpsFor('ranch', asOf),
         othersAttending: _othersB,
+        kingsMessengers: const [],
       ),
     ];
   }
@@ -278,6 +315,26 @@ class StaticEventsRepository implements EventsRepository {
       createdAt: now,
       lastModifiedAt: now,
     );
+  }
+
+  @override
+  Future<EventKingsMessenger?> submitKingsMessengerSignup({
+    required String eventFratNightDetailsId,
+    required String memberId,
+  }) async {
+    final key = '$eventFratNightDetailsId:$memberId';
+    if (_kingsMessengers.containsKey(key)) {
+      _kingsMessengers.remove(key);
+      return null;
+    }
+    final (firstName, lastName) = _memberNames[memberId] ?? (memberId, '');
+    final messenger = EventKingsMessenger(
+      memberId: memberId,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    _kingsMessengers[key] = messenger;
+    return messenger;
   }
 }
 
@@ -330,12 +387,27 @@ class SupabaseEventsRepository implements EventsRepository {
         EventAttendee.fromJson(r as Map<String, dynamic>),
     ];
 
+    final fratNightDetailsJson =
+        row['event_frat_night_details'] as Map<String, dynamic>?;
+    final kingsMessengers = <EventKingsMessenger>[];
+    if (fratNightDetailsJson != null) {
+      final kingsMessengerRows = await _client.rpc(
+        'get_event_kings_messengers',
+        params: {'p_event_frat_night_details_id': fratNightDetailsJson['id']},
+      );
+      kingsMessengers.addAll([
+        for (final r in kingsMessengerRows as List<dynamic>)
+          EventKingsMessenger.fromJson(r as Map<String, dynamic>),
+      ]);
+    }
+
     if (memberIds.isEmpty) {
       return Event.fromJson(
         row,
         memberLabels: memberLabels,
         eligibleMemberIds: const [],
         othersAttending: othersAttending,
+        kingsMessengers: kingsMessengers,
       );
     }
     final eligible = await _client.rpc(
@@ -351,6 +423,7 @@ class SupabaseEventsRepository implements EventsRepository {
       memberLabels: memberLabels,
       eligibleMemberIds: eligibleIds,
       othersAttending: othersAttending,
+      kingsMessengers: kingsMessengers,
     );
   }
 
@@ -374,5 +447,33 @@ class SupabaseEventsRepository implements EventsRepository {
       return null; // un-toggled — the RPC returns an all-null row, not absent
     }
     return HouseholdRsvp.fromJson(row);
+  }
+
+  @override
+  Future<EventKingsMessenger?> submitKingsMessengerSignup({
+    required String eventFratNightDetailsId,
+    required String memberId,
+  }) async {
+    final result = await _client.rpc(
+      'submit_kings_messenger_signup',
+      params: {
+        'p_event_frat_night_details_id': eventFratNightDetailsId,
+        'p_member_id': memberId,
+      },
+    );
+    if (result == null) return null;
+    final row = result as Map<String, dynamic>;
+    if (row['id'] == null) {
+      return null; // un-registered — the RPC returns an all-null row, not absent
+    }
+    // The RPC returns the raw table row (ids only, no name columns) —
+    // callers invalidate visibleEventsProvider afterwards to pick up the
+    // resolved name via get_event_kings_messengers, same as EventRsvp's
+    // toggleStatus does for RSVPs.
+    return EventKingsMessenger(
+      memberId: row['member_id'] as String,
+      firstName: '',
+      lastName: '',
+    );
   }
 }

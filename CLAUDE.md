@@ -33,6 +33,8 @@ flutter run -d android --dart-define-from-file=env/local.json  # run on Android 
 flutter devices                                             # list available devices
 ```
 
+Prefer `./scripts/run_local.sh -d ios` (or `-d android`) over the raw `flutter run` commands above — it forwards flags straight to `flutter run` but also self-heals a local Supabase CLI quirk where auth signup emails silently fall back to a stock link instead of the expected 6-digit code (see the script's own comment, and `supabase/config.toml`'s `[auth.email.template.*]` comments, for why).
+
 Regenerate `@riverpod` provider code after adding/editing a provider (generated `*.g.dart` files are committed, so a fresh clone doesn't need this to build — but regenerate before committing your own provider changes):
 
 ```bash

@@ -1,14 +1,23 @@
+import '../../../design_system/design_system.dart' show RsvpStatus;
 import 'event_attendee.dart';
 import 'event_attendees_chapter.dart';
 import 'event_attendees_specific.dart';
 import 'event_eligible_member.dart';
 import 'event_excursion_details.dart';
 import 'event_frat_night_details.dart';
+import 'event_kings_messenger.dart';
 import 'event_location.dart';
 import 'event_ranch_details.dart';
 import 'household_rsvp.dart';
 
-enum EventType { fratNight, excursion, ranch, custom, commitmentCeremony, ceremony }
+enum EventType {
+  fratNight,
+  excursion,
+  ranch,
+  custom,
+  commitmentCeremony,
+  ceremony,
+}
 
 extension EventTypeIcon on EventType {
   /// Lucide icon name shown on the event's card — [EventType.custom]
@@ -47,6 +56,7 @@ class Event {
     required this.eligibleHouseholdMembers,
     required this.householdRsvps,
     required this.othersAttending,
+    required this.kingsMessengers,
   });
 
   final String id;
@@ -87,8 +97,22 @@ class Event {
   final List<HouseholdRsvp> householdRsvps;
   final List<EventAttendee> othersAttending;
 
+  /// Every Captain currently signed up to give the Kings Message —
+  /// populated only when [type] is [EventType.fratNight]. Resolved via the
+  /// `get_event_kings_messengers` RPC, same cross-household-read reasoning
+  /// as [othersAttending].
+  final List<EventKingsMessenger> kingsMessengers;
+
   /// The UI only needs cancelled-or-not, not when it was cancelled.
   bool get isCancelled => cancellationDate != null;
+
+  /// Total accepted RSVPs across the caller's own household and everyone
+  /// else — [householdRsvps] filtered to [RsvpStatus.yes], plus
+  /// [othersAttending] (already scoped to accepted-only, see
+  /// [EventAttendee]'s doc).
+  int get registeredCount =>
+      othersAttending.length +
+      householdRsvps.where((rsvp) => rsvp.status == RsvpStatus.yes).length;
 
   /// Falls back to [EventType.custom] for a value this client doesn't
   /// recognize yet, since `event_type` is backend-defined and new values
@@ -119,12 +143,15 @@ class Event {
   /// both fetched by the repository, not this factory. [othersAttending] is
   /// resolved the same way, from a separate `get_event_attendees` RPC call
   /// — see EventAttendee's doc for why that's its own cross-household RPC
-  /// rather than part of this embed.
+  /// rather than part of this embed. [kingsMessengers] is resolved the same
+  /// way too, from a separate `get_event_kings_messengers` RPC call, only
+  /// issued by the repository when this row has Frat Night details.
   factory Event.fromJson(
     Map<String, dynamic> json, {
     required Map<String, String> memberLabels,
     required List<String> eligibleMemberIds,
     required List<EventAttendee> othersAttending,
+    required List<EventKingsMessenger> kingsMessengers,
   }) {
     final attendeesChapterJson =
         json['event_attendees_chapter'] as List<dynamic>? ?? const [];
@@ -181,6 +208,7 @@ class Event {
           HouseholdRsvp.fromJson(row as Map<String, dynamic>),
       ],
       othersAttending: othersAttending,
+      kingsMessengers: kingsMessengers,
     );
   }
 }

@@ -1,0 +1,5 @@
+[tools]
+node = "26.7.0"
+java = "openjdk-24.0.2"
+cmake = "4.2.3"
+flutter = "3.44.8"

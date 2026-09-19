@@ -148,6 +148,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               color: FraternusColors.accentPrimary,
             ),
           ),
+        // Officer Role names (e.g. "Frat Night Officer") are too long to
+        // fit as an avatar badge, so they're listed here as text instead —
+        // see Member.officerRoles.
+        if (selfMember != null && selfMember.officerRoles.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final officerRole in selfMember.officerRoles)
+                Tag(label: officerRole.label, size: TagSize.small),
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -98,6 +98,7 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
 - There isn't anything preventing a chapter from having the same frat night scheduled for different dates. This allows cancelled frat nights to stay on the calendar and get picked up at a different date.
 - Holding the Commander (or any other) Officer Role has no special privileges here
 - It is ok that the data model has the Chapter Key on both the "Event Frat Night Details" and "Event Attendees Chapter" tables. Some logic should be written to ensure that these do not deviate.
+- A Frat Night has a "Kings Message" — a short reflection on the night's video clip, given by a featured speaker (the "Kings Messenger"). A Captain can sign themselves up as the Kings Messenger for a specific Frat Night, and un-register the same way. Only Captains can sign up (a Guardian cannot sign up on behalf of a Brother child, since a Brother cannot give the Kings Message). The schema allows multiple Kings Messengers for the same Frat Night, though in practice it's almost always just one — see the Event Frat Night Kings Messenger data model below.
 
 ## Logic
 
@@ -343,6 +344,15 @@ This is a flutter application called Fraternus that will be deployed to the iOS 
     - Chapter Key (referenced by Key, not Id)
     - Constraints:
         - Unique constraint on Frat Night Template Key — at most one Event per Frat Night Template
+- Event Frat Night Kings Messenger
+    - Id
+    - Event Frat Night Details Id
+    - Member Id
+    - Submitted By User Id
+    - Created Date
+    - Constraints:
+        - Unique constraint on (Event Frat Night Details Id, Member Id)
+    - Note: Member must hold Role = Captain. Multiple messengers per Frat Night are allowed by the schema but rare — the app's sign-up flow only offers signing up while the list is empty; additional messengers beyond the first would be added directly via Studio/SQL, same as other hand-managed content.
 - Event Excursion Details
     - Id
     - Event Id

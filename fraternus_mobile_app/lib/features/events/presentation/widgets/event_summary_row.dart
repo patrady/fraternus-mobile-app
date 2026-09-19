@@ -111,6 +111,40 @@ class EventSummaryRow extends ConsumerWidget {
                         const SizedBox(height: 4),
                         _MetaLine(icon: 'map-pin', label: location.name),
                       ],
+                      if (event.registeredCount > 0) ...[
+                        const SizedBox(height: 4),
+                        _MetaLine(
+                          icon: 'users',
+                          label: '${event.registeredCount} registered',
+                        ),
+                      ],
+                      if (event.type == EventType.fratNight &&
+                          event.kingsMessengers.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final messenger in event.kingsMessengers)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AvatarWithBadge(
+                                    initials: messenger.initials,
+                                    size: AvatarSize.small,
+                                    badge: const CrownBadge(),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Kings Message by ${messenger.name}',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
