@@ -37,11 +37,59 @@ Earlier real-stack bugs (Phases 5–6, for reference — keep testing every phas
 
 **Nothing from this work is committed to git yet.**
 
-## Blocking external setup (not something I can do autonomously)
+## Production status (2026-09-19)
 
-1. **Hosted Supabase project** — everything so far is local-only (`supabase start`). Before this ships:
-   - Create the hosted project, `supabase link --project-ref <ref>`, `supabase db push`.
-   - Fill in `fraternus_mobile_app/env/prod.json` from `env/prod.example.json` with the hosted project's URL/anon key.
+**Hosted Supabase project is live** — `mfbqkatpseefyzzhptnm` ("Fraternus -
+Production"), linked, all 30 migrations pushed via `supabase db push`
+(schema + real seed content — chapters, Frat Night curriculum, events,
+challenges — confirmed to be actual production content, not dev fixtures).
+`fraternus_mobile_app/env/prod.json` is filled in with its URL/anon key.
+
+**Auth email (SMTP + OTP codes) confirmed working end-to-end**, but NOT via
+`supabase config push` — configured directly through the Supabase Dashboard
+instead, deliberately:
+- **SMTP**: Resend's official Supabase integration (dashboard-to-dashboard,
+  domain `patrady.com` verified, sender "Fraternus App" <no-reply@patrady.com>).
+  Supabase's built-in email provider is hard-capped at 2 emails/hour with no
+  way to raise it short of custom SMTP — confirmed via Supabase's own prod
+  checklist, not just the in-app error. Free-tier projects also can't
+  customize email templates at all with the default provider (a real
+  Supabase API rejection, not app code) — configuring SMTP unblocked that.
+- **Email templates** (`{{ .Token }}`-based, matching `supabase/templates/*.html`):
+  pasted directly into Dashboard → Authentication → Email Templates (both
+  "Confirm signup" and "Magic Link" — signInWithOtp sends different templates
+  depending on whether the user already exists).
+- **`otp_length = 6`**: also set directly in the Dashboard. This one was a
+  real, live production bug, not cosmetic — `lib/features/auth/validation.dart`
+  hardcodes `RegExp(r'^\d{6}$')`, but the hosted project defaulted to
+  Supabase's 8-digit OTP length, which would have made every real signup
+  fail client-side validation. Fixed and verified with a real end-to-end
+  test (received a 6-digit code, confirmed it matched what the app expects).
+
+**Why the Dashboard instead of `config.toml`/`config push`**: `config.toml`
+is the single shared source for both `supabase start` (local) and
+`supabase config push` (hosted) — there's no per-environment split for it
+outside Supabase's paid Branching feature (`[remotes.<name>]`, which
+requires the git-integration branching workflow, not just a plain
+`supabase link`). Declaring `[auth.email.smtp]` locally to get it onto
+production breaks local dev immediately — confirmed by testing: local
+`supabase start` tries to actually authenticate to Resend with no
+`RESEND_SMTP_PASSWORD` set, and every local signup OTP starts 500ing instead
+of landing in Mailpit. So local `config.toml` still has SMTP commented out,
+same as before.
+
+**Known drift this leaves behind**: local `config.toml` has `site_url`,
+`additional_redirect_urls`, and `email_sent` (rate limit) updated for
+production, but these were never pushed — `supabase config push` sends the
+*entire* `[auth]` block in one call, and since local doesn't declare
+`[auth.email.smtp]` at all while the hosted project has it configured via
+the Resend integration, it's unverified whether pushing would silently
+disable production SMTP as a side effect of an unrelated diff. Untested
+because the downside (breaking live signups) isn't worth the experiment.
+Until this is resolved, **any other `[auth]`-related config.toml change
+meant for production needs to go through the Dashboard by hand, not
+`config push`** — or someone needs to verify the push behavior safely first
+(e.g. against a disposable test project) before trusting it on this one.
 
 **Push notifications (Firebase/FCM) deliberately removed for v1** (2026-09-19) — the
 `user_devices` table, the `notify_event_cancellation` trigger/function, the

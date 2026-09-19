@@ -1,0 +1,4 @@
+{
+  "API_KEY_ID": "the App Store Connect API Key ID (Users and Access > Integrations > Team Keys, or your profile's Individual API Key)",
+  "API_ISSUER_ID": "the Issuer ID shown on the same Integrations page — shared by all keys on the team"
+}
