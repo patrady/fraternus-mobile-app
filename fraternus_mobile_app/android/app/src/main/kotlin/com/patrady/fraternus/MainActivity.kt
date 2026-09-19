@@ -1,4 +1,4 @@
-package com.example.fraternus_mobile_app
+package com.patrady.fraternus
 
 import io.flutter.embedding.android.FlutterActivity
 
