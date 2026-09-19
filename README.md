@@ -114,6 +114,63 @@ flutter run -d <device-id> --dart-define-from-file=env/local.json
 flutter test
 ```
 
+## Releasing to TestFlight (iOS)
+
+Push a new build to App Store Connect / TestFlight with:
+
+```bash
+fraternus_mobile_app/scripts/upload_testflight.sh
+```
+
+This builds a release IPA (`flutter build ipa --dart-define-from-file=env/prod.json`) and uploads it via `xcrun altool`, authenticating with an App Store Connect API key.
+
+One-time setup:
+
+1. Generate an API key at [appstoreconnect.apple.com](https://appstoreconnect.apple.com) (**Users and Access → Integrations → Team Keys**, role **App Manager** or higher, or your profile's **Individual API Key**). Download the `.p8` immediately — it's a one-time download — and save it to `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. That file is the actual credential and is never committed.
+2. Copy `fraternus_mobile_app/env/testflight.example.json` to `fraternus_mobile_app/env/testflight.json` and fill in that key's `API_KEY_ID` and `API_ISSUER_ID` (gitignored like the other `env/*.json` files — these IDs alone aren't secret, but they're account-specific).
+
+Before each new upload, bump the `+N` build number in `fraternus_mobile_app/pubspec.yaml`'s `version:` line — App Store Connect rejects a re-upload with a version+build number that's already been used.
+
+A Claude Code skill (`build-and-publish-ios`, under `.claude/skills/`) wraps this same script — ask Claude to push/upload/ship a build to TestFlight and it'll run it and report the result.
+
+## Releasing to Google Play (Android)
+
+Build a signed release App Bundle with:
+
+```bash
+cd fraternus_mobile_app
+mise exec -- flutter build appbundle --release --dart-define-from-file=env/prod.json
+```
+
+Output lands at `fraternus_mobile_app/build/app/outputs/bundle/release/app-release.aab`. Never build with `env/local.json` — it's often repointed at `10.0.2.2` for Android-emulator testing, and a release built with it fails inside `Supabase.initialize()` before any request reaches the server, which is a genuinely confusing outage to debug (nothing shows up in Supabase's own logs, since the app never actually reaches it). Also never build via a raw `./gradlew bundleRelease`/`assembleRelease` — it bypasses Flutter's `--dart-define` mechanism entirely, silently producing a build with empty Supabase config baked in.
+
+One-time setup:
+
+1. Generate an upload keystore yourself, so the passwords never pass through anyone else's hands:
+   ```bash
+   cd fraternus_mobile_app/android
+   mise exec -- keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+2. Create `fraternus_mobile_app/android/key.properties` (gitignored, like the keystore file itself):
+   ```properties
+   storePassword=<your store password>
+   keyPassword=<your key password>
+   keyAlias=upload
+   storeFile=upload-keystore.jks
+   ```
+   Without this file, release builds silently fall back to debug signing — fine for local `flutter run --release`, not acceptable for a real upload. Verify with `keytool -printcert -jarfile <the .aab>`: the certificate owner should be your own identity, not the generic Android Debug cert.
+
+Before each new upload, bump the `+N` build number in `fraternus_mobile_app/pubspec.yaml`'s `version:` line — Play Console rejects a re-upload with an already-used version code.
+
+Then publish it manually:
+
+1. [Play Console](https://play.google.com/console) → the app → **Testing → Internal testing** → **Create new release**.
+2. Upload the `.aab` from the path above.
+3. Fill in release notes (required even for internal testing).
+4. **Next → Save → Review release → Start rollout to Internal testing.**
+
+A Claude Code skill (`build-and-publish-android`, under `fraternus_mobile_app/.claude/skills/`) wraps the build and verification steps and walks through the publish steps above — ask Claude to build/publish/ship an Android build and it'll run it and report the result.
+
 ## Running Widgetbook (Design System Catalog)
 
 The design system's component catalog lives in a separate Flutter app at `fraternus_mobile_app/widgetbook`, which depends on `fraternus_mobile_app` via a path dependency. Keeping it separate means Widgetbook and `build_runner` never end up in the production app's dependency tree.
